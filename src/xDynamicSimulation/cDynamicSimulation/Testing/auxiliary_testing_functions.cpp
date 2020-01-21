@@ -766,8 +766,9 @@ SignalContainer aux_test::get_mock_sinus_signal( AcquisitionsVector &acq_vec, Ti
 
 	for(size_t ia=0; ia<num_sampling_points; ia++)
 	{
-		auto sptr_acq = acq_vec.get_acquisition_sptr(ia);
-		all_time_points.push_back(sptr_acq->getHead().acquisition_time_stamp); 	
+		ISMRMRD::Acquisition acq;
+		acq_vec.get_acquisition(ia,acq);
+		all_time_points.push_back(acq.getHead().acquisition_time_stamp); 	
 	}
 
 	auto minmax_it = std::minmax_element(std::begin(all_time_points), std::end(all_time_points));
@@ -791,12 +792,13 @@ SignalContainer aux_test::get_mock_sinus_signal( AcquisitionsVector &acq_vec, Ti
 SignalContainer aux_test::get_mock_sawtooth_signal( AcquisitionsVector acq_vec, TimeAxisType const period_duration_ms)
 {
 	
-	auto sptr_acq = acq_vec.get_acquisition_sptr(0);
-	TimeAxisType t_0 = sptr_acq->getHead().acquisition_time_stamp;
+	ISMRMRD::Acquisition acq;
+	acq_vec.get_acquisition(0,acq);
+	TimeAxisType t_0 = acq.getHead().acquisition_time_stamp;
 			
 
-	sptr_acq = acq_vec.get_acquisition_sptr(acq_vec.items()-1);
-	TimeAxisType t_fin = sptr_acq->getHead().acquisition_time_stamp;
+	acq_vec.get_acquisition(acq_vec.items()-1, acq);
+	TimeAxisType t_fin = acq.getHead().acquisition_time_stamp;
 
 
 	unsigned const num_sampling_points = acq_vec.number();

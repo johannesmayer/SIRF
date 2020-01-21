@@ -231,8 +231,9 @@ bool tests_memory::test_acquisition_vector_memory( void )
 
 			for(size_t i_acq=0; i_acq<num_acq; i_acq++)
 			{	
-				auto sptr_acq = all_acquis.get_acquisition_sptr(i_acq);
-				temp_vec.append_acquisition_sptr(sptr_acq);
+				ISMRMRD::Acquisition temp_acq;
+				all_acquis.get_acquisition(i_acq, temp_acq);
+				temp_vec.append_acquisition(temp_acq);
 			}
 			acq_vec_vector.push_back( temp_vec );
 		}
@@ -307,18 +308,21 @@ bool tests_memory::tests_resizing_acquisition_memory( void )
 			
 			std::cout << " Resizing " <<std::endl;
 
+
 			for(size_t i=0; i<av.number(); i++)
 			{
-				auto sptr_acq = av.get_acquisition_sptr(i);
-				sptr_acq->resize( sptr_acq->number_of_samples(), (uint16_t)0, (uint16_t)0 );
-				sptr_acq->resize( sptr_acq->number_of_samples(), (uint16_t)25, (uint16_t)0 );
-				sptr_acq->resize( sptr_acq->number_of_samples(), (uint16_t)0, (uint16_t)0 );
+				ISMRMRD::Acquisition temp_acq;
+				av.get_acquisition(i, temp_acq);
+				temp_acq.resize( temp_acq.number_of_samples(), (uint16_t)0, (uint16_t)0 );
+				temp_acq.resize( temp_acq.number_of_samples(), (uint16_t)25, (uint16_t)0 );
+				temp_acq.resize( temp_acq.number_of_samples(), (uint16_t)0, (uint16_t)0 );
 			}
 
-			auto some_sptr_acq = av.get_acquisition_sptr(0);
-			std::cout << "Number of samples is now: " << some_sptr_acq->number_of_samples() <<std::endl;
-			std::cout << "Number of active channels is now: " << some_sptr_acq->active_channels() <<std::endl;
-			std::cout << "Data size is now: " << some_sptr_acq->getDataSize() << std::endl;
+			ISMRMRD::Acquisition temp_acq;
+			av.get_acquisition(0, temp_acq);
+			std::cout << "Number of samples is now: " << temp_acq.number_of_samples() <<std::endl;
+			std::cout << "Number of active channels is now: " << temp_acq.active_channels() <<std::endl;
+			std::cout << "Data size is now: " << temp_acq.getDataSize() << std::endl;
 
 			std::cout << "Waiting again" <<std::endl;
 			wait_for_time( 5 );
@@ -327,8 +331,8 @@ bool tests_memory::tests_resizing_acquisition_memory( void )
 			std::cout << "Resizing again" <<std::endl;
 			for(size_t i=0; i<av.number(); i++)
 			{
-				auto sptr_acq = av.get_acquisition_sptr(i);
-				sptr_acq->resize( sptr_acq->number_of_samples(), 4 );
+				av.get_acquisition(i, temp_acq);
+				temp_acq.resize( temp_acq.number_of_samples(), 4 );
 
 			}
 

@@ -48,20 +48,24 @@ bool test_noisegen::test_add_gaussian_noise( void )
 {
 	try
 	{
-		AcquisitionsVector av;
+		AcquisitionsVector av_out, av;
 		av.read(ISMRMRD_H5_TEST_PATH);
+
+		av_out.copy_acquisitions_info(av);
 
 		for(size_t i=0; i<av.number(); i++)
 		{
-			auto sptr_ac = av.get_acquisition_sptr( i );
-			sptr_ac->resize( sptr_ac->number_of_samples() );
+			ISMRMRD::Acquisition tmp_acq;
+			av.get_acquisition( i, tmp_acq );
+			tmp_acq.resize( tmp_acq.number_of_samples() );
 
-			auto it = sptr_ac->data_begin ();
-			while( it != sptr_ac->data_end() )
+			auto it = tmp_acq.data_begin ();
+			while( it != tmp_acq.data_end() )
 			{
 				*it = complex_float_t( 0.f, 0.f );	
 				it++;
 			}  
+			av_out.append_acquisition(tmp_acq);
 		}
 
 		float const SNR = 13;
@@ -73,11 +77,11 @@ bool test_noisegen::test_add_gaussian_noise( void )
 		noise_gen.set_signal_img(signal);
 		noise_gen.set_sampling_specific_scaling( rpe_noise_scaling );
 
-		noise_gen.add_noise(av);
+		noise_gen.add_noise(av_out);
 
 		std::stringstream filename_test_output;
 		filename_test_output << std::string(SHARED_FOLDER_PATH) << "test_gaussian_noise_generator_SNR_" << SNR <<"_signal_" << signal  << ".h5";		
-		av.write(filename_test_output.str().c_str());
+		av_out.write(filename_test_output.str().c_str());
 
 		return true;
 
