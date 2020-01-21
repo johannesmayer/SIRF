@@ -12,8 +12,9 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include <stdexcept>
 #include <stdlib.h>
 
-#include "sirf/cDynamicSimulation/dynsim_noisegenerator.h"
+#include <ismrmrd/ismrmrd.h>
 
+#include "sirf/cDynamicSimulation/dynsim_noisegenerator.h"
 
 using namespace sirf;
 
@@ -67,8 +68,10 @@ float GaussianNoiseGenerator::noise_width_from_snr( AcquisitionsVector& acquisit
 	if( num_acquistions <= 0)
 		return 0.f;
 
-	auto sptr_acquis = acquisition_vector.get_acquisition_sptr(0);
-	float const suggested_noise_width = this->noise_width_img_;// / sqrt ( num_acquistions * sptr_acquis->number_of_samples() );
+
+	ISMRMRD::Acquisition tmp_acq;
+	acquisition_vector.get_acquisition(0, tmp_acq);
+	float const suggested_noise_width = this->noise_width_img_;// / sqrt ( num_acquistions * tmp_acq.number_of_samples() );
 
 	return suggested_noise_width;
 }
@@ -87,13 +90,15 @@ void GaussianNoiseGenerator::add_noise_to_data( AcquisitionsVector& acquisition_
 
 	std::normal_distribution< float > gaussian_distribution( this->mean_noise_ , this->noise_width_kspace_ );
 
+
 	for( size_t i_acq=0; i_acq<acquisition_vector.number(); i_acq++)
 	{
-		auto sptr_acquis = acquisition_vector.get_acquisition_sptr( i_acq );
+		ISMRMRD::Acquisition tmp_acq;
+		acquisition_vector.get_acquisition(i_acq, tmp_acq);
 
-		for(size_t i_data_point=0; i_data_point<sptr_acquis->getNumberOfDataElements(); i_data_point++)
+		for(size_t i_data_point=0; i_data_point<tmp_acq.getNumberOfDataElements(); i_data_point++)
 		{
-			*(sptr_acquis->getDataPtr() + i_data_point) +=   complex_float_t(gaussian_distribution(generator), gaussian_distribution(generator)) / this->sequence_specific_scaling_;	
+			*(tmp_acq.getDataPtr() + i_data_point) +=   complex_float_t(gaussian_distribution(generator), gaussian_distribution(generator)) / this->sequence_specific_scaling_;	
 		}
 	}
 
