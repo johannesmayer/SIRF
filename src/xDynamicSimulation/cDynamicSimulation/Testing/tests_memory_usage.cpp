@@ -35,7 +35,7 @@ bool tests_memory::test_sirf_free_acquisition( void )
 
 	try
 	{
-		size_t num_iterations = 10000;
+		size_t num_iterations = 100;
 
 		size_t num_acquis = 256*128;
 		uint16_t num_samples = 192;
@@ -92,9 +92,9 @@ bool tests_memory::test_acquisition_memory( void )
 		// all_acquis.read( std::string( ISMRMRD_H5_TEST_PATH ));
 		all_acquis.read( std::string( ISMRMRD_H5_TEST_PATH ), false);
 
-		size_t num_iterations = 1000;
+		size_t num_iterations = 100;
 
-		bool construct_inside_loop = false;
+		bool construct_inside_loop = true;
 
 		
 		if( construct_inside_loop )
@@ -189,7 +189,7 @@ bool tests_memory::test_acquisition_vector_ordering_memory( void )
 		AcquisitionsVector all_acquis;
 		all_acquis.read( std::string( ISMRMRD_H5_TEST_PATH ));
 
-		size_t num_iterations = 10000;
+		size_t num_iterations = 100;
 
 		for(size_t i=0; i<num_iterations; i++)
 		{
@@ -218,7 +218,7 @@ bool tests_memory::test_acquisition_vector_memory( void )
 		all_acquis.read( std::string( ISMRMRD_H5_TEST_PATH ));
 
 		size_t num_acq = all_acquis.items();
-		size_t num_iterations = 1000;
+		size_t num_iterations = 100;
 
 		std::vector< AcquisitionsVector > acq_vec_vector;
 

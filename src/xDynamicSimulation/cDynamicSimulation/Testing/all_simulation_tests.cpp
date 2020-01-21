@@ -76,23 +76,23 @@ void run_tests_dynamics( void )
 	bool tests_successful = true;
 	std::vector< bool > dyn_tests;
 	std::cout << "start ----------------------------------------------------" <<std::endl;
-	// std::cout << "1 ----------------------------------------------------" <<std::endl;
-	// dyn_tests.push_back(test_dynamic::test_is_in_bin());
+	std::cout << "1 ----------------------------------------------------" <<std::endl;
+	dyn_tests.push_back(test_dynamic::test_is_in_bin());
 
-	// std::cout << "2 ----------------------------------------------------" <<std::endl;
-	// dyn_tests.push_back(test_dynamic::test_intersect_mr_acquisition_data());
+	std::cout << "2 ----------------------------------------------------" <<std::endl;
+	dyn_tests.push_back(test_dynamic::test_intersect_mr_acquisition_data());
 
-	// std::cout << "3 ----------------------------------------------------" <<std::endl;
-	// dyn_tests.push_back(test_dynamic::test_linear_interpolate_signal());
+	std::cout << "3 ----------------------------------------------------" <<std::endl;
+	dyn_tests.push_back(test_dynamic::test_linear_interpolate_signal());
 
 	// std::cout << "4 ----------------------------------------------------" <<std::endl;
 	// dyn_tests.push_back(test_dynamic::test_get_set_bins());
 
-	// std::cout << "5 ----------------------------------------------------" <<std::endl;
-	// dyn_tests.push_back(test_dynamic::test_bin_mr_acquisitions());
+	std::cout << "5 ----------------------------------------------------" <<std::endl;
+	dyn_tests.push_back(test_dynamic::test_bin_mr_acquisitions());
 
-	// std::cout << "6 ----------------------------------------------------" <<std::endl;
-	// dyn_tests.push_back(test_dynamic::test_motion_dynamic_counter());
+	std::cout << "6 ----------------------------------------------------" <<std::endl;
+	dyn_tests.push_back(test_dynamic::test_motion_dynamic_counter());
 
 	// std::cout << "7 ----------------------------------------------------" <<std::endl;
 	// dyn_tests.push_back(test_dynamic::test_motion_dynamic_temp_folder_setup());
@@ -163,7 +163,7 @@ void run_tests_dynamic_simulation( void )
 	// tests_mr_dynsim::test_extract_hdr_information();
 
 	std::cout << "MR 4 ----------------------------------------------------" <<std::endl;
-	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_dynamics());
+	mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_dynamics());
 
 	std::cout << "MR 5 ----------------------------------------------------" <<std::endl;
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_rpe_acquisition());
@@ -202,7 +202,7 @@ void run_tests_dynamic_simulation( void )
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_simulate_motion_dynamics());
 
 	std::cout << "PET 5 ----------------------------------------------------" <<std::endl;
-	pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
+	// pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
 
 	std::cout << "PET 6 ----------------------------------------------------" <<std::endl;
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_5d_pet_acquisition());
@@ -554,13 +554,13 @@ void run_tests_memory_usage( void )
 	bool tests_successful = true;
 
  	tests_memory::test_sirf_free_acquisition();	
-	// tests_memory::test_acquisition_memory();
-	// tests_memory::test_downsizing_acquisition_memory();
-	// tests_successful *= tests_memory::test_acquisition_vector_memory();
-	// tests_successful *=tests_memory::test_acquisition_vector_ordering_memory();
-	// tests_successful *= tests_memory::test_ndarray_memory_managment();
-	// tests_successful *= tests_memory::tests_resizing_acquisition_memory();
-	// tests_successful *= tests_memory::tests_VD_h5_file_content();
+	tests_memory::test_acquisition_memory();
+	tests_memory::test_downsizing_acquisition_memory();
+	tests_successful *= tests_memory::test_acquisition_vector_memory();
+	tests_successful *=tests_memory::test_acquisition_vector_ordering_memory();
+	tests_successful *= tests_memory::test_ndarray_memory_managment();
+	tests_successful *= tests_memory::tests_resizing_acquisition_memory();
+	tests_successful *= tests_memory::tests_VD_h5_file_content();
 	if ( !tests_successful )
 	{
 		throw std::runtime_error( "The memory usage tests failed." );

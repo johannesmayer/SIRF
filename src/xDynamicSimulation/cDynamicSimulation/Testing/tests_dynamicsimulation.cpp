@@ -509,7 +509,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		bool const simulate_data = true;
 		bool const store_gt_mvfs = false;
 
-		int const num_simul_motion_dyn = 10;
+		int const num_simul_motion_dyn = 1;
 
 		float const test_SNR = 18;
 		size_t const noise_label = 13;
@@ -518,7 +518,8 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Output/MRI/5DMotion/";
 
 		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
-		std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Output/4DMotion/Cardiac/";
+		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Output/4DMotion/Cardiac/";
+		std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/";
 
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
 		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
