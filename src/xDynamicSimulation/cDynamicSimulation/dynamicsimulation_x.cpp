@@ -249,12 +249,16 @@ void MRDynamicSimulation::set_coilmaps( ISMRMRD::Image< complex_float_t > &coilm
 void MRDynamicSimulation::shift_time_start_to_zero( void )
 {
 	this->all_source_acquisitions_.time_order();
-	auto sptr_acquis = all_source_acquisitions_.get_acquisition_sptr(0);
-	uint32_t const t0 = sptr_acquis->acquisition_time_stamp();
+	
+	ISMRMRD::Acquisition tmp_acq;
+	all_source_acquisitions_.get_acquisition(0,tmp_acq);
+	uint32_t const t0 = tmp_acq.acquisition_time_stamp();
+	
 	for(size_t i=0; i<all_source_acquisitions_.number(); i++)
 	{
-		sptr_acquis = all_source_acquisitions_.get_acquisition_sptr(i);
-		sptr_acquis->acquisition_time_stamp() -= t0;
+		this->all_source_acquisitions_.get_acquisition(i, tmp_acq);
+		tmp_acq.acquisition_time_stamp() -= t0;
+		this->all_source_acquisitions_.set_acquisition(i, tmp_acq);
 	}
 }
 
@@ -318,11 +322,12 @@ void MRDynamicSimulation::acquire_raw_data( void )
 		
 		for( size_t i_acqu=0; i_acqu<this->source_acquisitions_.items(); i_acqu++)
 		{
-			auto sptr_acq = this->source_acquisitions_.get_acquisition_sptr(i_acqu);
-			ISMRMRD::AcquisitionHeader acq_head = sptr_acq->getHead();
+			ISMRMRD::Acquisition tmp_acq;
+			this->source_acquisitions_.get_acquisition(i_acqu, tmp_acq);
+			ISMRMRD::AcquisitionHeader acq_head = tmp_acq.getHead();
 			
 			if( acq_head.idx.contrast == i_contrast )
-				acq_vec.append_acquisition_sptr( sptr_acq );
+				acq_vec.append_acquisition( tmp_acq );
 		}
 		
 		// std::shared_ptr< AcquisitionsVector > curr_template_acquis( new AcquisitionsVector(acq_vec) );
