@@ -467,13 +467,13 @@ MRAcquisitionModel::fwd_(ISMRMRD::Image<T>* ptr_img, CoilData& csm,
 			}
 		}
 
-		this->sptr_traj_->set_acquisition_trajectory(*sptr_curr_acq);
+		this->sptr_traj_->set_acquisition_trajectory(curr_acq);
 		curr_acq.idx().contrast = img.getContrast();
 	
 		if( is_reverse == 1)
 			curr_acq.clearFlag( ISMRMRD::ISMRMRD_ACQ_IS_REVERSE );
 
-		ac.append_acquisition(sptr_curr_acq);
+		ac.append_acquisition(curr_acq);
 
 	}
 }
