@@ -58,19 +58,18 @@ AcquisitionsVector intersect_mr_acquisition_data( AcquisitionsVector& one_dat, A
 
 	CounterBox one_counters, other_counters;
 
+	ISMRMRD::Acquisition tmp_acq;
 
 	for( size_t i=0; i<one_dat.items(); i++)
 	{
-		auto sptr_acq = one_dat.get_acquisition_sptr( i );
-		one_counters.push_back(sptr_acq->getHead().scan_counter);
+		one_dat.get_acquisition( i, tmp_acq );
+		one_counters.push_back(tmp_acq.getHead().scan_counter);
 	}
 
 	for( size_t i=0; i<other_dat.items(); i++)
 	{
-		ISMRMRD::Acquisition acq;
-
-		auto sptr_acq = other_dat.get_acquisition_sptr( i );
-		other_counters.push_back(sptr_acq->getHead().scan_counter);
+		other_dat.get_acquisition( i, tmp_acq );
+		other_counters.push_back(tmp_acq.getHead().scan_counter);
 	}
 	
 	std::sort(one_counters.begin(), one_counters.end() );
@@ -95,11 +94,11 @@ AcquisitionsVector intersect_mr_acquisition_data( AcquisitionsVector& one_dat, A
 
 	for( size_t i=0; i<smaller_data_container.items(); i++)
 	{
-		auto sptr_acq = smaller_data_container.get_acquisition_sptr( i );
-		uint32_t acquis_counter = sptr_acq->getHead().scan_counter;
+		smaller_data_container.get_acquisition( i, tmp_acq );
+		uint32_t acquis_counter = tmp_acq.getHead().scan_counter;
 		if(std::find(intersected_counters.begin(), intersected_counters.end(), acquis_counter) != intersected_counters.end()) 
 		{
-			intersection.append_acquisition_sptr(sptr_acq);
+			intersection.append_acquisition(tmp_acq);
     	} 
 	}
 
@@ -676,7 +675,10 @@ void MRMotionDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisitions 
 
 	AcquisitionsVector time_ordered_acquisitions = all_acquisitions;
 	time_ordered_acquisitions.time_order();
-	TimeAxisType time_offset = SIRF_SCANNER_MS_PER_TIC * time_ordered_acquisitions.get_acquisition_sptr(0)->acquisition_time_stamp();
+
+	ISMRMRD::Acquisition tmp_acq;
+	time_ordered_acquisitions.get_acquisition(0,tmp_acq);
+	TimeAxisType time_offset = SIRF_SCANNER_MS_PER_TIC * tmp_acq.acquisition_time_stamp();
 
 
 	std::deque< size_t > relevant_acq_numbers;
@@ -701,15 +703,15 @@ void MRMotionDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisitions 
 			auto curr_pos = relevant_acq_numbers[0];
 			relevant_acq_numbers.pop_front();	
 			
-			auto sptr_acq = all_acquisitions.get_acquisition_sptr( curr_pos );
-			auto acq_hdr = sptr_acq->getHead();
+			all_acquisitions.get_acquisition( curr_pos, tmp_acq );
+			auto acq_hdr = tmp_acq.getHead();
 			
 			TimeAxisType acq_time = SIRF_SCANNER_MS_PER_TIC * (TimeAxisType)acq_hdr.acquisition_time_stamp - time_offset;
 			
 			SignalAxisType signal_of_acq = this->linear_interpolate_signal( acq_time );
 			
 			if( is_in_bin(signal_of_acq, bin) )
-				curr_acq_vector.append_acquisition_sptr(sptr_acq);
+				curr_acq_vector.append_acquisition(tmp_acq);
 			else
 				acq_not_binned.push_back(curr_pos);					
 		}
@@ -756,8 +758,13 @@ void MRContrastDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisition
 
 	size_t const num_acquis = time_ordered_acquisitions.number();	
 
-	TimeAxisType total_time = SIRF_SCANNER_MS_PER_TIC * (time_ordered_acquisitions.get_acquisition_sptr(num_acquis-1)->acquisition_time_stamp() -
-							   time_ordered_acquisitions.get_acquisition_sptr(0)->acquisition_time_stamp());
+	ISMRMRD::Acquisition first_acq, last_acq;
+	
+	time_ordered_acquisitions.get_acquisition(0, first_acq);
+	time_ordered_acquisitions.get_acquisition(num_acquis-1, last_acq);
+
+
+	TimeAxisType total_time = SIRF_SCANNER_MS_PER_TIC * (last_acq.acquisition_time_stamp() - first_acq.acquisition_time_stamp());
 
 	std::vector< size_t > index_lims;
 
@@ -780,8 +787,8 @@ void MRContrastDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisition
 
 		for(size_t i=start_index; i<stop_index; i++)
 		{
-			auto sptr_acq = time_ordered_acquisitions.get_acquisition_sptr( i );
-			av.append_acquisition_sptr( sptr_acq );
+			time_ordered_acquisitions.get_acquisition( i, first_acq );
+			av.append_acquisition( first_acq );
 		}
 		
 		this->binned_mr_acquisitions_.push_back( av );
