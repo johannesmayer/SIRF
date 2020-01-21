@@ -391,11 +391,11 @@ void RPETrajectoryPreparation::set_kspace_subset( sirf::MRAcquisitionData &ad )
 
 	for( size_t i=0; i<num_traj_points; i++)
 	{
+		ISMRMRD::Acquisition temp_acq;		
+		ad.get_acquisition( i, temp_acq );
 
-		auto sptr_acq = ad.get_acquisition_sptr( i );
-
-		size_t const nr = (size_t)sptr_acq->getHead().idx.kspace_encode_step_1;
-		size_t const na = (size_t)sptr_acq->getHead().idx.kspace_encode_step_2;
+		size_t const nr = (size_t)temp_acq.getHead().idx.kspace_encode_step_1;
+		size_t const na = (size_t)temp_acq.getHead().idx.kspace_encode_step_2;
 		size_t const lin_index = na*this->traj_dims_[0] + nr;
 		
 		*(subset_traj.begin() + i) = *(this->traj_.begin() + lin_index);
