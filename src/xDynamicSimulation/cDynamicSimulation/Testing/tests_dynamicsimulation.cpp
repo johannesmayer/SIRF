@@ -185,8 +185,8 @@ bool tests_mr_dynsim::test_simulate_dynamics()
 		mr_dyn_sim.set_coilmaps( csm );
 
 
-		// std::string const traj_name = "ITLGCRPE";
-		std::string const traj_name = "Cartesian";
+		std::string const traj_name = "ITLGCRPE";
+		// std::string const traj_name = "Cartesian";
 
 		if( traj_name == "ITLGCRPE") 
 		{
@@ -505,28 +505,31 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 {
 	try
 	{	
-		bool const do_cardiac_sim = true;
+		bool const do_cardiac_sim = false;
 		bool const simulate_data = true;
 		bool const store_gt_mvfs = false;
 
-		int const num_simul_motion_dyn = 1;
+		int const num_simul_motion_dyn = 10;
 
 		float const test_SNR = 18;
 		size_t const noise_label = 13;
 
-		// std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
+		// PETMR
+		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Output/MRI/5DMotion/";
 
-		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
+		// FATWATER
+		// std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Output/4DMotion/Cardiac/";
+		
 		std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/";
 
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
 		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
 
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
-		// mr_dyn_sim.set_filename_rawdata( input_path + "/MRI/meas_MID00241_FID69145_Tho_T1_fast_ismrmrd.h5"); // PETMR
-		mr_dyn_sim.set_filename_rawdata( input_path + "/MR/meas_MID00443_FID81493_3DFatWater_Rpe_Sfl_bSSFP_5min_ismrmrd.h5"); //CARDIAC FWSEP
+		mr_dyn_sim.set_filename_rawdata( input_path + "/MRI/meas_MID00241_FID69145_Tho_T1_fast_ismrmrd.h5"); // PETMR
+		// mr_dyn_sim.set_filename_rawdata( input_path + "/MR/meas_MID00443_FID81493_3DFatWater_Rpe_Sfl_bSSFP_5min_ismrmrd.h5"); //CARDIAC FWSEP
 
 
 		std::vector<float> roi_labels{1,2,3,4,50,72,73};

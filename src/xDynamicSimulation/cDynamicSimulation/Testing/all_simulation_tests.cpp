@@ -163,7 +163,7 @@ void run_tests_dynamic_simulation( void )
 	// tests_mr_dynsim::test_extract_hdr_information();
 
 	std::cout << "MR 4 ----------------------------------------------------" <<std::endl;
-	mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_dynamics());
+	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_dynamics());
 
 	std::cout << "MR 5 ----------------------------------------------------" <<std::endl;
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_simulate_rpe_acquisition());
@@ -172,7 +172,7 @@ void run_tests_dynamic_simulation( void )
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_dce_acquisition());
 
 	std::cout << "MR 7 ----------------------------------------------------" <<std::endl;
-	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
+	mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
 
 	std::cout << "MR 8 ----------------------------------------------------" <<std::endl;
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_5d_mri_acquisition());
