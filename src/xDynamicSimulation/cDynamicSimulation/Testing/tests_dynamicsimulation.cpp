@@ -505,35 +505,40 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 {
 	try
 	{	
-		bool const do_cardiac_sim = true;
+		bool const do_cardiac_sim = false;
 		bool const simulate_data = true;
-		bool const store_gt_mvfs = false;
+		bool const store_gt_mvfs = true;
 
 		int const num_simul_motion_dyn = 10;
 
 		float const test_SNR = 18;
 		size_t const noise_label = 13;
 
+		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "HackathonSimulations/Hackathon012020/MRI/Input/";
+		std::string const output_path = std::string(SHARED_FOLDER_PATH) + "HackathonSimulations/Hackathon012020/MRI/Output/";
+
 		// std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Output/MRI/5DMotion/";
 
-		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
-		std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Output/4DMotion/Cardiac/";
+		// std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
+		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Output/4DMotion/Cardiac/";
 
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
 		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
 
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
 		// mr_dyn_sim.set_filename_rawdata( input_path + "/MRI/meas_MID00241_FID69145_Tho_T1_fast_ismrmrd.h5"); // PETMR
-		mr_dyn_sim.set_filename_rawdata( input_path + "/MR/meas_MID00443_FID81493_3DFatWater_Rpe_Sfl_bSSFP_5min_ismrmrd.h5"); //CARDIAC FWSEP
+		// mr_dyn_sim.set_filename_rawdata( input_path + "/MR/meas_MID00443_FID81493_3DFatWater_Rpe_Sfl_bSSFP_5min_ismrmrd.h5"); //CARDIAC FWSEP
 
+		mr_dyn_sim.set_filename_rawdata( input_path + "/CV_nav_cart_128Cube_1Echo_pseudospiral.h5"); //Hackthon Simulation
+		
 
 		std::vector<float> roi_labels{1,2,3,4,50,72,73};
 
 		// std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Output/MRI/";
 				
-		std::string const output_prefix_roi = output_path;
+		std::string const output_prefix_roi = output_path + "roi" ;
 		
 		auto data_dims = segmentation_labels.get_dimensions();
 		
@@ -548,10 +553,11 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		// auto sptr_traj = std::make_shared< RPEInterleavedGoldenCutTrajectoryContainer >( rpe_traj );
 		// mr_dyn_sim.set_trajectory( sptr_traj );
 
-		typedef RPESuperInterleavedGoldenCutTrajectoryContainer TrajType;
-		TrajType sfl_traj;
-		auto sptr_traj = std::make_shared< TrajType >( sfl_traj );
-		mr_dyn_sim.set_trajectory( sptr_traj );
+		// typedef RPESuperInterleavedGoldenCutTrajectoryContainer TrajType;
+		// TrajType sfl_traj;
+		// auto sptr_traj = std::make_shared< TrajType >( sfl_traj );
+		// mr_dyn_sim.set_trajectory( sptr_traj );
+
 
 		AcquisitionsVector all_acquis;
 		all_acquis.read( mr_dyn_sim.get_filename_rawdata(), false );
@@ -584,7 +590,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 			}
 
 			std::string motion_type_suffix = do_cardiac_sim? "card" : "resp";
-			motion_dyn.set_ground_truth_folder_name( output_path + "ground_truth_motionfields_" + motion_type_suffix);
+			motion_dyn.set_ground_truth_folder_name( output_path + "ground_truth_motionfields_" + motion_type_suffix );
 
 
 			SignalContainer motion_signal = data_io::read_surrogate_signal(fname_timepts, fname_signalpts);

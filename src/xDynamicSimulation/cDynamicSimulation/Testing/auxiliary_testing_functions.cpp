@@ -973,22 +973,6 @@ float aux_test::prep_pet_motion_dyn( PETMotionDynamic& motion_dyn, SignalContain
 }
 
 
-void aux_test::generate_pseudospiral_ismrmrd_file(sirf::MRAcquisitionData& template_acq_dat, std::string const fname_output, int const oversampling_factor)
-{
-	std::cout << "Generating rawdata file with pseudospiral trajectory on cartesian grid." << std::endl;
-
-	
-	std::string acq_info = template_acq_dat.acquisitions_info();
-	ISMRMRD::IsmrmrdHeader hdr;
-
-	ISMRMRD::deserialize(acq_info.c_str(), hdr);
-
-
-
-
-}
-
-
 std::vector< std::pair<uint16_t,uint16_t> > aux_test::pseudospiral_trajectory(size_t const num_arms, size_t const pts_per_arm, ISMRMRD::MatrixSize mat_size )
 {
 
@@ -1020,12 +1004,88 @@ std::vector< std::pair<uint16_t,uint16_t> > aux_test::pseudospiral_trajectory(si
 
 			traj.push_back( traj_pt );
 		}
-
 	}
 
 	return traj;
+}
+
+
+
+void aux_test::generate_pseudospiral_ismrmrd_file(sirf::MRAcquisitionData& template_acq_dat, std::string const fname_output, int const oversampling_factor)
+{
+	std::cout << "Generating rawdata file with pseudospiral trajectory on cartesian grid." << std::endl;
+	
+	std::string acq_info = template_acq_dat.acquisitions_info();
+	ISMRMRD::IsmrmrdHeader hdr;
+
+	ISMRMRD::deserialize(acq_info.c_str(), hdr);
+
+
+	std::vector< ISMRMRD::Encoding > enc_vec = hdr.encoding;
+
+	if(enc_vec.size() != 1)
+		throw std::runtime_error("The number of encodings provided in the file is not 1.");
+
+	ISMRMRD::Encoding enc = enc_vec[0];
+	ISMRMRD::EncodingSpace enc_space = enc.encodedSpace;
+	ISMRMRD::MatrixSize k_space_size = enc_space.matrixSize;
+
+	size_t const num_acq_in_template = template_acq_dat.items();
+	template_acq_dat.time_order();
+
+	sirf::AcquisitionsVector output_acquisition_data;
+	output_acquisition_data.copy_acquisitions_info(template_acq_dat);
+
+	
+
+	if(hdr.sequenceParameters().echo_spacing().size() != 1)
+		throw std::runtime_error("Give a file with one echo spacing only.");
+
+	float TR = hdr.sequenceParameters().echo_spacing()[0];
+
+	size_t const num_pts_per_arm = k_space_size.y;
+	size_t const num_arms = std::ceil( oversampling_factor * num_acq_in_template/num_pts_per_arm );
+
+	std::vector<std::pair< uint16_t, uint16_t> > traj = aux_test::pseudospiral_trajectory(num_arms, num_pts_per_arm, k_space_size);
+
+	ISMRMRD::Acquisition tmp_acq;
+	template_acq_dat.get_acquisition(template_acq_dat.items()-1, tmp_acq);
+	float const t_max = tmp_acq.getHead().acquisition_time_stamp;
+
+	template_acq_dat.get_acquisition(0, tmp_acq);
+	float const t_0 = tmp_acq.getHead().acquisition_time_stamp;
+
+	float const time_offset_tics = t_max - t_0;
+
+	for(int rep=0; rep<oversampling_factor; ++rep)
+	{
+		std::cout << "Starting repetition # " << rep+1 << "/"  << oversampling_factor << std::endl;
+		
+		for(size_t iacq=0; iacq<num_acq_in_template; ++iacq)
+		{
+			ISMRMRD::Acquisition acq;
+			template_acq_dat.get_acquisition(iacq, acq);
+
+			acq.resize(1,1); // save memory
+
+			ISMRMRD::AcquisitionHeader acq_hdr = acq.getHead();
+
+			acq_hdr.acquisition_time_stamp += (rep*time_offset_tics);
+			acq_hdr.scan_counter = rep*num_acq_in_template + iacq;
+			acq_hdr.idx.kspace_encode_step_1 = traj[acq_hdr.scan_counter].first;
+			acq_hdr.idx.kspace_encode_step_2 = traj[acq_hdr.scan_counter].second;
+
+			acq.setHead(acq_hdr);
+
+			output_acquisition_data.append_acquisition(acq);
+		}
+	}
+
+	output_acquisition_data.write(fname_output);
 
 }
+
+
 
 
 

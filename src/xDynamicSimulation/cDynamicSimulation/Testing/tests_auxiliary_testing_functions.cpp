@@ -267,29 +267,6 @@ bool test_aux_test_funs::test_get_mock_sawtooth_signal( void )
 	return true;	
 }
 
-bool test_aux_test_funs::test_generate_pseudospiral_ismrmrd_file( void )
-{
-
-	try
-	{
-		AcquisitionsVector template_acq_dat = mr_io::read_ismrmrd_acquisitions( ISMRMRD_H5_TEST_PATH );
-		int const oversampling_factor = 1;
-		std::string const fname_output = std::string(SHARED_FOLDER_PATH) + "pseudospiral_file.h5";
-
-		aux_test::generate_pseudospiral_ismrmrd_file(template_acq_dat, fname_output, oversampling_factor);
-
-
-	}
-	catch( std::runtime_error const &e)
-	{
-		std::cout << "Exception caught in " <<__FUNCTION__ <<" .!" <<std::endl;
-		std::cout << e.what() << std::endl;
-		throw e;
-	}
-
-	return true;	
-
-}
 
 bool test_aux_test_funs::test_pseudospiral_trajectory( void )
 {
@@ -322,3 +299,26 @@ bool test_aux_test_funs::test_pseudospiral_trajectory( void )
 }
 
 
+bool test_aux_test_funs::test_generate_pseudospiral_ismrmrd_file( void )
+{
+
+	try
+	{
+		AcquisitionsVector template_acq_dat = mr_io::read_ismrmrd_acquisitions( ISMRMRD_H5_TEST_PATH );
+		int const oversampling_factor = 2;
+		std::string const fname_output = std::string(SHARED_FOLDER_PATH) + "pseudospiral_file.h5";
+
+		aux_test::generate_pseudospiral_ismrmrd_file(template_acq_dat, fname_output, oversampling_factor);
+
+
+	}
+	catch( std::runtime_error const &e)
+	{
+		std::cout << "Exception caught in " <<__FUNCTION__ <<" .!" <<std::endl;
+		std::cout << e.what() << std::endl;
+		throw e;
+	}
+
+	return true;	
+
+}

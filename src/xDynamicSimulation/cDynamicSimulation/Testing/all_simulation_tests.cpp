@@ -55,8 +55,8 @@ void run_tests_auxiliary_testing_functions( void )
 	// tests_successful *= test_aux_test_funs::test_get_mock_pet_contrast_generator();
 	// tests_successful *= test_aux_test_funs::test_get_mock_sawtooth_signal();
 	// tests_successful *= test_aux_test_funs::test_get_mock_gaussian_csm();
-	// tests_successful *= test_aux_test_funs::test_generate_pseudospiral_ismrmrd_file();
-	tests_successful *= test_aux_test_funs::test_pseudospiral_trajectory();
+	// tests_successful *= test_aux_test_funs::test_pseudospiral_trajectory();
+	tests_successful *= test_aux_test_funs::test_generate_pseudospiral_ismrmrd_file();
 
 
 	if ( !tests_successful )
@@ -174,7 +174,7 @@ void run_tests_dynamic_simulation( void )
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_dce_acquisition());
 
 	std::cout << "MR 7 ----------------------------------------------------" <<std::endl;
-	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
+	mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
 
 	std::cout << "MR 8 ----------------------------------------------------" <<std::endl;
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_5d_mri_acquisition());
@@ -204,7 +204,7 @@ void run_tests_dynamic_simulation( void )
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_simulate_motion_dynamics());
 
 	std::cout << "PET 5 ----------------------------------------------------" <<std::endl;
-	pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
+	// pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
 
 	std::cout << "PET 6 ----------------------------------------------------" <<std::endl;
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_5d_pet_acquisition());

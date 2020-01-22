@@ -41,6 +41,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 	#define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_128.h5"
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_SR_128Cube_1Echo_10Dyn.h5"
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_1Echo.h5"   
+	#define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_1Echo_base.h5"   
+	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_1Echo_pseudospiral.h5"  
 	
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_FLASH_PD.h5"   
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_FLASH_T1.h5"   
@@ -48,7 +50,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 	
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_GRAPPA4_REF48_FLASH_PD.h5"   
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_GRAPPA4_REF48_FLASH_T1.h5"   
-	#define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_GRAPPA4_REF48_FLASH_T2.h5"   
+	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/ CV_nav_cart_128Cube_GRAPPA4_REF48_FLASH_T2.h5"   
 
 	
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_128_rpe_itl_golden.h5"  
