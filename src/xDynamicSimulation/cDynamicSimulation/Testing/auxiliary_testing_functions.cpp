@@ -971,3 +971,79 @@ float aux_test::prep_pet_motion_dyn( PETMotionDynamic& motion_dyn, SignalContain
 
  	return tot_time_ms;
 }
+
+
+void aux_test::generate_pseudospiral_ismrmrd_file(sirf::MRAcquisitionData& template_acq_dat, std::string const fname_output, int const oversampling_factor)
+{
+	std::cout << "Generating rawdata file with pseudospiral trajectory on cartesian grid." << std::endl;
+
+	
+	std::string acq_info = template_acq_dat.acquisitions_info();
+	ISMRMRD::IsmrmrdHeader hdr;
+
+	ISMRMRD::deserialize(acq_info.c_str(), hdr);
+
+
+
+
+}
+
+
+std::vector< std::pair<uint16_t,uint16_t> > aux_test::pseudospiral_trajectory(size_t const num_arms, size_t const pts_per_arm, ISMRMRD::MatrixSize mat_size )
+{
+
+	std::vector< std::pair<uint16_t, uint16_t> > traj;
+	std::vector<float> spiral_angles, spiral_radius;
+
+	for(int i=0; i<pts_per_arm; ++i)
+	{
+		float const tmp_angle = i * (2*M_PI)/(pts_per_arm-1);
+
+		spiral_angles.push_back( tmp_angle );
+		spiral_radius.push_back( tmp_angle/(2*M_PI) );
+	}
+
+	uint16_t const Ky = mat_size.y;
+	uint16_t const Kz = mat_size.z;
+
+
+	for(int na=0; na<num_arms; ++na)
+	{
+		float const angle_offset = na*M_PI*(3-sqrt(5));
+
+		for(int npt=0; npt<pts_per_arm; ++npt)
+		{
+			std::pair< uint16_t, uint16_t> traj_pt;
+			
+			traj_pt.first  = std::floor( (Ky-1)/2 * (1 + spiral_radius[npt] * cos(spiral_angles[npt] + angle_offset)));
+			traj_pt.second = std::floor( (Kz-1)/2 * (1 + spiral_radius[npt] * sin(spiral_angles[npt] + angle_offset)));
+
+			traj.push_back( traj_pt );
+		}
+
+	}
+
+	return traj;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

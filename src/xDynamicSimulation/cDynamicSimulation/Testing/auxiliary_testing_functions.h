@@ -109,4 +109,7 @@ namespace aux_test
 	void store_roi( LabelVolume& label_vol, std::vector<float> const labels, std::string const output_prefix);
 	float prep_pet_motion_dyn(PETMotionDynamic& motion_dyn, SignalContainer const motion_signal);
 
+	void generate_pseudospiral_ismrmrd_file(sirf::MRAcquisitionData& template_acq_dat, std::string const fname_output, int const oversampling_factor);
+	std::vector< std::pair<uint16_t,uint16_t> > pseudospiral_trajectory(size_t const num_arms, size_t const pts_per_arm, ISMRMRD::MatrixSize mat_size );
+
 }// namespace aux_test

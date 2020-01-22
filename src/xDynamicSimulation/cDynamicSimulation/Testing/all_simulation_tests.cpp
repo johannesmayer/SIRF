@@ -54,7 +54,9 @@ void run_tests_auxiliary_testing_functions( void )
 	// tests_successful *= test_aux_test_funs::test_get_mock_ismrmrd_image_with_cube();
 	// tests_successful *= test_aux_test_funs::test_get_mock_pet_contrast_generator();
 	// tests_successful *= test_aux_test_funs::test_get_mock_sawtooth_signal();
-	tests_successful *= test_aux_test_funs::test_get_mock_gaussian_csm();
+	// tests_successful *= test_aux_test_funs::test_get_mock_gaussian_csm();
+	// tests_successful *= test_aux_test_funs::test_generate_pseudospiral_ismrmrd_file();
+	tests_successful *= test_aux_test_funs::test_pseudospiral_trajectory();
 
 
 	if ( !tests_successful )

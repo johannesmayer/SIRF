@@ -29,5 +29,6 @@ bool test_get_mock_ismrmrd_image_with_cube( void );
 bool test_get_mock_contrast_generator( void );
 bool test_get_mock_pet_contrast_generator( void );
 bool test_get_mock_sawtooth_signal( void );
-
+bool test_generate_pseudospiral_ismrmrd_file( void );
+bool test_pseudospiral_trajectory( void );
 }
