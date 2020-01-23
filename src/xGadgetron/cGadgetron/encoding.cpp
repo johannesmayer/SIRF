@@ -9,7 +9,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include <stdexcept>
 #include <algorithm>
 
-#include "sirf/cGadgetron/encoding.h"
+#include "sirf/Gadgetron/encoding.h"
 
 
 #include <gadgetron/hoNDArray.h>

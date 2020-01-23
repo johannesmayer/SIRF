@@ -46,7 +46,7 @@ limitations under the License.
 #include "sirf/Gadgetron/gadget_lib.h"
 #include "sirf/Gadgetron/ismrmrd_fftw.h"
 
-#include "sirf/cGadgetron/encoding.h"
+#include "sirf/Gadgetron/encoding.h"
 
 #define N_TRIALS 5
 

@@ -31,7 +31,7 @@ limitations under the License.
 #include "sirf/Gadgetron/cgadgetron_shared_ptr.h"
 #include "sirf/Gadgetron/gadgetron_x.h"
 
-#include "sirf/cGadgetron/encoding.h"
+#include "sirf/Gadgetron/encoding.h"
 
 using namespace gadgetron;
 using namespace sirf;
