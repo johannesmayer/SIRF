@@ -22,10 +22,10 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include "sirf/common/multisort.h"
 #include "sirf/cDynamicSimulation/dynamics.h"
 
-#include "sirf/cReg/NiftyResample.h"
-#include "sirf/cReg/NiftiImageData3D.h"
-#include "sirf/cReg/NiftiImageData3DDeformation.h"
-#include "sirf/cReg/NiftiImageData3DDisplacement.h"
+#include "sirf/Reg/NiftyResample.h"
+#include "sirf/Reg/NiftiImageData3D.h"
+#include "sirf/Reg/NiftiImageData3DDeformation.h"
+#include "sirf/Reg/NiftiImageData3DDisplacement.h"
 
 #include <_reg_localTrans.h>
 
@@ -674,7 +674,7 @@ void MRMotionDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisitions 
 		throw std::runtime_error( "Please set a signal first. Otherwise you cannot bin your data, you dummy!" );
 
 	AcquisitionsVector time_ordered_acquisitions = all_acquisitions;
-	time_ordered_acquisitions.time_order();
+	time_ordered_acquisitions.sort_by_time();
 
 	ISMRMRD::Acquisition tmp_acq;
 	time_ordered_acquisitions.get_acquisition(0,tmp_acq);
@@ -754,9 +754,9 @@ void MRContrastDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisition
 	}
 
 	AcquisitionsVector time_ordered_acquisitions = all_acquisitions;
-	time_ordered_acquisitions.time_order(); 
+	time_ordered_acquisitions.sort_by_time(); 
 
-	size_t const num_acquis = time_ordered_acquisitions.number();	
+	size_t const num_acquis = time_orderd_acquisitions.number();	
 
 	ISMRMRD::Acquisition first_acq, last_acq;
 	

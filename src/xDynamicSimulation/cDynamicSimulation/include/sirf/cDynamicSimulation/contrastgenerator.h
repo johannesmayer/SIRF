@@ -19,8 +19,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
 
-#include "sirf/cSTIR/stir_types.h"
-#include "sirf/cSTIR/stir_data_containers.h"
+#include "sirf/STIR/stir_types.h"
+#include "sirf/STIR/stir_data_containers.h"
 
 // base class for contrast generators. inherit for different modalities.
 // Reading the header is the same for each modality (hopefully!!!).

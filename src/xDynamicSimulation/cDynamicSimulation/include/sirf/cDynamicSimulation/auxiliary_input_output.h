@@ -26,14 +26,14 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include <ismrmrd/xml.h>
 // #include <gadgetron/ImageIOAnalyze.h>
 
-#include "sirf/cSTIR/stir_data_containers.h"
+#include "sirf/STIR/stir_data_containers.h"
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
  
 
 #include "sirf/common/GeometricalInfo.h"
 #include "sirf/common/ImageData.h"
 
-#include "sirf/cReg/NiftiImageData3D.h"
+#include "sirf/Reg/NiftiImageData3D.h"
 	
 
 #include "test_input_filenames.h"

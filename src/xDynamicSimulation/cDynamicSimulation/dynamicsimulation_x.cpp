@@ -16,7 +16,7 @@ date: 15. March 2018
 #include "sirf/cDynamicSimulation/auxiliary_input_output.h"
 #include "sirf/cDynamicSimulation/dynsim_deformer.h"
 
-#include "sirf/cReg/NiftiImageData3DDeformation.h"
+#include "sirf/Reg/NiftiImageData3DDeformation.h"
 
 
 
@@ -47,7 +47,7 @@ void MRDynamicSimulation::write_simulation_results( const std::string& filename_
 		ISMRMRD::serialize(this->hdr_, serialized_hdr);
 		target_acquisitions_.set_acquisitions_info( serialized_hdr.str() ); 
 
-		target_acquisitions_.time_order();		
+		target_acquisitions_.sort_by_time();		
 
 		target_acquisitions_.write( filename_output_with_h5_extension.c_str() );
 		cout << "Finished writing simulation output."<<endl;
@@ -250,7 +250,7 @@ void MRDynamicSimulation::set_coilmaps( ISMRMRD::Image< complex_float_t > &coilm
 
 void MRDynamicSimulation::shift_time_start_to_zero( void )
 {
-	this->all_source_acquisitions_.time_order();
+	this->all_source_acquisitions_.sort_by_time();
 	
 	ISMRMRD::Acquisition tmp_acq;
 	all_source_acquisitions_.get_acquisition(0,tmp_acq);
