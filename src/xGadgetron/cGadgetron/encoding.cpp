@@ -480,7 +480,6 @@ void RadialPhaseEncodingFFT::SampleFourierSpace( MREncodingDataType &i_data)
 		*(data_to_be_fftd.begin() + i) = *(i_data.begin() + i);
 	
 	// memcpy( data_to_be_fftd.begin(), i_data.begin(), i_data.getDataSize());
-
 	
 	hoNDFFT< float >::instance()->fft1c( data_to_be_fftd );
 	
@@ -538,11 +537,8 @@ void RadialPhaseEncodingFFT::SampleFourierSpace( MREncodingDataType &i_data)
 				}
 			}
 
-			ho2DArray< complex_float_t > cropped_subslice( &cropped_slice_dims );
-			Gadgetron::crop<complex_float_t, 2>(crop_offset, cropped_slice_dimension, &sub_slice, &cropped_subslice);
-
-		    ho2DArray<complex_float_t> padded_sub_slice;
-		    Gadgetron::pad<complex_float_t,  2>(gridder_img_dimensions, &cropped_subslice, &padded_sub_slice, true, 0.f);
+			hoNDArray<complex_float_t> cropped_subslice = Gadgetron::crop<complex_float_t,2>(cropped_slice_dimension, sub_slice);
+		    hoNDArray<complex_float_t> padded_sub_slice = Gadgetron::pad<complex_float_t,2>(gridder_img_dimensions, cropped_subslice, 0.f);
 
 			Gadgetron::hoNDArray< complex_float_t > result = this->traj_prep_.get_formatted_output_container< complex_float_t >();
 			Gadgetron::hoNDArray< float > identitiy_DCF = this->traj_prep_.get_formatted_identity_dcf< float >();
