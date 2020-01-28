@@ -106,3 +106,27 @@ else()
     endif()
   endif()
 endif()
+
+##########################################################################
+#                             Simulation                                 #
+##########################################################################
+option(DISABLE_Simulation "Disable building the simulation code" OFF)
+if (DISABLE_Simulation)
+  message(STATUS "Simulation code disabled.")
+else()
+  find_path(GADGETRON_CMAKE_MODULES "FindGadgetron.cmake" HINTS "${GADGETRON_HOME}/share/gadgetron/cmake")
+  if (NOT GADGETRON_CMAKE_MODULES)
+    MESSAGE(FATAL_ERROR "GADGETRON_CMAKE_MODULES cannot be found. Try to set GADGETRON_HOME variable.")
+  endif(NOT GADGETRON_CMAKE_MODULES)
+  set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${GADGETRON_CMAKE_MODULES}")
+
+  ## find the package
+  find_package(Gadgetron QUIET)
+  if (NOT Gadgetron_FOUND)
+    MESSAGE(FATAL_ERROR "Gadgetron required for simulation code. If not desired, set DISABLE_Simulation to ON.")
+  endif()
+
+  include_directories(${GADGETRON_INCLUDE_DIR})
+  link_directories(${GADGETRON_LIB_DIR})
+  ADD_SUBDIRECTORY(xDynamicSimulation)
+endif()
