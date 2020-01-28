@@ -100,7 +100,8 @@ bool test_contgen::test_mr_map_contrast_dim_check( void )
 
 	mr_contgen.map_contrast();
 
-	std::vector< ISMRMRD::Image< complex_float_t> > contrasts = mr_contgen.get_contrast_filled_volumes();	
+    ISMRMRD::Image<complex_float_t> contrasts = mr_contgen.get_contrast_filled_ismrmrd_img(0);
+    size_t num_contrasts = mr_contgen.get_contrast_filled_volumes().number();
 
 	size_t const num_echoes = ((hdr.sequenceParameters.get()).TE.get()).size();;
 	size_t input_dims[8] = {3,2,2,2,num_echoes,1,1,1};
@@ -108,10 +109,10 @@ bool test_contgen::test_mr_map_contrast_dim_check( void )
 	std::vector< size_t > contrast_dims;
 
 	contrast_dims.push_back( 3 );
-	contrast_dims.push_back( contrasts[0].getMatrixSizeX() );
-	contrast_dims.push_back( contrasts[0].getMatrixSizeY() );
-	contrast_dims.push_back( contrasts[0].getMatrixSizeZ() );
-	contrast_dims.push_back( contrasts.size() );
+	contrast_dims.push_back( contrasts.getMatrixSizeX() );
+	contrast_dims.push_back( contrasts.getMatrixSizeY() );
+	contrast_dims.push_back( contrasts.getMatrixSizeZ() );
+	contrast_dims.push_back( num_contrasts );
 
 	bool dims_are_correct = true; 
 	for( int i=0; i< 4; i++)
@@ -134,30 +135,30 @@ void test_contgen::test_match_output_dims_to_headerinfo( void )
 	
 	mr_contgen.set_rawdata_header(hdr);
 	mr_contgen.map_contrast();
-	
 
 	// std::vector< ISMRMRD::Image< complex_float_t> > mr_contrasts = mr_contget.get_contrast_filled_volumes();
-	auto mr_contrasts = mr_contgen.get_contrast_filled_volumes();
-	size_t num_contrasts = mr_contrasts.size();
+    ISMRMRD::Image<complex_float_t> contrasts = mr_contgen.get_contrast_filled_ismrmrd_img(0);
+    GadgetronImagesVector mr_contrasts = mr_contgen.get_contrast_filled_volumes();
+    size_t num_contrasts = mr_contrasts.number();
 
 	std::vector< size_t > dims_pre_matching; 
-	dims_pre_matching.push_back( mr_contrasts[0].getMatrixSizeX() );
-	dims_pre_matching.push_back( mr_contrasts[0].getMatrixSizeY() );
-	dims_pre_matching.push_back( mr_contrasts[0].getMatrixSizeZ() );
+    dims_pre_matching.push_back( contrasts.getMatrixSizeX() );
+	dims_pre_matching.push_back( contrasts.getMatrixSizeY() );
+	dims_pre_matching.push_back( contrasts.getMatrixSizeZ() );
 	dims_pre_matching.push_back( num_contrasts );
 
 	mr_contgen.match_output_dims_to_headerinfo();
 
 
-	mr_contrasts = mr_contgen.get_contrast_filled_volumes();
+	contrasts = mr_contgen.get_contrast_filled_ismrmrd_img(0);
 
 
 	// check data sizes
 	std::vector< size_t > dims_post_matching;
 
-	dims_post_matching.push_back( mr_contrasts[0].getMatrixSizeX() );
-	dims_post_matching.push_back( mr_contrasts[0].getMatrixSizeY() );
-	dims_post_matching.push_back( mr_contrasts[0].getMatrixSizeZ() );
+    dims_post_matching.push_back( contrasts.getMatrixSizeX() );
+	dims_post_matching.push_back( contrasts.getMatrixSizeY() );
+	dims_post_matching.push_back( contrasts.getMatrixSizeZ() );
 	dims_post_matching.push_back( num_contrasts );
 		
 	bool dims_match = true;		
@@ -189,18 +190,19 @@ void test_contgen::test_mr_map_contrast_application_to_xcat( void )
 	
 	mr_contgen.map_contrast();
 	
-	std::vector< ISMRMRD::Image< complex_float_t> >	mr_contrasts = mr_contgen.get_contrast_filled_volumes();	
+	ISMRMRD::Image< complex_float_t> mr_contrasts = mr_contgen.get_contrast_filled_ismrmrd_img(0);
 
-	size_t num_elements = mr_contrasts[0].getNumberOfDataElements();
-	size_t num_contrasts = mr_contrasts.size();
+	size_t num_elements = mr_contrasts.getNumberOfDataElements();
+	size_t num_contrasts = mr_contgen.get_contrast_filled_volumes().number();
 	std::cout << epiph(num_elements) << std::endl;
 	std::cout << epiph(num_contrasts) << std::endl;
 
 	for( size_t i_contrast=0; i_contrast<num_contrasts; i_contrast++)
 	{	
+        mr_contrasts = mr_contgen.get_contrast_filled_ismrmrd_img(i_contrast);
 		std::stringstream name_stream;
 		name_stream << SHARED_FOLDER_PATH << "testoutput_mr_cont_gent_contrast_" << i_contrast;
-		data_io::write_ISMRMRD_Image_to_nii< complex_float_t > ( name_stream.str(), mr_contrasts[i_contrast]);
+		data_io::write_ISMRMRD_Image_to_nii< complex_float_t > ( name_stream.str(), mr_contrasts);
 	}			
 }
 
@@ -232,11 +234,9 @@ void test_contgen::test_replace_petmr_tissue_parameters_in_xcat()
 	mr_contgen.set_rawdata_header(hdr);
 	mr_contgen.map_contrast();
 
-	auto mr_contrasts = mr_contgen.get_contrast_filled_volumes();
+	auto img_data = mr_contgen.get_contrast_filled_ismrmrd_img(0);
 
 	std::string const output_name_pre_contrast = std::string(SHARED_FOLDER_PATH) + "test_contrast_gen_pre_contrast";
-	
-	auto img_data = mr_contrasts[0];
 	
 	ImageHeader img_hdr = img_data.getHead();
 	img_hdr.data_type = ISMRMRD_FLOAT; 
@@ -261,11 +261,9 @@ void test_contgen::test_replace_petmr_tissue_parameters_in_xcat()
 	mr_contgen.replace_petmr_tissue_parameters(label_to_replace, tissue_param_pair.second);
 	mr_contgen.map_contrast();
 
-	mr_contrasts = mr_contgen.get_contrast_filled_volumes();
+	img_data = mr_contgen.get_contrast_filled_ismrmrd_img(0);
 
 	std::string const output_name_post_contrast = std::string(SHARED_FOLDER_PATH) + "test_contrast_gen_post_contrast";
-	
-	img_data = mr_contrasts[0];
 	
 	for(size_t i_vx=0; i_vx<num_voxels; i_vx++) 
 		*(output_img.begin() + i_vx) = std::abs( *(img_data.begin()+ i_vx) );

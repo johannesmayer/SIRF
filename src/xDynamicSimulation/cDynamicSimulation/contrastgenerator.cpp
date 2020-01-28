@@ -571,7 +571,7 @@ void PETContrastGenerator::resample_to_template_image( void )
 		resampler.process();
 		
 
-		auto deformed_img = resampler.get_output_sptr();
+		auto deformed_img = std::dynamic_pointer_cast<const NiftiImageData<float> >(resampler.get_output_sptr());
 		this->contrast_filled_volumes_[i] = sirf::STIRImageData( this->template_pet_image_data_ ); //constructor for STIRImageData from ImageData does not exist yet.
 		this->contrast_filled_volumes_[i].set_data( (float*)( deformed_img->get_raw_nifti_sptr()->data ) );
 
