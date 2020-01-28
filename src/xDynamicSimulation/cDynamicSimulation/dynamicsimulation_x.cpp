@@ -8,13 +8,15 @@ date: 15. March 2018
 #include <mutex>
 #include <sstream>
 
-#include "sirf/cDynamicSimulation/dynamicsimulation_x.h"
+#include "sirf/Reg/NiftiImageData3DDeformation.h"
+#include "sirf/Gadgetron/gadgetron_data_containers.h"
+#include "sirf/Gadgetron/gadgetron_image_wrap.h"
 
+#include "sirf/cDynamicSimulation/dynamicsimulation_x.h"
 #include "sirf/cDynamicSimulation/auxiliary_input_output.h"
+#include "sirf/cDynamicSimulation/dynsim_deformer.h"
 
 #include "sirf/cReg/NiftiImageData3DDeformation.h"
-
-#include "sirf/cDynamicSimulation/dynsim_deformer.h"
 
 
 
@@ -292,14 +294,16 @@ void MRDynamicSimulation::acquire_raw_data( void )
 	if( this->coilmaps_.getNumberOfDataElements() == 0)
 		throw std::runtime_error("Please make sure to set the coilmaps prior to starting the simulation.");
 
-	std::vector< ISMRMRD::Image< complex_float_t> > contrast_filled_volumes = this->mr_cont_gen_.get_contrast_filled_volumes();
+	size_t const num_contrasts = this->mr_cont_gen_.get_contrast_filled_volumes().number();
 
-	size_t const num_contrasts = contrast_filled_volumes.size();
+	if( num_contrasts < 1)
+		throw std::runtime_error("There are no images in the image data you want to acquire.");
+	
+	auto contrast0 = this->mr_cont_gen_.get_contrast_filled_ismrmrd_img(0);
 
-
-	size_t Nx = contrast_filled_volumes[0].getMatrixSizeX();
-	size_t Ny = contrast_filled_volumes[0].getMatrixSizeY();
-	size_t Nz = contrast_filled_volumes[0].getMatrixSizeZ();
+	size_t Nx = contrast0.getMatrixSizeX();
+	size_t Ny = contrast0.getMatrixSizeY();
+	size_t Nz = contrast0.getMatrixSizeZ();
 	size_t Nc = this->coilmaps_.getNumberOfChannels();
 
 	auto csm = vol_orientator_.reorient_image(this->coilmaps_);
@@ -308,11 +312,10 @@ void MRDynamicSimulation::acquire_raw_data( void )
 
 	unsigned int offset = 0;
 
-
 	for( size_t i_contrast=0; i_contrast<num_contrasts; i_contrast++)
 	{
 		cout << "Acquisition of contrast " << i_contrast << endl;
-		ISMRMRD::Image<complex_float_t> curr_cont = contrast_filled_volumes[i_contrast];
+		ISMRMRD::Image<complex_float_t> curr_cont = this->mr_cont_gen_.get_contrast_filled_ismrmrd_img(i_contrast);
 		curr_cont = vol_orientator_.reorient_image(curr_cont);
 
 		ImageWrap curr_img_wrap(IMG_DATA_TYPE, new ISMRMRD::Image< complex_float_t >(curr_cont));		

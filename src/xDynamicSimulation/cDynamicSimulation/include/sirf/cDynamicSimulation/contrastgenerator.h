@@ -17,6 +17,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include "sirf/cDynamicSimulation/tissueparameters.h"
 #include "sirf/cDynamicSimulation/tissuelabelmapper.h"
 
+#include "sirf/Gadgetron/gadgetron_data_containers.h"
 
 #include "sirf/cSTIR/stir_types.h"
 #include "sirf/cSTIR/stir_data_containers.h"
@@ -66,14 +67,17 @@ public:
 	void map_contrast();
 	complex_float_t get_signal_for_tissuelabel( size_t const label );
 
-	std::vector< ISMRMRD::Image< complex_float_t> >& get_contrast_filled_volumes(bool const resample_output=false);
+	sirf::GadgetronImagesVector get_contrast_filled_volumes(bool const resample_output=false);
+	ISMRMRD::Image<complex_float_t> get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output=false);
 
 	void match_output_dims_to_headerinfo( void );
 
 private:
 
+	void append_contrast_image(const ISMRMRD::Image<complex_float_t>& img);
+
 	void resample_to_template_image( void );
-	std::vector< ISMRMRD::Image< complex_float_t> > contrast_filled_volumes_;
+	sirf::GadgetronImagesVector contrast_filled_volumes_;
 	IsmrmrdHeader hdr_;
 
 };

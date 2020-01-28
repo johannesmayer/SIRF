@@ -9,6 +9,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #include "sirf/cDynamicSimulation/contrastgenerator.h"
 #include "sirf/cReg/NiftyResample.h"
 
+#include "sirf/Gadgetron/gadgetron_image_wrap.h"
+
 #include <memory>
 #include <stdexcept>
 #include <cmath>
@@ -58,7 +60,17 @@ void MRContrastGenerator::set_rawdata_header(const ISMRMRD::IsmrmrdHeader& hdr)
 	this->hdr_ = hdr;
 }
 
-std::vector< ISMRMRD::Image< complex_float_t> >& MRContrastGenerator::get_contrast_filled_volumes(bool const resample_output)
+ISMRMRD::Image<complex_float_t> MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
+{
+	if( resample_output == true )
+		this->resample_to_template_image();
+
+	sirf::ImageWrap iw = this->contrast_filled_volumes_.image_wrap(0);
+	auto sptr_contrast = std::make_shared<ISMRMRD::Image<complex_float_t> > ( static_cast<ISMRMRD::Image<complex_float_t>*>(iw.ptr_image()));
+	return *sptr_contrast;
+}
+
+sirf::GadgetronImagesVector MRContrastGenerator::get_contrast_filled_volumes(bool const resample_output)
 {
 	if( resample_output == true )
 		this->resample_to_template_image();
@@ -88,15 +100,12 @@ void MRContrastGenerator::match_output_dims_to_headerinfo( void )
 	EncodingSpace enc_space = enc.encodedSpace;
 	MatrixSize enc_matrix_size = enc_space.matrixSize;	
 
-
-	size_t num_contrast_volumes = this->contrast_filled_volumes_.size();
-
-
+	size_t num_contrast_volumes = this->contrast_filled_volumes_.number();
 
 	for( int i_img=0; i_img<num_contrast_volumes; i_img++)
 	{
 
-		Image< complex_float_t > curr_image = this->contrast_filled_volumes_[i_img];
+		Image< complex_float_t > curr_image = this->get_contrast_filled_ismrmrd_img(i_img);
 		auto padded_image = curr_image;
 		padded_image.resize(enc_matrix_size.x, enc_matrix_size.y, enc_matrix_size.z, 1);
 		
@@ -128,16 +137,22 @@ void MRContrastGenerator::match_output_dims_to_headerinfo( void )
 		{
 			throw std::runtime_error("The dimensions of the segmentation do not match the header information. Please modify either one to match the other. Dimension sizes in the segmentation half of the one in the encoded space are padded to cope for readout oversampling.");				
 		}
-
-		padded_volumes.push_back(padded_image);
-	
+		
+		this->append_contrast_image(padded_image);
 	}
-	this->contrast_filled_volumes_ = padded_volumes;
 }
 
 void MRContrastGenerator::resample_to_template_image( void )
 {
 
+}
+
+void MRContrastGenerator::append_contrast_image(const ISMRMRD::Image<complex_float_t>& img)
+{
+	void* ptr_contrast_img = new ISMRMRD::Image<complex_float_t>(img);
+	sirf::ImageWrap iw(ISMRMRD::ISMRMRD_CXFLOAT, ptr_contrast_img);
+
+	this->contrast_filled_volumes_.append(iw);
 }
 
 void MRContrastGenerator::map_contrast()
@@ -146,8 +161,9 @@ void MRContrastGenerator::map_contrast()
 	
 	if( true ) 
 	{
-		std::vector< ISMRMRD::Image< complex_float_t> > temp(0);
-		this->contrast_filled_volumes_.swap(temp);
+		this->contrast_filled_volumes_= sirf::GadgetronImagesVector();
+		// std::vector< ISMRMRD::Image< complex_float_t> > temp(0);
+		// this->contrast_filled_volumes_.swap(temp);
 	}
 	
 	std::vector < complex_float_t >	(*contrast_map_function)(std::shared_ptr<TissueParameter> const ptr_to_tiss_par, const ISMRMRD::IsmrmrdHeader& ismrmrd_hdr);
@@ -222,7 +238,8 @@ void MRContrastGenerator::map_contrast()
 		}
 
 		contrast_img.setContrast(i_contrast);
-		this->contrast_filled_volumes_.push_back( contrast_img );
+
+		this->append_contrast_image(contrast_img);
 	}
 }
 
