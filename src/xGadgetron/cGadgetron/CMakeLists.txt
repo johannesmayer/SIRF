@@ -34,9 +34,8 @@ if (SIRF_INSTALL_DEPENDENCIES AND WIN32)
 	endforeach()
   endif()
 	
-add_library(cgadgetron cgadgetron.cpp gadgetron_x.cpp gadgetron_data_containers.cpp gadgetron_client.cpp ismrmrd_fftw.cpp encoding.cpp)
-# c++14 is required by the parts of Gadgetron that we need, so cgadgetron needs to be c++14.
-target_compile_features(cgadgetron PRIVATE cxx_std_14)
+add_library(cgadgetron cgadgetron.cpp gadgetron_x.cpp gadgetron_data_containers.cpp gadgetron_client.cpp 
+            gadgetron_fftw.cpp ismrmrd_fftw.cpp ismrmrd_phantom.cpp shepp_logan_phantom.cpp)
 
 set (cGadgetron_INCLUDE_DIR "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>$<INSTALL_INTERFACE:include>")
 target_include_directories(cgadgetron PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:include>")
@@ -45,6 +44,7 @@ target_include_directories(cgadgetron PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_
 
 target_include_directories(cgadgetron PUBLIC "${cGadgetron_INCLUDE_DIR}")
 target_include_directories(cgadgetron PRIVATE "${FFTW3_INCLUDE_DIR}")
+target_include_directories(cgadgetron PRIVATE "${ISMRMRD_INCLUDE_DIR}")
 
 target_link_libraries(cgadgetron iutilities csirf)
 # Add boost library dependencies
@@ -63,7 +63,11 @@ endif()
 # Note: cannot use ISMRMRD_LIBRARIES on Windows as it generally contains 
 # a list of filenames with spaces. There doesn't seem to be a way to pass this through (strange).
 # Luckily, we know what libraries it uses
-target_link_libraries(cgadgetron ismrmrd)
+find_library(ismrmrd_full_path "ismrmrd" "${ISMRMRD_LIBRARY_DIRS}")
+if(NOT ismrmrd_full_path)
+  message(FATAL_ERROR "ismrmrd not found")
+endif()
+target_link_libraries(cgadgetron ${ismrmrd_full_path})
 target_link_libraries(cgadgetron "${FFTW3_LIBRARIES}")
 target_link_libraries(cgadgetron "${HDF5_LIBRARIES}")
 

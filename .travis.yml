@@ -21,15 +21,15 @@ language: cpp
 #       i.e. -boost == -DUSE_SYSTEM_Boost=OFF, which means that Boost will be built.
 matrix:
  include:
- # linux g{cc,++}-{5,6} py{27,3}
+ # linux g{cc,++}-6 py{27,3}
  - os: linux
    python: 3
-   # -boost +fftw3 +hdf5
-   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON" MATRIX_EVAL="CC=gcc-5 CXX=g++-5" PYMVER=3
+   # -boost +fftw3 +hdf5 +ace
+   env: EXTRA_BUILD_FLAGS="-DUSE_ITK:BOOL=ON -DUSE_SYSTEM_ITK:BOOL=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DUSE_SYSTEM_ACE=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=3
  - os: linux
    python: 2.7
-   # -boost +fftw3 +hdf5 +siemens_to_ismrmrd +swig
-   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DBUILD_siemens_to_ismrmrd=ON -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc-5 CXX=g++-5" PYMVER=2
+   # -boost +fftw3 +hdf5 +siemens_to_ismrmrd +swig +ace
+   env: EXTRA_BUILD_FLAGS="-DUSE_ITK:BOOL=ON -DUSE_SYSTEM_ITK:BOOL=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DBUILD_siemens_to_ismrmrd=ON -DUSE_SYSTEM_SWIG=ON -DUSE_SYSTEM_ACE=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=2
  - os: linux
    python: 3
    # +DEVEL -boost -hdf5 -fftw3 +ace +siemens_to_ismrmrd
@@ -37,43 +37,47 @@ matrix:
  - os: linux
    python: 2.7
    # +DEVEL -boost -fftw3 -hdf5 -swig +ace
-   env: EXTRA_BUILD_FLAGS="-DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=OFF -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_ACE=ON -DUSE_SYSTEM_SWIG=OFF" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=2
+   env: EXTRA_BUILD_FLAGS="-DUSE_ITK:BOOL=ON -DUSE_SYSTEM_ITK:BOOL=ON -DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=OFF -DUSE_SYSTEM_HDF5=ON -DUSE_SYSTEM_ACE=ON -DUSE_SYSTEM_SWIG=OFF" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=2
  # osx g{cc,++} py{27,36}
  - os: osx
+   osx_image: xcode11.2
    python: 2.7
    # +boost -hdf5 -swig
    env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=OFF" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
  - os: osx
    # +boost +fftw3 -hdf5 -swig
+   osx_image: xcode11.2
    python: 3
    env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=OFF" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=3
  - os: osx
    python: 2.7
    # +DEVEL +boost -hdf5 +swig
+   osx_image: xcode11.2
    env: EXTRA_BUILD_FLAGS="-DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
  - os: osx
    python: 2.7
-   # +DEVEL +boost -fftw3 -hdf5 +swig
-   env: EXTRA_BUILD_FLAGS="-DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_FFTW3=OFF -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
- # itk
+   # +DEVEL +boost -fftw3 -hdf5 +swig +itk
+   osx_image: xcode11.2
+   env: EXTRA_BUILD_FLAGS="-DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_FFTW3=OFF -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON -DUSE_ITK=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
  - os: linux
    python: 3
    # -boost +itk +fftw3 +hdf5
-   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_ITK=ON -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON" MATRIX_EVAL="CC=gcc-5 CXX=g++-5" PYMVER=3
- # Can't use ITK on OSX at the moment, as it times out.
- # - os: osx
- #   python: 2.7
- #   # +boost +itk -hdf5 +swig
- #   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_ITK=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
+   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_ITK=ON -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=3
+ - os: osx
+   python: 2.7
+   # +boost +itk -hdf5 +swig
+   osx_image: xcode11.2
+   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_ITK=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
 
 env:
  global:
-  - BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Release"
+  # Need STIR_TAG=master at present, see https://github.com/CCPPETMR/SIRF/issues/366
+  - BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Release -DSTIR_TAG=master"
   # don't use too many threads - may crash
   - MAKEFLAGS="-j 2"
 
 # Ubuntu 14.04 LTS
-dist: trusty
+dist: xenial
 
 # No need for sudo
 sudo: false
@@ -86,8 +90,8 @@ addons:
   packages:
    - git-core
    - build-essential
-   - g++-5
    - g++-6
+   - g++-7
    - libboost-all-dev
    - libhdf5-serial-dev
    - libfftw3-dev
@@ -104,17 +108,16 @@ addons:
    - libplplot-dev
    - swig
    - ccache
-   # for building ACE (note: Trusty only)
-   - realpath
    # not in whitelist
    - libxslt-dev
    - libace-dev
    # - root-system-bin
+   - libinsighttoolkit4-dev
 
 # cache C/C++/pip
 cache:
-  - ccache
-  - pip
+ - ccache
+ - pip
 
 before_install:
  # Set C and C++ compiler etc using trick from
@@ -130,6 +133,11 @@ before_install:
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew update
       BUILD_FLAGS="$BUILD_FLAGS -DSHARED_LIBS_ABS_PATH=ON"
+      brew install openblas
+      # Get openblas version
+      blas_ver=$(brew list --versions openblas)
+      blas_ver=${blas_ver#"openblas "}
+      EXTRA_BUILD_FLAGS="$EXTRA_BUILD_FLAGS -DCBLAS_INCLUDE_DIR=/usr/local/Cellar/openblas/${blas_ver}/include -DCBLAS_LIBRARY=/usr/local/Cellar/openblas/${blas_ver}/lib/libblas.dylib"
       if [ $PYMVER == 2 ]; then
         PYINST=/System/Library/Frameworks/Python.framework/Versions/$PYMVER.7
         PY_EXE=$PYINST/bin/python2.7
@@ -171,8 +179,8 @@ before_install:
         brew install curl
         #brew install cmake # already present
         # alternative: get our own
-        #curl -0 https://cmake.org/files/v3.8/cmake-3.8.0-Darwin-x86_64.tar.gz -o cmake.tar.gz
-        #tar xzf cmake.tar.gz
+        #curl -L -O https://cmake.org/files/v3.8/cmake-3.8.0-Darwin-x86_64.tar.gz
+        #tar xzf cmake-*.tar.gz
         #mv cmake-*/CMake.app/Contents/* cmake
         #export PATH="$PWD/cmake/bin:$PATH"
       )
@@ -191,7 +199,7 @@ before_install:
  # setuptools may be out of date on osx
  - $PY_EXE -m pip install --user -U pip setuptools wheel
  # ensure python bin dir exists (and coverage dependencies installed)
- - $PY_EXE -m pip install --user -U nose codecov coveralls
+ - $PY_EXE -m pip install --user -U nose codecov coveralls requests deprecation
  # for counting clones, excluding ours
  - |
     if [[ -n "$GITHUB_API_TOKEN" ]]; then
@@ -206,13 +214,17 @@ before_install:
  - $PY_EXE -m pip freeze
  # ccache compiler override
  - ln -s "$(which ccache)" g++
- - ln -s "$(which ccache)" g++-5
  - ln -s "$(which ccache)" g++-6
+ - ln -s "$(which ccache)" g++-7
+
  - ln -s "$(which ccache)" gcc
- - ln -s "$(which ccache)" gcc-5
  - ln -s "$(which ccache)" gcc-6
+ - ln -s "$(which ccache)" gcc-7
+
  - export PATH="$PWD:$PATH"
  - popd
+ # ensure a branch exists (for e.g. PRs)
+ - git symbolic-ref -q HEAD || git checkout -b local_$TRAVIS_COMMIT
  # Use Travis' currently checked-out SIRF commit ID to build.
  # Also no point re-downloading SIRF - just use local URL.
  # N.B.: don't put into build matrix to allow caching.
@@ -224,7 +236,7 @@ before_install:
  - cmake --version
 
 install:
- - $PY_EXE -m pip install --user --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib
+ - $PY_EXE -m pip install --user --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib nibabel
  - cmake $BUILD_FLAGS $EXTRA_BUILD_FLAGS .
  # Job may timeout (>50min) if no ccache, otherwise should be <1min:
  - make
@@ -238,12 +250,12 @@ script:
  - ctest -VV
  # print for debugging
  - cat builds/SIRF/build/Testing/Temporary/LastTest.log
- # may exceed 4MB travis log limit
- - cat gadgetron.log
-
-
+ - echo "----------- Last 200 lines of gadgetron.log"
+ - tail -n 200 gadgetron.log
 
 after_success:
- - cd SIRF
+ - pushd ../SIRF
+ - sed -r 's/SIRF-SuperBuild\/INSTALL\/python\/sirf\/(\w*)\.py/SIRF\/src\/x\1\/p\1\/\1.py/g' ../SIRF-SuperBuild/sources/SIRF/.coverage > .coverage
  - codecov
  - coveralls
+ - popd

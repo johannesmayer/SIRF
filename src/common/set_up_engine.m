@@ -28,7 +28,7 @@ function alias = set_up_engine(engine)
         libload_sirf();
         eval(['libload_' lower(engine)])
     catch me
-        fprintf(me.message)
+        fprintf('%s\n', me.message)
         error('package %s failed to load\n', engine)
     end
     
@@ -40,12 +40,12 @@ function alias = set_up_engine(engine)
     
     % Get the folder containing the engine
     path = fileparts(mfilename('fullpath'));
-    path = fullfile(path, ['+m' engine], '*m');
+    path = fullfile(path, '+sirf', ['+' engine], '*m');
     files = dir(path);
     
     % Loop over all classes and functions and set alias to handle
     for i=1:size(files,1)
         [~,file,~] = fileparts(files(i).name);
-        alias.(file) = eval(['@m' engine '.' file]);
+        alias.(file) = eval(['@sirf.' engine '.' file]);
     end
 end

@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <mex.h>
 #include "matrix.h"
-#include "csirf.h"
+#include "sirf/common/csirf.h"
 
 #ifndef CSIRF_FOR_MATLAB
 #define PTR_INT size_t
@@ -36,13 +36,16 @@ limitations under the License.
 #define PTR_FLOAT float*
 #define PTR_DOUBLE double*
 #endif
-EXPORTED_FUNCTION  void* mSIRF_dataItems(const void* ptr_x) {
+EXPORTED_FUNCTION  void* mSIRF_newObject(const char* name) {
+	return cSIRF_newObject(name);
+}
+EXPORTED_FUNCTION void* mSIRF_dataItems(const void* ptr_x) {
 	return cSIRF_dataItems(ptr_x);
 }
 EXPORTED_FUNCTION void* mSIRF_norm(const void* ptr_x) {
 	return cSIRF_norm(ptr_x);
 }
-EXPORTED_FUNCTION void*	mSIRF_dot(const void* ptr_x, const void* ptr_y) {
+EXPORTED_FUNCTION void* mSIRF_dot(const void* ptr_x, const void* ptr_y) {
 	return cSIRF_dot(ptr_x, ptr_y);
 }
 EXPORTED_FUNCTION void* mSIRF_axpby(const PTR_FLOAT ptr_a, const void* ptr_x, const PTR_FLOAT ptr_b, const void* ptr_y) {
@@ -59,6 +62,33 @@ EXPORTED_FUNCTION void* mSIRF_write(const void* ptr, const char* filename) {
 }
 EXPORTED_FUNCTION void* mSIRF_clone(void* ptr_x) {
 	return cSIRF_clone(ptr_x);
+}
+EXPORTED_FUNCTION void* mSIRF_fillImageFromImage(void* ptr_im, const void* ptr_src) {
+	return cSIRF_fillImageFromImage(ptr_im, ptr_src);
+}
+EXPORTED_FUNCTION void* mSIRF_DataHandleVector_push_back(void* self, void* to_append) {
+	return cSIRF_DataHandleVector_push_back(self, to_append);
+}
+EXPORTED_FUNCTION void* mSIRF_ImageData_get_geom_info(const void* ptr_geom) {
+	return cSIRF_ImageData_get_geom_info(ptr_geom);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_print(const void* ptr_geom) {
+	return cSIRF_GeomInfo_print(ptr_geom);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_get_offset(const void* ptr_geom, PTR_FLOAT ptr_arr) {
+	return cSIRF_GeomInfo_get_offset(ptr_geom, ptr_arr);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_get_spacing(const void* ptr_geom, PTR_FLOAT ptr_arr) {
+	return cSIRF_GeomInfo_get_spacing(ptr_geom, ptr_arr);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_get_size(const void* ptr_geom, PTR_INT ptr_arr) {
+	return cSIRF_GeomInfo_get_size(ptr_geom, ptr_arr);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_get_direction_matrix(const void* ptr_geom, PTR_FLOAT ptr_arr) {
+	return cSIRF_GeomInfo_get_direction_matrix(ptr_geom, ptr_arr);
+}
+EXPORTED_FUNCTION void* mSIRF_GeomInfo_get_index_to_physical_point_matrix(const void* ptr_geom, PTR_FLOAT ptr_arr) {
+	return cSIRF_GeomInfo_get_index_to_physical_point_matrix(ptr_geom, ptr_arr);
 }
 #ifndef CSIRF_FOR_MATLAB
 }

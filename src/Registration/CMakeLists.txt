@@ -16,11 +16,7 @@
 #
 #=========================================================================
 
-# ------------------------------------------------------------------------
-# Add c++, python, matlab components (if desired)
-# ------------------------------------------------------------------------
-SET(cREG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cReg")
-INCLUDE_DIRECTORIES(${cREG_INCLUDE_DIR})
+ADD_SUBDIRECTORY(NiftyMoMo)
 ADD_SUBDIRECTORY(cReg)
 ADD_SUBDIRECTORY(pReg)
 ADD_SUBDIRECTORY(mReg)

@@ -1,6 +1,6 @@
 /*
 CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2018 - 2019 Rutherford Appleton Laboratory STFC
+Copyright 2018 - 2019 University College London
 
 This is software developed for the Collaborative Computational
 Project in Positron Emission Tomography and Magnetic Resonance imaging
@@ -27,9 +27,9 @@ limitations under the License.
 \author CCP PETMR
 */
 
-#include "sirf/cReg/NiftiImageData3D.h"
-#include "sirf/cSTIR/stir_data_containers.h"
-#include "sirf/cGadgetron/gadgetron_data_containers.h"
+#include "sirf/Reg/NiftiImageData3D.h"
+#include "sirf/Gadgetron/gadgetron_data_containers.h"
+#include "sirf/STIR/stir_data_containers.h"
 
 
 using namespace sirf;

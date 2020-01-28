@@ -4,10 +4,7 @@
 #include "stir/common.h"
 #include "stir/IO/stir_ecat_common.h"
 
-#include "cstir.h"
-#include "object.h"
-
-#include "sirf/cSTIR/stir_x.h"
+#include "sirf/STIR/stir_x.h"
 #include "sirf/common/getenv.h"
 
 using namespace stir;

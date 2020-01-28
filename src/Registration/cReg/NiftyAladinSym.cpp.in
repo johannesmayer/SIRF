@@ -27,12 +27,12 @@ limitations under the License.
 \author CCP PETMR
 */
 
-#include "sirf/cReg/NiftyAladinSym.h"
-#include "sirf/cReg/Parser.h"
-#include "sirf/cReg/AffineTransformation.h"
-#include "sirf/cReg/NiftiImageData3D.h"
-#include "sirf/cReg/NiftiImageData3DDeformation.h"
-#include "sirf/cReg/NiftiImageData3DDisplacement.h"
+#include "sirf/Reg/NiftyAladinSym.h"
+#include "sirf/Reg/Parser.h"
+#include "sirf/Reg/AffineTransformation.h"
+#include "sirf/Reg/NiftiImageData3D.h"
+#include "sirf/Reg/NiftiImageData3DDeformation.h"
+#include "sirf/Reg/NiftiImageData3DDisplacement.h"
 #include <_reg_aladin_sym.h>
 
 using namespace sirf;
@@ -55,14 +55,18 @@ void NiftyAladinSym<dataType>::process()
     _registration_sptr->SetInputReference(ref.get_raw_nifti_sptr().get());
     _registration_sptr->SetInputFloating(flo.get_raw_nifti_sptr().get());
 
+    // By default, use a padding value of 0
+    _registration_sptr->SetWarpedPaddingValue(0.f);
+
     // Set masks (if present). Again, need to copy to get rid of const
+    NiftiImageData3D<dataType> ref_mask, flo_mask;
     if (this->_reference_mask_nifti_sptr && this->_reference_mask_nifti_sptr->is_initialised()) {
-        NiftiImageData3D<dataType> ref_mask = *this->_reference_mask_nifti_sptr;
+        ref_mask = *this->_reference_mask_nifti_sptr;
         _registration_sptr->SetInputMask(ref_mask.get_raw_nifti_sptr().get());
     }
     if (this->_floating_mask_nifti_sptr && this->_floating_mask_nifti_sptr->is_initialised()) {
-        NiftiImageData3D<dataType> flo_mask = *this->_floating_mask_nifti_sptr;
-        _registration_sptr->SetInputMask(flo_mask.get_raw_nifti_sptr().get());
+        flo_mask = *this->_floating_mask_nifti_sptr;
+        _registration_sptr->SetInputFloatingMask(flo_mask.get_raw_nifti_sptr().get());
     }
 
     // Parse parameter file
@@ -106,6 +110,12 @@ void NiftyAladinSym<dataType>::process()
     this->_warped_image_sptr->fill(*this->_warped_image_nifti_sptr);
 
     std::cout << "\n\nRegistration finished!\n\n";
+}
+
+template<class dataType>
+void NiftyAladinSym<dataType>::print_all_wrapped_methods()
+{
+    std::cout << ${NR_aladin_list_methods};
 }
 
 template<class dataType>

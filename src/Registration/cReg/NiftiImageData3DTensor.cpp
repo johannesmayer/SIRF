@@ -27,8 +27,8 @@ limitations under the License.
 \author CCP PETMR
 */
 
-#include "sirf/cReg/NiftiImageData3DTensor.h"
-#include "sirf/cReg/NiftiImageData3D.h"
+#include "sirf/Reg/NiftiImageData3DTensor.h"
+#include "sirf/Reg/NiftiImageData3D.h"
 #include <boost/format.hpp>
 
 using namespace sirf;
@@ -136,6 +136,10 @@ void NiftiImageData3DTensor<dataType>::write_split_xyz_components(const std::str
         // Crop image
         NiftiImageData<dataType> image = *this;
         image.crop(min_index,max_index);
+
+        // Intent code is no longer vector
+        image.get_raw_nifti_sptr()->intent_code = NIFTI_INTENT_NONE;
+        image.get_raw_nifti_sptr()->intent_p1 = -1;
 
         if      (i == 0) image.write(filename_x,datatype);
         else if (i == 1) image.write(filename_y,datatype);

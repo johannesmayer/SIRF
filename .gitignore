@@ -257,8 +257,7 @@ $RECYCLE.BIN/
 *.s
 *.pyd
 *.pyc
-*.mexw64
-*.mexa64
+*.mex*
 *.mat
 *.am
 *.thresholded
@@ -266,7 +265,17 @@ $RECYCLE.BIN/
 *.backup
 *.db
 *.opendb
-.coverage
+*.nii
+*.nii.gz
+
+# Common editor backups
+~$*
+*~
+*.bak
+\#*
+.#*
+
+# other
 htmlcov/
 info.txt
 warn.txt
@@ -283,3 +292,6 @@ coverage.xml
 # Dont track NiftyAladinSym.cpp/NiftyF3dSym.cpp as they are generated with CMake's configure_file
 NiftyAladinSym.cpp
 NiftyF3dSym.cpp
+
+# Ignore files created by Pycharm
+\.idea/

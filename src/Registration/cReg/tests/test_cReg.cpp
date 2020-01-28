@@ -28,14 +28,16 @@ limitations under the License.
 */
 
 #include <iostream>
-#include "sirf/cReg/NiftyAladinSym.h"
-#include "sirf/cReg/NiftyF3dSym.h"
-#include "sirf/cReg/NiftyResample.h"
-#include "sirf/cReg/NiftiImageData3D.h"
-#include "sirf/cReg/ImageWeightedMean.h"
-#include "sirf/cReg/NiftiImageData3DDisplacement.h"
-#include "sirf/cReg/AffineTransformation.h"
+#include "sirf/Reg/NiftyAladinSym.h"
+#include "sirf/Reg/NiftyF3dSym.h"
+#include "sirf/Reg/NiftyResample.h"
+#include "sirf/Reg/NiftiImageData3D.h"
+#include "sirf/Reg/ImageWeightedMean.h"
+#include "sirf/Reg/NiftiImageData3DDisplacement.h"
+#include "sirf/Reg/AffineTransformation.h"
+#include "sirf/Reg/Quaternion.h"
 #include <memory>
+#include <numeric>
 
 using namespace sirf;
 
@@ -70,6 +72,9 @@ int main(int argc, char* argv[])
     const std::string save_nifti_image_3d_deformation_split      = output_prefix   + "save_NiftiImageData3DDeformation_split_%s.nii";
     const std::string save_nifti_image_3d_displacement_not_split = output_prefix   + "save_NiftiImageData3DDisplacement_not_split.nii";
     const std::string save_nifti_image_3d_displacement_split     = output_prefix   + "save_NiftiImageData3DDisplacement_split_%s.nii";
+    const std::string save_nifti_image_upsample                  = output_prefix   + "save_NiftiImageData_upsample.nii";
+    const std::string save_nifti_image_downsample                = output_prefix   + "save_NiftiImageData_downsample.nii";
+    const std::string save_nifti_image_up_downsample             = output_prefix   + "save_NiftiImageData_upsample_downsample.nii";
     const std::string flo_aladin_as_unsigned_int                 = output_prefix   + "flo_aladin_as_unsigned_int.nii";
     const std::string aladin_warped            = output_prefix   + "aladin_warped.nii";
     const std::string f3d_warped               = output_prefix   + "f3d_warped.nii";
@@ -86,6 +91,7 @@ int main(int argc, char* argv[])
     const std::string rigid_resample           = output_prefix   + "rigid_resample.nii";
     const std::string nonrigid_resample_disp   = output_prefix   + "nonrigid_resample_disp.nii";
     const std::string nonrigid_resample_def    = output_prefix   + "nonrigid_resample_def.nii";
+    const std::string niftymomo_resample_adj   = output_prefix   + "niftymomo_resample_adj.nii";
     const std::string output_weighted_mean     = output_prefix   + "weighted_mean.nii";
     const std::string output_weighted_mean_def = output_prefix   + "weighted_mean_def.nii";
     const std::string output_float             = output_prefix   + "reg_aladin_float.nii";
@@ -220,6 +226,53 @@ int main(int argc, char* argv[])
             throw std::runtime_error("NiftiImageData constructor from array.");
         // Save to file (useful for UI comparison)
         t.write(flo_aladin_as_unsigned_int);
+
+        // Check upsampling/downsampling
+        NiftiImageData<float> u(ref_aladin_filename);
+        float *pixdim = u.get_raw_nifti_sptr()->pixdim;
+        float original_spacing[3]    = {pixdim[1],       pixdim[2],       pixdim[3]};
+        float upsampled_spacing[3]   = {pixdim[1] / 2.F, pixdim[2] / 4.F, pixdim[3]};
+        float downsampled_spacing[3] = {pixdim[1] * 2.F, pixdim[2] * 4.F, pixdim[3]};
+        // Downsample
+        NiftiImageData<float> v = u;
+        v.set_voxel_spacing(downsampled_spacing,3);
+        v.write(save_nifti_image_downsample);
+        // Upsample then downsample, check nothing has changed
+        NiftiImageData<float> w = u;
+        w.set_voxel_spacing(upsampled_spacing,0);
+        w.write(save_nifti_image_upsample);
+        NiftiImageData<float> x = w;
+        x.set_voxel_spacing(original_spacing,0);
+        x.write(save_nifti_image_up_downsample);
+        NiftiImageData<float>::print_headers({&u, &v, &w, &x});
+        if (x != u)
+            throw std::runtime_error("NiftiImageData::upsample()/downsample() failed.");
+
+        // Test inner product
+        NiftiImageData<float> y = x;
+        for (unsigned i=0; i<x.get_num_voxels(); ++i)
+            x(int(i)) = static_cast<float>(i);
+        for (unsigned i=0; i<x.get_num_voxels(); ++i)
+            y(int(i)) = static_cast<float>(3*x.get_num_voxels()-i);
+        const float inner = x.get_inner_product(y);
+
+        // Do it with vectors to check
+        const float *x_begin = &static_cast<const float*>(x.get_raw_nifti_sptr()->data)[0];
+        const float *y_begin = &static_cast<const float*>(y.get_raw_nifti_sptr()->data)[0];
+        const float *x_end   = &static_cast<const float*>(x.get_raw_nifti_sptr()->data)[0] + x.get_num_voxels();
+        const float inner_vec = std::inner_product(x_begin, x_end, y_begin, 0.f);
+
+        if (std::abs(inner-inner_vec) > 1e-4f)
+            throw std::runtime_error("NiftiImageData::get_inner_product() failed.");
+
+        // Test contains NaNs
+        x.fill(0.f);
+        if (x.get_contains_nans())
+            throw std::runtime_error("NiftiImageData::get_contains_nans() 1 failed.");
+        x(0) = NAN;
+        if (!x.get_contains_nans())
+            throw std::runtime_error("NiftiImageData::get_contains_nans() 2 failed.");
+
 
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished NiftiImageData test.\n";
@@ -468,6 +521,24 @@ int main(int argc, char* argv[])
         if (h != t)
             throw std::runtime_error("NiftiImageData3DDisplacement constructor from array.");
 
+        // Check upsampling/downsampling
+        NiftiImageData3DDisplacement<float> u(save_nifti_image_3d_displacement_not_split);
+        float *pixdim = u.get_raw_nifti_sptr()->pixdim;
+        float original_spacing[3]    = {pixdim[1],       pixdim[2],       pixdim[3]};
+        float upsampled_spacing[3]   = {pixdim[1] / 2.F, pixdim[2] / 4.F, pixdim[3]};
+        float downsampled_spacing[3] = {pixdim[1] * 2.F, pixdim[2] * 4.F, pixdim[3]};
+        // Downsample
+        NiftiImageData3DDisplacement<float> v = u;
+        v.set_voxel_spacing(downsampled_spacing,3);
+        // Upsample then downsample, check nothing has changed
+        NiftiImageData3DDisplacement<float> w = u;
+        w.set_voxel_spacing(upsampled_spacing,0);
+        NiftiImageData3DDisplacement<float> z = w;
+        z.set_voxel_spacing(original_spacing,0);
+        NiftiImageData3DDisplacement<float>::print_headers({&u, &v, &w, &z});
+        if (z != u)
+            throw std::runtime_error("NiftiImageData3DDisplacement::upsample()/downsample() failed.");
+
 
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished NiftiImageData3DDisplacement test.\n";
@@ -563,12 +634,25 @@ int main(int argc, char* argv[])
         std::cout << "//                  Starting Nifty aladin test...\n";
         std::cout << "//------------------------------------------------------------------------ //\n";
 
+        // Print all available methods
+        NiftyAladinSym<float>::print_all_wrapped_methods();
+
+        // First set up some masks
+        std::shared_ptr<NiftiImageData3D<float> > ref_mask = ref_aladin->clone();
+        std::shared_ptr<NiftiImageData3D<float> > flo_mask = flo_aladin->clone();
+        ref_mask->fill(1.F);
+        flo_mask->fill(1.F);
+
         NA.set_reference_image               (            ref_aladin         );
         NA.set_floating_image                (            flo_aladin         );
         NA.set_parameter_file                (      parameter_file_aladin    );
         NA.set_parameter("SetInterpolationToCubic");
         NA.set_parameter("SetLevelsToPerform","1");
         NA.set_parameter("SetMaxIterations","5");
+        NA.set_parameter("SetPerformRigid","1");
+        NA.set_parameter("SetPerformAffine","0");
+        NA.set_reference_mask(ref_mask);
+        NA.set_floating_mask(flo_mask);
         NA.process();
 
         // Get outputs
@@ -615,12 +699,23 @@ int main(int argc, char* argv[])
         std::cout << "//                  Starting Nifty f3d test..\n";
         std::cout << "//------------------------------------------------------------------------ //\n";
 
+        // Print all available methods
+        NiftyF3dSym<float>::print_all_wrapped_methods();
+
+        // First set up some masks
+        std::shared_ptr<NiftiImageData3D<float> > ref_mask = ref_f3d->clone();
+        std::shared_ptr<NiftiImageData3D<float> > flo_mask = flo_f3d->clone();
+        ref_mask->fill(1.F);
+        flo_mask->fill(1.F);
+
         NiftyF3dSym<float> NF;
         NF.set_reference_image               (           ref_f3d          );
         NF.set_floating_image                (           flo_f3d          );
         NF.set_parameter_file                (     parameter_file_f3d     );
         NF.set_reference_time_point          (             1              );
         NF.set_floating_time_point           (             1              );
+        NF.set_reference_mask(ref_mask);
+        NF.set_floating_mask(flo_mask);
         NF.process();
 
         // Get outputs
@@ -688,6 +783,9 @@ int main(int argc, char* argv[])
         if (composed.get_as_deformation_field(*ref_aladin) != *def_forward_sptr)
             throw std::runtime_error("NiftiImageData3DDeformation::compose_single_deformation failed.");
 
+        // Test get_inverse
+        AffineTransformation<float> tm_inv = tm_iden.get_inverse();
+
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished transformations test.\n";
         std::cout << "//------------------------------------------------------------------------ //\n";
@@ -702,6 +800,7 @@ int main(int argc, char* argv[])
         std::shared_ptr<const Transformation<float> > tm       = NA.get_transformation_matrix_forward_sptr();
         std::shared_ptr<const Transformation<float> > disp     = NA.get_displacement_field_forward_sptr();
         std::shared_ptr<const Transformation<float> > deff     = NA.get_deformation_field_forward_sptr();
+        float padding_value = -20.f;
 
         std::cout << "Testing rigid resample...\n";
         NiftyResample<float> nr1;
@@ -721,8 +820,15 @@ int main(int argc, char* argv[])
         nr2.set_interpolation_type_to_sinc(); // try different interpolations
         nr2.set_interpolation_type_to_linear(); // try different interpolations
         nr2.add_transformation(disp);
+        nr2.set_padding_value(padding_value);
         nr2.process();
-        nr2.get_output_sptr()->write(nonrigid_resample_disp);
+        const std::shared_ptr<const NiftiImageData<float> > nr2_output =
+                std::dynamic_pointer_cast<const NiftiImageData<float> >(
+                    nr2.get_output_sptr());
+        nr2_output->write(nonrigid_resample_disp);
+
+        if (std::abs(nr2_output->get_min() - padding_value) > 1e-4f) // only get exact value with linear inerpolation
+            throw std::runtime_error("NiftyResample::set_padding_value failed.");
 
         std::cout << "Testing non-rigid deformation...\n";
         NiftyResample<float> nr3;
@@ -734,6 +840,19 @@ int main(int argc, char* argv[])
         nr3.process();
         nr3.get_output_sptr()->write(nonrigid_resample_def);
 
+        // Check that the following give the same result
+        //      out = resample.forward(in)
+        //      resample.forward(out, in)
+        const std::shared_ptr<const NiftiImageData<float> > out1_sptr =
+                std::dynamic_pointer_cast<const NiftiImageData<float> >(
+                    nr3.forward(flo_aladin));
+
+        const std::shared_ptr<NiftiImageData<float> > out2_sptr = ref_aladin->clone();
+        nr3.forward(out2_sptr, flo_aladin);
+
+        if (*out1_sptr != *out2_sptr)
+            throw std::runtime_error("out = NiftyResample::forward(in) and NiftyResample::forward(out, in) do not give same result.");
+
         // TODO this doesn't work. For some reason (even with NiftyReg directly), resampling with the TM from the registration
         // doesn't give the same result as the output from the registration itself (even with same interpolations). Even though
         // ref and flo images are positive, the output of the registration can be negative. This implies that linear interpolation
@@ -744,6 +863,76 @@ int main(int argc, char* argv[])
 
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished Nifty resample test.\n";
+        std::cout << "//------------------------------------------------------------------------ //\n";
+    }
+
+    {
+        std::cout << "// ----------------------------------------------------------------------- //\n";
+        std::cout << "//                  Starting NiftyMoMo test...\n";
+        std::cout << "//------------------------------------------------------------------------ //\n";
+
+        // The forward and the adjoint should meet the following criterion:
+        //      |<x, Ty> - <y, Tsx>| / 0.5*(|<x, Ty>|+|<y, Tsx>|) < epsilon
+        // for all images x and y, where T is the transform and Ts is the adjoint.
+
+        const std::shared_ptr<const NiftiImageData<float> > x =
+                std::make_shared<const NiftiImageData<float> >(ref_aladin_filename);
+        const std::shared_ptr<AffineTransformation<float> > T =
+                std::make_shared<AffineTransformation<float> >(*
+                NA.get_transformation_matrix_forward_sptr());
+        const std::shared_ptr<NiftiImageData<float> > y  =
+                std::make_shared<NiftiImageData3D<float> >(flo_aladin_filename);
+
+        // Add in a magnification to make things interesting
+        (*T)[0][0] = 1.5f;
+
+        // make it slightly unsquare to spice things up
+        int min_idx[7] = {0,1,2,-1,-1,-1,-1};
+        const int *y_dims = y->get_dimensions();
+        int max_idx[7] = {y_dims[1]-3,y_dims[2]-1,y_dims[3]-5-1,-1,-1,-1};
+        y->crop(min_idx,max_idx);
+
+        NiftyResample<float> nr;
+        nr.set_reference_image(x);
+        nr.set_floating_image(y);
+        nr.set_interpolation_type(Resample<float>::LINEAR);
+        nr.add_transformation(T);
+
+        // Do the forward
+        const std::shared_ptr<const NiftiImageData<float> > Ty =
+                std::dynamic_pointer_cast<const NiftiImageData<float> >(
+                    nr.forward(y));
+
+        // Do the adjoint
+        const std::shared_ptr<const NiftiImageData<float> > Tsx =
+                std::dynamic_pointer_cast<const NiftiImageData<float> >(
+                    nr.adjoint(x));
+
+        // Check the adjoint is truly the adjoint with: |<x, Ty> - <y, Tsx>| / 0.5*(|<x, Ty>|+|<y, Tsx>|) < epsilon
+        float inner_x_Ty  = x->get_inner_product(*Ty);
+        float inner_y_Tsx = y->get_inner_product(*Tsx);
+        float adjoint_test = std::abs(inner_x_Ty - inner_y_Tsx) / (0.5f * (std::abs(inner_x_Ty) +std::abs(inner_y_Tsx)));
+        std::cout << "\n<x, Ty>  = " << inner_x_Ty << "\n";
+        std::cout << "<y, Tsx> = " << inner_y_Tsx << "\n";
+        std::cout << "|<x, Ty> - <y, Tsx>| / 0.5*(|<x, Ty>|+|<y, Tsx>|) = " << adjoint_test << "\n";
+        if (adjoint_test > 1e-4F)
+            throw std::runtime_error("NiftyResample::adjoint() failed");
+
+        // Check that the following give the same result
+        //      out = resample.adjoint(in)
+        //      resample.adjoint(out, in)
+        const std::shared_ptr<const NiftiImageData<float> > out1_sptr =
+                std::dynamic_pointer_cast<const NiftiImageData<float> >(
+                    nr.adjoint(x));
+
+        const std::shared_ptr<NiftiImageData<float> > out2_sptr = y->clone();
+        nr.backward(out2_sptr, x);
+
+        if (*out1_sptr != *out2_sptr)
+            throw std::runtime_error("out = NiftyResample::adjoint(in) and NiftyResample::adjoint(out, in) do not give same result.");
+
+        std::cout << "// ----------------------------------------------------------------------- //\n";
+        std::cout << "//                  Finished NiftyMoMo test.\n";
         std::cout << "//------------------------------------------------------------------------ //\n";
     }
 
@@ -851,8 +1040,95 @@ int main(int argc, char* argv[])
         if (e.get_determinant() - 1.F > 1.e-7F)
             throw std::runtime_error("AffineTransformation::get_determinant failed.");
 
+        // Test get_Euler_angles
+        AffineTransformation<float> test_Eul;
+        for (int i=0; i<4; ++i)
+            for (int j=0; j<4; ++j)
+                test_Eul[i][j]=0.F;
+        test_Eul[0][2] =  1.F;
+        test_Eul[1][1] = -1.F;
+        test_Eul[2][0] = -1.F;
+        test_Eul[3][3] =  1.F;
+        // Example given by rotm2eul for MATLAB is [0 0 1; 0 -1 0; -1 0 0] -> XYZ = [-3.1416 1.5708 0]
+        std::array<float,3> Eul = test_Eul.get_Euler_angles();
+        std::array<float,3> Eul_expected{-3.1416F, 1.5708F, 0.F};
+        for (unsigned i=0; i<3; ++i)
+            if (std::abs(Eul[i] - Eul_expected[i]) > 1e-4F)
+                throw std::runtime_error("AffineTransformation::get_Euler_angles failed.");
+
+        // Average!
+        Quaternion<float> quat_1(0.92707F,  0.02149F,   0.19191F,  0.32132F);
+        Quaternion<float> quat_2(0.90361F,  0.0025836F, 0.097279F, 0.41716F);
+        Quaternion<float> quat_3(0.75868F, -0.21289F,   0.53263F,  0.30884F);
+        AffineTransformation<float> tm_1({0.F,0.F,0.F},quat_1);
+        AffineTransformation<float> tm_2({0.F,0.F,0.F},quat_2);
+        AffineTransformation<float> tm_3({0.F,0.F,0.F},quat_3);
+        AffineTransformation<float> average = AffineTransformation<float>::get_average({tm_1,tm_2,tm_3});
+        AffineTransformation<float> exptd_average;
+        exptd_average[0][0] =  0.5836F;
+        exptd_average[0][1] = -0.6736F;
+        exptd_average[0][2] =  0.4535F;
+        exptd_average[1][0] =  0.6007F;
+        exptd_average[1][1] =  0.7339F;
+        exptd_average[1][2] =  0.3171F;
+        exptd_average[2][0] = -0.5464F;
+        exptd_average[2][1] =  0.0874F;
+        exptd_average[2][2] =  0.8329F;
+        if (average != exptd_average)
+            throw std::runtime_error("AffineTransformation::get_average() failed.");
+
+
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished AffineTransformation test.\n";
+        std::cout << "//------------------------------------------------------------------------ //\n";
+    }
+
+    {
+        std::cout << "// ----------------------------------------------------------------------- //\n";
+        std::cout << "//                  Starting Quaternion test...\n";
+        std::cout << "//------------------------------------------------------------------------ //\n";
+
+        // Construct TM
+        AffineTransformation<float> rotm;
+        for (unsigned i=0; i<4; ++i)
+            for (unsigned j=0; j<4; ++j)
+                rotm[i][j]=0.F;
+        rotm[0][2] =  1.f;
+        rotm[1][1] =  1.f;
+        rotm[2][0] = -1.f;
+        rotm[3][3] =  1.f;
+
+        // Convert to quaternion
+        Quaternion<float> quat(rotm);
+        // Compare to expected values
+        Quaternion<float> expt(0.707107f, 0.f, 0.707107f, 0.f);
+
+        if (quat != expt)
+            throw std::runtime_error("Quaternion from TM failed.");
+
+        // Convert back to TM
+        std::array<float,3> trans{0.F,0.F,0.F};
+        AffineTransformation<float> affine(trans,quat);
+        if (affine != rotm)
+            throw std::runtime_error("TM to quaternion failed.");
+
+        // Convert TM to quaternion
+        Quaternion<float> quat2 = affine.get_quaternion();
+        if (std::abs(quat.dot(quat2)) -1.f > 1.e-4f)
+            throw std::runtime_error("AffineTransformation.get_quaternion()/Quaternion::dot() failed.");
+
+        // Average!
+        Quaternion<float> quat_1(0.92707F,  0.02149F,   0.19191F,  0.32132F);
+        Quaternion<float> quat_2(0.90361F,  0.0025836F, 0.097279F, 0.41716F);
+        Quaternion<float> quat_3(0.75868F, -0.21289F,   0.53263F,  0.30884F);
+        Quaternion<float> average = Quaternion<float>::get_average({quat_1,quat_2,quat_3});
+        Quaternion<float> exptd_average(0.88748F, -0.0647152F, 0.281671F, 0.35896F);
+
+        if (average != exptd_average)
+            throw std::runtime_error("Quaternion::get_average() failed.");
+
+        std::cout << "// ----------------------------------------------------------------------- //\n";
+        std::cout << "//                  Finished Quaternion test.\n";
         std::cout << "//------------------------------------------------------------------------ //\n";
     }
 

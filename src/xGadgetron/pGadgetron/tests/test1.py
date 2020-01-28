@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test set 1.
+"""sirf.Gadgetron Test set 1.
 v{version}
 
 Fully sampled data tests
@@ -15,9 +15,10 @@ Options:
 
 {licence}
 """
-from pGadgetron import *
 # Created on Tue Nov 21 10:17:28 2017
-__version__ = "0.2.0"
+from sirf.Gadgetron import *
+from sirf.Utilities import runner, RE_PYEXT, __license__
+__version__ = "0.2.3"
 __author__ = "Evgueni Ovtchinnikov, Casper da Costa-Luis"
 
 
@@ -26,7 +27,7 @@ def test_main(rec=False, verb=False, throw=True):
     test = pTest(datafile, rec, throw=throw)
     test.verbose = verb
 
-    data_path = mr_data_path()
+    data_path = examples_data_path('MR')
     input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
     test.check(input_data.norm())
 

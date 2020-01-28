@@ -27,11 +27,11 @@ limitations under the License.
 \author CCP PETMR
 */
 
-#include "sirf/cReg/NiftyF3dSym.h"
-#include "sirf/cReg/Parser.h"
-#include "sirf/cReg/AffineTransformation.h"
-#include "sirf/cReg/NiftiImageData3D.h"
-#include "sirf/cReg/NiftiImageData3DDisplacement.h"
+#include "sirf/Reg/NiftyF3dSym.h"
+#include "sirf/Reg/Parser.h"
+#include "sirf/Reg/AffineTransformation.h"
+#include "sirf/Reg/NiftiImageData3D.h"
+#include "sirf/Reg/NiftiImageData3DDisplacement.h"
 #include <_reg_f3d_sym.h>
 
 using namespace sirf;
@@ -54,6 +54,9 @@ void NiftyF3dSym<dataType>::process()
     _registration_sptr->SetFloatingImage(ref.get_raw_nifti_sptr().get());
     _registration_sptr->SetReferenceImage(flo.get_raw_nifti_sptr().get());
 
+    // By default, use a padding value of 0
+    _registration_sptr->SetWarpedPaddingValue(0.f);
+
     // If there is an initial transformation matrix, set it
     if (_initial_transformation_sptr) {
         mat44 init_tm = _initial_transformation_sptr->get_as_mat44();
@@ -61,12 +64,13 @@ void NiftyF3dSym<dataType>::process()
     }
 
     // Set masks (if present). Again, need to copy to get rid of const
+    NiftiImageData3D<dataType> ref_mask, flo_mask;
     if (this->_reference_mask_nifti_sptr && this->_reference_mask_nifti_sptr->is_initialised()) {
-        NiftiImageData3D<dataType> ref_mask = *this->_reference_mask_nifti_sptr;
+        ref_mask = *this->_reference_mask_nifti_sptr;
         _registration_sptr->SetReferenceMask(ref_mask.get_raw_nifti_sptr().get());
     }
     if (this->_floating_mask_nifti_sptr && this->_floating_mask_nifti_sptr->is_initialised()) {
-        NiftiImageData3D<dataType> flo_mask = *this->_floating_mask_sptr;
+        flo_mask = *this->_floating_mask_sptr;
         _registration_sptr->SetFloatingMask(flo_mask.get_raw_nifti_sptr().get());
     }
 
@@ -82,9 +86,17 @@ void NiftyF3dSym<dataType>::process()
     _registration_sptr->Run();
 
     // Get the warped image
-    nifti_image *warped_im = *_registration_sptr->GetWarpedImage();
-    this->_warped_image_nifti_sptr = std::make_shared<NiftiImageData3D<dataType> >(*warped_im);
-    nifti_image_free(warped_im);
+    nifti_image **warped_im = _registration_sptr->GetWarpedImage();
+    this->_warped_image_nifti_sptr = std::make_shared<NiftiImageData3D<dataType> >(*warped_im[0]);
+    // Free the images created
+    if(warped_im[0]!=NULL)
+        nifti_image_free(warped_im[0]);
+    warped_im[0]=NULL;
+    if(warped_im[1]!=NULL)
+        nifti_image_free(warped_im[1]);
+    warped_im[1]=NULL;
+    free(warped_im);
+    warped_im=NULL;
 
     // For some reason, dt & pixdim[4] are sometimes set to 1
     if (this->_floating_image_nifti_sptr->get_raw_nifti_sptr()->dt < 1.e-7F &&
@@ -92,8 +104,12 @@ void NiftyF3dSym<dataType>::process()
         this->_warped_image_nifti_sptr->get_raw_nifti_sptr()->pixdim[4] = this->_warped_image_nifti_sptr->get_raw_nifti_sptr()->dt = 0.F;
 
     // Get the CPP images
-    NiftiImageData3DTensor<dataType> cpp_forward(*_registration_sptr->GetControlPointPositionImage());
-    NiftiImageData3DTensor<dataType> cpp_inverse(*_registration_sptr->GetBackwardControlPointPositionImage());
+    nifti_image * cpp_fwd_ptr = _registration_sptr->GetControlPointPositionImage();
+    nifti_image * cpp_inv_ptr = _registration_sptr->GetBackwardControlPointPositionImage();
+    NiftiImageData3DTensor<dataType> cpp_forward(*cpp_fwd_ptr);
+    NiftiImageData3DTensor<dataType> cpp_inverse(*cpp_inv_ptr);
+    nifti_image_free(cpp_fwd_ptr);
+    nifti_image_free(cpp_inv_ptr);
 
     // Get deformation fields from cpp
     NiftiImageData3DDeformation<dataType> def_fwd, def_inv;
@@ -109,6 +125,12 @@ void NiftyF3dSym<dataType>::process()
     this->_warped_image_sptr->fill(*this->_warped_image_nifti_sptr);
 
     std::cout << "\n\nRegistration finished!\n\n";
+}
+
+template<class dataType>
+void NiftyF3dSym<dataType>::print_all_wrapped_methods()
+{
+    std::cout << ${NR_f3d_list_methods};
 }
 
 template<class dataType>
