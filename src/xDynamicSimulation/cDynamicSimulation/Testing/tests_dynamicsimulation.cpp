@@ -185,8 +185,8 @@ bool tests_mr_dynsim::test_simulate_dynamics()
 		mr_dyn_sim.set_coilmaps( csm );
 
 
-		std::string const traj_name = "ITLGCRPE";
-		// std::string const traj_name = "Cartesian";
+        std::string const traj_name = "ITLGCRPE";
+        // std::string const traj_name = "Cartesian";
 
 		if( traj_name == "ITLGCRPE") 
 		{
@@ -515,7 +515,8 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		size_t const noise_label = 13;
 
 		// PETMR
-		std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
+        std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/HackathonSimulations/Hackathon012020/MRI/Input/";
+//        std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Input/";
 		// std::string const output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/Output/MRI/5DMotion/";
 
 		// FATWATER
@@ -528,8 +529,9 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
 
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
-		mr_dyn_sim.set_filename_rawdata( input_path + "/MRI/meas_MID00241_FID69145_Tho_T1_fast_ismrmrd.h5"); // PETMR
+//		mr_dyn_sim.set_filename_rawdata( input_path + "/MRI/meas_MID00241_FID69145_Tho_T1_fast_ismrmrd.h5"); // PETMR
 		// mr_dyn_sim.set_filename_rawdata( input_path + "/MR/meas_MID00443_FID81493_3DFatWater_Rpe_Sfl_bSSFP_5min_ismrmrd.h5"); //CARDIAC FWSEP
+        mr_dyn_sim.set_filename_rawdata( ISMRMRD_H5_TEST_PATH );
 
 
 		std::vector<float> roi_labels{1,2,3,4,50,72,73};
@@ -548,14 +550,14 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		mr_dyn_sim.set_coilmaps( csm );
 
 
-		// RPEInterleavedGoldenCutTrajectoryContainer rpe_traj;
-		// auto sptr_traj = std::make_shared< RPEInterleavedGoldenCutTrajectoryContainer >( rpe_traj );
-		// mr_dyn_sim.set_trajectory( sptr_traj );
+//		RPEInterleavedGoldenCutTrajectoryContainer rpe_traj;
+//		auto sptr_traj = std::make_shared< RPEInterleavedGoldenCutTrajectoryContainer >( rpe_traj );
+//		mr_dyn_sim.set_trajectory( sptr_traj );
 
-		typedef RPESuperInterleavedGoldenCutTrajectoryContainer TrajType;
-		TrajType sfl_traj;
-		auto sptr_traj = std::make_shared< TrajType >( sfl_traj );
-		mr_dyn_sim.set_trajectory( sptr_traj );
+//		typedef RPESuperInterleavedGoldenCutTrajectoryContainer TrajType;
+//		TrajType sfl_traj;
+//		auto sptr_traj = std::make_shared< TrajType >( sfl_traj );
+//		mr_dyn_sim.set_trajectory( sptr_traj );
 
 		AcquisitionsVector all_acquis;
 		all_acquis.read( mr_dyn_sim.get_filename_rawdata(), false );
