@@ -68,7 +68,7 @@ public:
 	complex_float_t get_signal_for_tissuelabel( size_t const label );
 
 	sirf::GadgetronImagesVector get_contrast_filled_volumes(bool const resample_output=false);
-	ISMRMRD::Image<complex_float_t> get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output=false);
+    CFImage& get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output=false);
 
 	void match_output_dims_to_headerinfo( void );
 

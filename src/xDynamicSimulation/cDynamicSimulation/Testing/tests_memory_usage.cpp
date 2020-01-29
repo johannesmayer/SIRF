@@ -196,7 +196,7 @@ bool tests_memory::test_acquisition_vector_ordering_memory( void )
 			std::cout << "loopindex i " << i <<std::endl;
 			std::cout << "Ordering " <<std::endl;
 			
-			all_acquis.order();
+            all_acquis.sorted();
 		}
 
 		return true;

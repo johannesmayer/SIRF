@@ -60,7 +60,7 @@ void MRContrastGenerator::set_rawdata_header(const ISMRMRD::IsmrmrdHeader& hdr)
 	this->hdr_ = hdr;
 }
 
-CFImage MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
+CFImage& MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
 {
 	if( resample_output == true )
 		this->resample_to_template_image();
@@ -106,7 +106,7 @@ void MRContrastGenerator::match_output_dims_to_headerinfo( void )
 	for( int i_img=0; i_img<num_contrast_volumes; i_img++)
 	{
 
-		Image< complex_float_t > curr_image = this->get_contrast_filled_ismrmrd_img(i_img);
+		CFImage curr_image = this->get_contrast_filled_ismrmrd_img(i_img);
 		auto padded_image = curr_image;
 		padded_image.resize(enc_matrix_size.x, enc_matrix_size.y, enc_matrix_size.z, 1);
 		

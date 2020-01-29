@@ -103,12 +103,12 @@ try
 			mr_cont_gen.map_contrast();
 			DynamicSimulationDeformer::deform_contrast_generator(mr_cont_gen, vec_mvfs);
 			
-			auto curr_motion_state = mr_cont_gen.get_contrast_filled_volumes();
+            auto curr_motion_state = mr_cont_gen.get_contrast_filled_ismrmrd_img(0);
 			
 			std::stringstream filename_stream;
 			filename_stream << SHARED_FOLDER_PATH << "mr_contrast_map_state_" << i; 		
 			
-			data_io::write_ISMRMRD_Image_to_nii< complex_float_t > (filename_stream.str(), curr_motion_state[0]);
+            data_io::write_ISMRMRD_Image_to_nii< complex_float_t > (filename_stream.str(), curr_motion_state);
 		}
 
 		return true;
@@ -266,12 +266,12 @@ bool DynSimDeformerTester::test_motion_of_MotionDynamics()
 			mr_cont_gen.map_contrast();
 			DynamicSimulationDeformer::deform_contrast_generator(mr_cont_gen, vec_mvfs);
 			
-			auto curr_motion_state = mr_cont_gen.get_contrast_filled_volumes();
-			
-			std::stringstream filename_stream;
-			filename_stream << SHARED_FOLDER_PATH << "mr_contrast_map_state_from_dyn_" << i; 		
-			
-			data_io::write_ISMRMRD_Image_to_nii< complex_float_t > (filename_stream.str(), curr_motion_state[0]);
+            auto curr_motion_state = mr_cont_gen.get_contrast_filled_ismrmrd_img(0);
+
+            std::stringstream filename_stream;
+            filename_stream << SHARED_FOLDER_PATH << "mr_contrast_map_state_" << i;
+
+            data_io::write_ISMRMRD_Image_to_nii< complex_float_t > (filename_stream.str(), curr_motion_state);
 		}
 	
 		return test_succesful;

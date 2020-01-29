@@ -66,11 +66,11 @@ ISMRMRD::Image< float > DynamicSimulationDeformer::extract_complex_subpart( ISMR
 void DynamicSimulationDeformer::deform_contrast_generator(MRContrastGenerator& mr_cont_gen, std::vector<sirf::NiftiImageData3DDeformation<float> > &vec_displacement_fields)
 {
 
-	std::vector< ISMRMRD::Image< complex_float_t> >&  vect_img_data = mr_cont_gen.get_contrast_filled_volumes();
+	size_t num_images = mr_cont_gen.get_contrast_filled_volumes().number();
 
-	for(size_t i_cont=0; i_cont<vect_img_data.size(); i_cont++)
+	for(size_t i_cont=0; i_cont<num_images; i_cont++)
 	{
-		ISMRMRD::Image<complex_float_t> &curr_img = vect_img_data[i_cont];
+		CFImage& curr_img = mr_cont_gen.get_contrast_filled_ismrmrd_img(i_cont);
 		auto real_image_part =  DynamicSimulationDeformer::extract_real_part(curr_img);
 		DynamicSimulationDeformer::deform_ismrmrd_image( real_image_part, vec_displacement_fields);
 		
@@ -115,8 +115,8 @@ void DynamicSimulationDeformer::deform_ismrmrd_image(ISMRMRD::Image< float >& im
 
 	resampler.process();
 
-	auto deformed_img = resampler.get_output_sptr();
-    auto deformed_img_as_nifti = deformed_img->get_raw_nifti_sptr();
+    auto sptr_deformed_img = std::dynamic_pointer_cast< const sirf::NiftiImageData3D<float> >(resampler.get_output_sptr());
+    auto deformed_img_as_nifti = sptr_deformed_img->get_raw_nifti_sptr();
 	
 	if( deformed_img_as_nifti->nvox != img.getNumberOfDataElements() )
 	{
