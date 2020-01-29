@@ -57,46 +57,25 @@ TARGET_INCLUDE_DIRECTORIES(cdynamicsimulation PUBLIC
 target_include_directories(cdynamicsimulation PRIVATE "${FFTW3_INCLUDE_DIR}")
 target_include_directories(cdynamicsimulation PUBLIC "${HDF5_INCLUDE_DIRS}")
 
-target_link_libraries(cdynamicsimulation iutilities)
+target_link_libraries(cdynamicsimulation PUBLIC iutilities)
 # Add boost library dependencies
 if((CMAKE_VERSION VERSION_LESS 3.5.0) OR (NOT _Boost_IMPORTED_TARGETS))
   # This is harder than it should be on older CMake versions to be able to cope with
   # spaces in filenames.
   foreach(C SYSTEM FILESYSTEM THREAD DATE_TIME CHRONO)
-    target_link_libraries(cdynamicsimulation optimized "${Boost_${C}_LIBRARY_RELEASE}")
-    target_link_libraries(cdynamicsimulation debug  "${Boost_${C}_LIBRARY_DEBUG}")
+    target_link_libraries(cdynamicsimulation PUBLIC optimized "${Boost_${C}_LIBRARY_RELEASE}")
+    target_link_libraries(cdynamicsimulation PUBLIC debug  "${Boost_${C}_LIBRARY_DEBUG}")
   endforeach()
 else()
   # Nice and simple for recent CMake (which knows about your Boost version)
-  target_link_libraries(cdynamicsimulation Boost::system Boost::filesystem Boost::thread Boost::date_time Boost::chrono)
+  target_link_libraries(cdynamicsimulation PUBLIC Boost::system Boost::filesystem Boost::thread Boost::date_time Boost::chrono)
 endif()
 
-# Note: cannot use ISMRMRD_LIBRARIES on Windows as it generally contains 
-# a list of filenames with spaces. There doesn't seem to be a way to pass this through (strange).
-# Luckily, we know what libraries it uses
-target_link_libraries(cdynamicsimulation ismrmrd)
-target_link_libraries(cdynamicsimulation "${FFTW3_LIBRARIES}")
-target_link_libraries(cdynamicsimulation "${HDF5_LIBRARIES}")
-
-
-target_link_libraries(cdynamicsimulation cgadgetron)
-target_link_libraries(cdynamicsimulation cstir)
-target_link_libraries(cdynamicsimulation Reg)
-
-target_link_libraries(cdynamicsimulation ${HDF5_CXX_LIBRARIES})
-
-set( GADGETRON_LIBRARIES_TOLINK gadgetron_toolbox_cpucore ${GADGETRON_LIBRARIES} )
-set( GADGETRON_LIBRARIES_TOLINK gadgetron_toolbox_cpufft ${GADGETRON_LIBRARIES_TOLINK} )
-set( GADGETRON_LIBRARIES_TOLINK gadgetron_toolbox_image_analyze_io ${GADGETRON_LIBRARIES_TOLINK} )
-set( GADGETRON_LIBRARIES_TOLINK gadgetron_toolbox_log ${GADGETRON_LIBRARIES_TOLINK} )
-
-#message(STATUS "#########################GADGETRON_LIBRARIES: ${GADGETRON_LIBRARIES_TOLINK}")
-
-target_link_libraries(cdynamicsimulation ${GADGETRON_LIBRARIES_TOLINK})
-
-#get_property( inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
-#message ( STATUS "##################################### include dirs #####################################: " ${inc_dirs})
+target_link_libraries(cdynamicsimulation PUBLIC cgadgetron)
+target_link_libraries(cdynamicsimulation PUBLIC cstir)
+target_link_libraries(cdynamicsimulation PUBLIC Reg)
 
 message(STATUS "XXXXXXXXXXXXXXXXXXSTIR_LIB ${STIR_LIBRARIES}")
 add_executable( TestJobs main.cpp ${STIR_REGISTRIES})
-target_link_libraries( TestJobs cdynamicsimulation ${STIR_LIBRARIES} )
+target_link_libraries( TestJobs cdynamicsimulation ${STIR_LIBRARIES} ${HDF5_LIBRARIES} ${ismrmrd_full_path} ${Gadge_libs_full_path})
+ADD_TEST(NAME SIMU_TEST_CPLUSPLUS COMMAND TestJobs WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

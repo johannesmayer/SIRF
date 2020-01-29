@@ -89,21 +89,21 @@ target_include_directories(cgadgetron PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_
 #set (cGadgetron_INCLUDE_DIR "${cGadgetron_INCLUDE_DIR}" PARENT_SCOPE)
 
 target_include_directories(cgadgetron PUBLIC "${cGadgetron_INCLUDE_DIR}")
-target_include_directories(cgadgetron PRIVATE "${FFTW3_INCLUDE_DIR}")
-target_include_directories(cgadgetron PRIVATE "${ISMRMRD_INCLUDE_DIR}")
+target_include_directories(cgadgetron PUBLIC "${FFTW3_INCLUDE_DIR}")
+target_include_directories(cgadgetron PUBLIC "${ISMRMRD_INCLUDE_DIR}")
 
-target_link_libraries(cgadgetron iutilities csirf)
+target_link_libraries(cgadgetron PUBLIC iutilities csirf)
 # Add boost library dependencies
 if((CMAKE_VERSION VERSION_LESS 3.5.0) OR (NOT _Boost_IMPORTED_TARGETS))
   # This is harder than it should be on older CMake versions to be able to cope with
   # spaces in filenames.
   foreach(C SYSTEM FILESYSTEM THREAD DATE_TIME CHRONO)
-    target_link_libraries(cgadgetron optimized "${Boost_${C}_LIBRARY_RELEASE}")
-    target_link_libraries(cgadgetron debug  "${Boost_${C}_LIBRARY_DEBUG}")
+    target_link_libraries(cgadgetron PUBLIC optimized "${Boost_${C}_LIBRARY_RELEASE}")
+    target_link_libraries(cgadgetron PUBLIC debug  "${Boost_${C}_LIBRARY_DEBUG}")
   endforeach()
 else()
   # Nice and simple for recent CMake (which knows about your Boost version)
-  target_link_libraries(cgadgetron Boost::system Boost::filesystem Boost::thread Boost::date_time Boost::chrono)
+  target_link_libraries(cgadgetron PUBLIC Boost::system Boost::filesystem Boost::thread Boost::date_time Boost::chrono)
 endif()
 
 # Note: cannot use ISMRMRD_LIBRARIES on Windows as it generally contains 
@@ -113,10 +113,10 @@ find_library(ismrmrd_full_path "ismrmrd" "${ISMRMRD_LIBRARY_DIRS}")
 if(NOT ismrmrd_full_path)
   message(FATAL_ERROR "ismrmrd not found")
 endif()
-target_link_libraries(cgadgetron ${ismrmrd_full_path})
-target_link_libraries(cgadgetron "${FFTW3_LIBRARIES}")
-target_link_libraries(cgadgetron "${HDF5_LIBRARIES}")
+target_link_libraries(cgadgetron PUBLIC ${ismrmrd_full_path})
+target_link_libraries(cgadgetron PUBLIC "${FFTW3_LIBRARIES}")
+target_link_libraries(cgadgetron PUBLIC "${HDF5_LIBRARIES}")
 
-target_link_libraries(cgadgetron "${SUPPLEMENTARY_GADGETRON_LIBRARIES_TOLINK}")
+target_link_libraries(cgadgetron PUBLIC "${SUPPLEMENTARY_GADGETRON_LIBRARIES_TOLINK}")
 
 
