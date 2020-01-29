@@ -34,8 +34,54 @@ if (SIRF_INSTALL_DEPENDENCIES AND WIN32)
 	endforeach()
   endif()
 	
-add_library(cgadgetron cgadgetron.cpp gadgetron_x.cpp gadgetron_data_containers.cpp gadgetron_client.cpp 
-            gadgetron_fftw.cpp ismrmrd_fftw.cpp ismrmrd_phantom.cpp shepp_logan_phantom.cpp encoding.cpp)
+  SET(SOURCE_FILES "cgadgetron.cpp" "gadgetron_x.cpp" "gadgetron_data_containers.cpp" "gadgetron_client.cpp" 
+    "gadgetron_fftw.cpp" "ismrmrd_fftw.cpp" "ismrmrd_phantom.cpp" "shepp_logan_phantom.cpp")
+
+  ##########################################################################
+  #               Gadgetron - for non-cartesian encoding                   #
+  ##########################################################################
+  # Add in non-cartesian encoding. disabled by default
+  option(DISABLE_noncartesian_encoding "Disable non-cartesian encoding" ON)
+  IF (NOT DISABLE_noncartesian_encoding)
+
+    # Find Gadgetron
+    find_path(GADGETRON_CMAKE_MODULES "FindGadgetron.cmake" HINTS "${GADGETRON_HOME}/share/gadgetron/cmake")
+    if (NOT GADGETRON_CMAKE_MODULES)
+      MESSAGE(WARNING "Non-cartesian encoding requires gadgetron, but GADGETRON_CMAKE_MODULES cannot be found. 
+        Try to set GADGETRON_HOME variable. Set DISABLE_noncartesian_encoding=ON to suppress this warning.")
+    else()
+      set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${GADGETRON_CMAKE_MODULES}")
+      find_package(Gadgetron QUIET)
+      if (NOT Gadgetron_FOUND)
+        MESSAGE(WARNING "Non-cartesian encoding requires gadgetron, but Gadgetron not found. 
+          Set DISABLE_noncartesian_encoding=ON to suppress this warning.")
+      else()
+        # If all successful, add in the encoding file
+        SET(SOURCE_FILES ${SOURCE_FILES} "encoding.cpp")
+      endif()
+    endif(NOT GADGETRON_CMAKE_MODULES)
+  endif()
+
+  # Create the cgadgetron library
+  add_library(cgadgetron "${SOURCE_FILES}")
+
+  # If necessary, link cgadgetron against Gadgetron
+  if (NOT DISABLE_noncartesian_encoding AND Gadgetron_FOUND)
+    set( GADGETRON_LIBRARIES_TOLINK "gadgetron_toolbox_cpucore" "gadgetron_toolbox_cpufft" "gadgetron_toolbox_cpunfft" 
+      "gadgetron_toolbox_image_analyze_io" "gadgetron_toolbox_log")
+
+    FOREACH(Gadge_lib ${GADGETRON_LIBRARIES_TOLINK})
+      find_library(${Gadge_lib}_full_path "${Gadge_lib}" "${GADGETRON_LIB_DIR}")
+      if(NOT ${Gadge_lib}_full_path)
+        message(FATAL_ERROR "${Gadge_lib} not found")
+      endif()
+      SET(Gadge_libs_full_path "${Gadge_libs_full_path};${${Gadge_lib}_full_path}")
+    ENDFOREACH()
+
+    add_definitions(-DUSE_NONCARTESIAN_ENCODING)
+    target_link_libraries(cgadgetron PUBLIC ${Gadge_libs_full_path})
+    target_include_directories(cgadgetron PUBLIC "${GADGETRON_INCLUDE_DIR}")
+  endif()
 
 set (cGadgetron_INCLUDE_DIR "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>$<INSTALL_INTERFACE:include>")
 target_include_directories(cgadgetron PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:include>")
