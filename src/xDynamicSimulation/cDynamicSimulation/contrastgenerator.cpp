@@ -60,14 +60,15 @@ void MRContrastGenerator::set_rawdata_header(const ISMRMRD::IsmrmrdHeader& hdr)
 	this->hdr_ = hdr;
 }
 
-ISMRMRD::Image<complex_float_t> MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
+CFImage MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
 {
 	if( resample_output == true )
 		this->resample_to_template_image();
 
-	sirf::ImageWrap iw = this->contrast_filled_volumes_.image_wrap(0);
-	auto sptr_contrast = std::make_shared<ISMRMRD::Image<complex_float_t> > ( static_cast<ISMRMRD::Image<complex_float_t>*>(iw.ptr_image()));
-	return *sptr_contrast;
+	sirf::ImageWrap iw = this->contrast_filled_volumes_.image_wrap(num);
+	CFImage* ptr_contrast = static_cast<CFImage*>(iw.ptr_image());
+	return *ptr_contrast;
+
 }
 
 sirf::GadgetronImagesVector MRContrastGenerator::get_contrast_filled_volumes(bool const resample_output)
@@ -147,9 +148,9 @@ void MRContrastGenerator::resample_to_template_image( void )
 
 }
 
-void MRContrastGenerator::append_contrast_image(const ISMRMRD::Image<complex_float_t>& img)
+void MRContrastGenerator::append_contrast_image(const CFImage& img)
 {
-	void* ptr_contrast_img = new ISMRMRD::Image<complex_float_t>(img);
+	void* ptr_contrast_img = new CFImage(img);
 	sirf::ImageWrap iw(ISMRMRD::ISMRMRD_CXFLOAT, ptr_contrast_img);
 
 	this->contrast_filled_volumes_.append(iw);

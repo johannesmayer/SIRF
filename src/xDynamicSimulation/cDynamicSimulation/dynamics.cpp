@@ -756,7 +756,7 @@ void MRContrastDynamic::bin_mr_acquisitions( AcquisitionsVector& all_acquisition
 	AcquisitionsVector time_ordered_acquisitions = all_acquisitions;
 	time_ordered_acquisitions.sort_by_time(); 
 
-	size_t const num_acquis = time_orderd_acquisitions.number();	
+	size_t const num_acquis = time_ordered_acquisitions.number();	
 
 	ISMRMRD::Acquisition first_acq, last_acq;
 	
