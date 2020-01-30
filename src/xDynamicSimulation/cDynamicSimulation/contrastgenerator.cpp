@@ -62,11 +62,18 @@ void MRContrastGenerator::set_rawdata_header(const ISMRMRD::IsmrmrdHeader& hdr)
 
 CFImage& MRContrastGenerator::get_contrast_filled_ismrmrd_img( size_t const num, bool const resample_output)
 {
-	if( resample_output == true )
-		this->resample_to_template_image();
+//	if( resample_output == true )
+//		this->resample_to_template_image();
 
-	sirf::ImageWrap iw = this->contrast_filled_volumes_.image_wrap(num);
-	CFImage* ptr_contrast = static_cast<CFImage*>(iw.ptr_image());
+    if(num<0 || num >= this->contrast_filled_volumes_.number() ||this->contrast_filled_volumes_.number()<1)
+    {
+        std::cout << "Accessing " << num << " / " << this->contrast_filled_volumes_.number() << std::endl;
+        throw std::runtime_error("Trying to access an empty GadgetronImagesVector or you are out of range.");
+    }
+
+    sirf::ImageWrap& iw = this->contrast_filled_volumes_.image_wrap(num);
+    void* vp_ismrmrdimg = iw.ptr_image();
+    CFImage* ptr_contrast = static_cast<CFImage*>(vp_ismrmrdimg);
 	return *ptr_contrast;
 
 }
@@ -139,7 +146,7 @@ void MRContrastGenerator::match_output_dims_to_headerinfo( void )
 			throw std::runtime_error("The dimensions of the segmentation do not match the header information. Please modify either one to match the other. Dimension sizes in the segmentation half of the one in the encoded space are padded to cope for readout oversampling.");				
 		}
 		
-		this->append_contrast_image(padded_image);
+        this->append_contrast_image(padded_image);
 	}
 }
 
@@ -200,7 +207,6 @@ void MRContrastGenerator::map_contrast()
 	for (size_t i= 0; i<num_voxels; i++)
 	{	
 		contrast_vector[i] = contrast_map_function(tissue_params[i], this->hdr_);
-		
 	}
 
 	size_t const num_contrasts = contrast_vector[0].size();
@@ -240,7 +246,7 @@ void MRContrastGenerator::map_contrast()
 
 		contrast_img.setContrast(i_contrast);
 
-		this->append_contrast_image(contrast_img);
+        this->append_contrast_image(contrast_img);
 	}
 }
 
@@ -571,7 +577,6 @@ void PETContrastGenerator::resample_to_template_image( void )
 		// resampler.set_reference_image(std::make_shared< sirf::STIRImageData >( contrast_volumes[i]));
 		resampler.process();
 		
-
 		auto deformed_img = std::dynamic_pointer_cast<const NiftiImageData<float> >(resampler.get_output_sptr());
 		this->contrast_filled_volumes_[i] = sirf::STIRImageData( this->template_pet_image_data_ ); //constructor for STIRImageData from ImageData does not exist yet.
 		this->contrast_filled_volumes_[i].set_data( (float*)( deformed_img->get_raw_nifti_sptr()->data ) );

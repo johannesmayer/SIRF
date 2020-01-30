@@ -45,18 +45,13 @@ ISMRMRD::Image< float > DynamicSimulationDeformer::extract_complex_subpart( ISMR
 	sub_img.setHead(cplx_img_header);
 	sub_img.resize( sub_img.getMatrixSizeX(), sub_img.getMatrixSizeY(), sub_img.getMatrixSizeZ(), sub_img.getNumberOfChannels() );
 
-
 	for( size_t i=0; i<complex_img.getNumberOfDataElements(); i++)
 	{
 		if (extract_real_part)
-		{
-			*(sub_img.begin() + i) = std::real(  *(complex_img.begin() + i ) );
-		}
+            *(sub_img.begin() + i) = std::real(  *(complex_img.begin() + i ) );
 		else
-		{
-			*(sub_img.begin() + i) = std::imag(  *(complex_img.begin() + i ) );
-		}
-	}
+            *(sub_img.begin() + i) = std::imag(  *(complex_img.begin() + i ) );
+    }
 
 	return sub_img;
 }
