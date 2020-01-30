@@ -103,7 +103,7 @@ try
 			mr_cont_gen.map_contrast();
 			DynamicSimulationDeformer::deform_contrast_generator(mr_cont_gen, vec_mvfs);
 			
-            auto curr_motion_state = mr_cont_gen.get_contrast_filled_ismrmrd_img(0);
+            ISMRMRD::Image<complex_float_t> curr_motion_state = mr_cont_gen.get_contrast_filled_ismrmrd_img(0);
 			
 			std::stringstream filename_stream;
 			filename_stream << SHARED_FOLDER_PATH << "mr_contrast_map_state_" << i; 		
