@@ -59,12 +59,11 @@ VoxelisedGeometricalInfo3D read_voxelised_geometry_info_from_h5_dataset( const s
 		geo_size   [i] = data_size[i];
 	}
 		
-	// THIS ORIENTATION NEEDS TO BE FIXED DUE TO STIRs ++- ORIENTATION
-	VoxelisedGeometricalInfo3D::Coordinate l_dir, p_dir, s_dir;
+    VoxelisedGeometricalInfo3D::Coordinate l_dir, p_dir, s_dir;
 
-	l_dir[0]=1; 	l_dir[1]= 0;	l_dir[2]=0;
-	p_dir[0]=0; 	p_dir[1]= 1;	p_dir[2]=0;
-	s_dir[0]=0; 	s_dir[1]= 0;	s_dir[2]=-1;
+    l_dir[0]=-1; 	l_dir[1]=0;     l_dir[2]=0;
+    p_dir[0]=0; 	p_dir[1]=-1;     p_dir[2]=0;
+    s_dir[0]=0; 	s_dir[1]=0;     s_dir[2]=1;
 
 
     VoxelisedGeometricalInfo3D::DirectionMatrix geo_dir;
