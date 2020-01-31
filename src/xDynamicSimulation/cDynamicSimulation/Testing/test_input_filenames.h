@@ -18,7 +18,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #define ANALYZE_OUTPUT_TESTPATH SHARED_FOLDER_PATH "analyze_test_output"
 
 #define USE_128_CUBE_INPUT
-// #define USE_192_CUBE_INPUT
+//#define USE_192_CUBE_INPUT
 // #define USE_208_CUBE_INPUT
 
 #ifdef USE_64_CUBE_INPUT
@@ -39,7 +39,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 
 #elif defined(USE_128_CUBE_INPUT)
 
-	#define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_128.h5"
+    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_ras_geomertry_128.h5"
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_SR_128Cube_1Echo_10Dyn.h5"
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_128Cube_1Echo.h5"   
 	
@@ -58,10 +58,10 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 
 
 	#define DISPLACEMENT_FIELD_PATH SHARED_FOLDER_PATH ""
-	
-	#define PET_TEMPLATE_CONTRAST_IMAGE_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/PET/SourceData/template_image_input_contgen.hv"
-	#define PET_TEMPLATE_ACQUISITION_IMAGE_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/PET/SourceData/template_image_input_acquisition.hv"
-	#define PET_TEMPLATE_ACQUISITION_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/PET/SourceData/template_span11.hs"
+
+    #define PET_TEMPLATE_CONTRAST_IMAGE_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/Hackathon012020/PET/Input/template_image_input_contgen.hv"
+    #define PET_TEMPLATE_ACQUISITION_IMAGE_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/Hackathon012020/PET/Input/template_image_input_acquisition.hv"
+    #define PET_TEMPLATE_ACQUISITION_DATA_PATH SHARED_FOLDER_PATH "HackathonSimulations/Hackathon012020/PET/Input/template_span11.hs"
 
 #elif defined(USE_192_CUBE_INPUT)
 
@@ -69,8 +69,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 	#define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "PublicationData/Input/DCE/meas_MID00533_FID13197_Abd_CV_rpe_192_1_5mm_233perc_5_8_789Hz_ismrmrd.h5" 
 	// #define ISMRMRD_H5_TEST_PATH  SHARED_FOLDER_PATH "h5_source_files/CV_nav_cart_192Cube_1Echo.h5" 
 	
-	#define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_192.h5"
-	// #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "XCATSegmentations/xcat192Cube_DCE/xcat_phantom_incl_geomertry_192_dce.h5"
+    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_192.h5"
+//	#define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "XCATSegmentations/xcat192Cube_DCE/xcat_phantom_incl_geomertry_192_dce.h5"
 
 	#define DISPLACEMENT_FIELD_PATH SHARED_FOLDER_PATH ""
 
