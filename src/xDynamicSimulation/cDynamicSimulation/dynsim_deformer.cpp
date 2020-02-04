@@ -108,7 +108,13 @@ void DynamicSimulationDeformer::deform_ismrmrd_image(ISMRMRD::Image< float >& im
 		resampler.add_transformation(disp_trafo);
 	}
 
-	resampler.process();
+//    std::shared_ptr<sirf::NiftiImageData3D<float> > sptr_deformed_img = resampler.forward(sptr_img_to_deform);
+
+    resampler.process();
+
+//    auto sptr_deformed_img = std::dynamic_pointer_cast< const sirf::NiftiImageData3D<float> >(resampler.get_output_sptr());
+//    auto deformed_img_as_nifti = sptr_deformed_img->get_raw_nifti_sptr();
+
 
     auto sptr_deformed_img = std::dynamic_pointer_cast< const sirf::NiftiImageData3D<float> >(resampler.get_output_sptr());
     auto deformed_img_as_nifti = sptr_deformed_img->get_raw_nifti_sptr();
@@ -119,7 +125,7 @@ void DynamicSimulationDeformer::deform_ismrmrd_image(ISMRMRD::Image< float >& im
 		throw std::runtime_error("Something went wrong during the resampling. The output image and input image have different number of voxels.");
 	}
 
-	memcpy(img.begin(), deformed_img_as_nifti->data, sizeof(float) * deformed_img_as_nifti->nvox);
+    memcpy(img.begin(), deformed_img_as_nifti->data, sizeof(float) * deformed_img_as_nifti->nvox);
 }
 
 
@@ -189,7 +195,8 @@ void DynamicSimulationDeformer::deform_pet_image(STIRImageData& img, std::vector
 
 	resampler.process();
 
-	auto deformed_img = resampler.get_output_sptr();
-	deformed_img->write( "/media/sf_SharedFolder/CCPPETMR/img_post_deforming" );
+    auto deformed_img = resampler.get_output_sptr();
+
+//    deformed_img->write( "/media/sf_CPPETMR/img_post_deforming.nii" );
     img.sirf::ImageData::fill(*deformed_img);
 }
