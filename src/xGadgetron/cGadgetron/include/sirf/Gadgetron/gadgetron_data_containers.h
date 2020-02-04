@@ -215,7 +215,10 @@ namespace sirf {
 
 		int index(int i) const
 		{
-			if (index_.size()>0 && i >= 0 && i < (int)number())
+			int ni = index_.size();
+			if (ni > 0 && i >= ni || i < 0)
+				THROW("Aquisition number is out of range");
+			if (ni > 0)
 				return index_[i];
 			else
 			{
@@ -493,7 +496,10 @@ namespace sirf {
 		const std::vector<int>& index() const { return index_; }
 		int index(int i) const
 		{
-			if (index_.size()>0 && i < index_.size() && i >= 0)
+			int ni = index_.size();
+			if (ni > 0 && i >= ni || i < 0)
+				THROW("Image number is out of range");
+			if (ni > 0)
 				return index_[i];
 			else
 				return i;

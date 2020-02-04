@@ -273,6 +273,37 @@ int main(int argc, char* argv[])
         if (!x.get_contains_nans())
             throw std::runtime_error("NiftiImageData::get_contains_nans() 2 failed.");
 
+        // Test that eg im += 5 gives same as im = im + 5
+        NiftiImageData<float> aa = *flo_aladin->clone();
+        NiftiImageData<float> bb = *flo_aladin->clone();
+        aa = aa + 5;
+        bb += 5;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::+= (scalar) failed");
+        aa = aa - 5;
+        bb -= 5;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::-= (scalar) failed");
+        aa = aa * 5;
+        bb *= 5;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::*= failed");
+        aa = aa / 5;
+        bb /= 5;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::/= failed");
+
+        aa = aa + aa;
+        bb += bb;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::+= failed");
+        aa = aa - aa;
+        bb -= bb;
+        if (bb != aa)
+            throw std::runtime_error("NiftiImageData::-= failed");
+
+
+
 
         std::cout << "// ----------------------------------------------------------------------- //\n";
         std::cout << "//                  Finished NiftiImageData test.\n";
@@ -808,6 +839,8 @@ int main(int argc, char* argv[])
         nr1.set_floating_image(flo_aladin);
         nr1.set_interpolation_type_to_cubic_spline(); // try different interpolations
         nr1.set_interpolation_type(NiftyResample<float>::CUBICSPLINE); // try different interpolations (cubic)
+        nr1.add_transformation(tm_iden);
+        nr1.clear_transformations();
         nr1.add_transformation(tm_iden);
         nr1.add_transformation(tm);
         nr1.process();
