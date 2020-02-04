@@ -11,11 +11,11 @@ namespace sirf{
 class aTrajectoryPreparation{
 
 public:
-    aTrajectoryPreparation();
+    aTrajectoryPreparation(){}
     virtual void set_trajectory(sirf::MRAcquisitionData& mr_acq)=0;
 protected:
 
-    virtual void update_acquisitions_info(sirf::MRAcquisitionData& mr_acq)=0;
+    void update_acquisitions_info(sirf::MRAcquisitionData& mr_acq);
 
     ISMRMRD::Encoding kspace_encoding_;
     ISMRMRD::TrajectoryType traj_type_;
@@ -34,6 +34,8 @@ public:
         traj_dim_ = 0;
     }
     virtual void set_trajectory(sirf::MRAcquisitionData& mr_acq);
+protected:
+    virtual std::vector<float> compute_trajectory(ISMRMRD::Acquisition& acq){return std::vector<float>{};}
 
 };
 
