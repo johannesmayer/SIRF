@@ -222,7 +222,6 @@ namespace sirf {
 				throw LocalisedException("Trying to access out of range acquisition.", __FILE__, __LINE__);
 			}
 		}
-
     	/*! 
     		\brief Reader for ISMRMRD::Acquisition from ISMRMRD file. 
       		*	filename_ismrmrd_with_ext:	filename of ISMRMRD rawdata file with .h5 extension.
