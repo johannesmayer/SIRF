@@ -6,6 +6,22 @@
 #include <ismrmrd/xml.h>
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
 
+
+
+/*!
+\file
+\ingroup Fourier Encoding
+\brief Specification file for preparing MRAcquisitionData for Fourier encoding.
+
+\author Johannes Mayer
+\author CCP PETMR
+*/
+
+/*!
+\ingroup Fourier Encoding
+\brief Abstract class for trajectory preparation
+
+*/
 namespace sirf{
 
 class aTrajectoryPreparation{
@@ -26,6 +42,12 @@ protected:
     virtual std::vector<float> calculate_trajectory(ISMRMRD::Acquisition& acq)=0;
 };
 
+/*!
+\ingroup Fourier Encoding
+\brief Cartesian trajectory preparation class
+
+*/
+
 class CartesianTrajectoryPrep : public aTrajectoryPreparation{
 
 public:
@@ -41,7 +63,11 @@ protected:
     virtual std::vector<float> calculate_trajectory(ISMRMRD::Acquisition& acq){return std::vector<float>{};}
 };
 
+/*!
+\ingroup Fourier Encoding
+\brief Golden Radial Phase Encoding interleaved trajectory preparation class.
 
+*/
 class GRPETrajectoryPrep : public aTrajectoryPreparation {
 
 public:
