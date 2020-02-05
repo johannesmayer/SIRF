@@ -56,7 +56,6 @@ bool test_GRPETrajectoryPrep_set_trajectory( void )
 }
 
 
-
 int main ()
 {
 	try{
@@ -66,8 +65,10 @@ int main ()
 
         return 0;
 	}
-	catch(...)
-	{
-
-	}
+    catch(const std::exception &error) {
+        std::cerr << "\nHere's the error:\n\t" << error.what() << "\n\n";
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
+
