@@ -3,10 +3,7 @@
 
 
 #include <sstream>
-<<<<<<< HEAD
-=======
 #include <math.h>
->>>>>>> sirf-master
 
 #include "sirf/iUtilities/LocalisedException.h"
 
@@ -14,22 +11,16 @@
 using namespace sirf;
 using namespace ISMRMRD;
 
-<<<<<<< HEAD
-=======
 #define SIRF_GOLDEN_ANGLE M_PI*(3-sqrt(5))
 
 
->>>>>>> sirf-master
 void sirf::aTrajectoryPreparation::update_acquisitions_info(MRAcquisitionData& mr_acq)
 {
 
     IsmrmrdHeader hdr = mr_acq.acquisitions_info().get_IsmrmrdHeader();
 
-<<<<<<< HEAD
-    if(hdr.encoding.size() > 0)
-=======
+
     if(hdr.encoding.size() != 1)
->>>>>>> sirf-master
         throw LocalisedException("Currrently only files with one encoding are supported", __FILE__, __LINE__);
 
     hdr.encoding[0].trajectory = this->traj_type_;
@@ -47,8 +38,7 @@ void sirf::CartesianTrajectoryPrep::set_trajectory(MRAcquisitionData& mr_acq)
     update_acquisitions_info(mr_acq); // do nothing for cartesian trajectories
 }
 
-<<<<<<< HEAD
-=======
+
 void sirf::GRPETrajectoryPrep::set_trajectory(MRAcquisitionData& mr_acq)
 {
     update_acquisitions_info(mr_acq);
@@ -98,4 +88,3 @@ std::vector<float> sirf::GRPETrajectoryPrep::calculate_trajectory(Acquisition& a
 
     return traj;
 }
->>>>>>> sirf-master
