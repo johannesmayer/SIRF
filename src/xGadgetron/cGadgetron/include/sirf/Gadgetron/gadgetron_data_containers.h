@@ -706,7 +706,12 @@ namespace sirf {
 			images_.push_back(gadgetron::shared_ptr<ImageWrap>
 				(new ImageWrap(image_data_type, ptr_image)));
 		}
-		virtual void append(const ImageWrap& iw)
+        virtual void append(CFImage& img)
+        {
+            void* vptr_img = new CFImage(img);
+            this->append(7, vptr_img);
+        }
+        virtual void append(const ImageWrap& iw)
 		{
 			images_.push_back(gadgetron::shared_ptr<ImageWrap>(new ImageWrap(iw)));
 		}
@@ -1083,8 +1088,8 @@ namespace sirf {
 			append(sptr_img);
 		}
 
-        virtual void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img)=0;
-        virtual void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels)=0;
+        virtual void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)=0;
+        virtual void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)=0;
 
 	protected:
 		int csm_smoothness_;
@@ -1146,11 +1151,11 @@ namespace sirf {
 		{
 			CoilDataVector::append(sptr_cd);
 		}
-        virtual CoilDataAsCFImage get_csm_as_CFImage();
 
+        virtual CFImage get_csm_as_CFImage();
 
-        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img);
-        void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels);
+        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
+        void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
 
 	private:
 		virtual CoilSensitivitiesAsImages* clone_impl() const
