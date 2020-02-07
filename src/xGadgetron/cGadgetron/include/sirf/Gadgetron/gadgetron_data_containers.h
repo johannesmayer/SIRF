@@ -1068,6 +1068,8 @@ namespace sirf {
 			append(sptr_img);
 		}
 
+        void apply_coil_sensitivities(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
+        void combine_coils(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
 
 	protected:
 		int csm_smoothness_;
@@ -1130,8 +1132,6 @@ namespace sirf {
 			CoilDataVector::append(sptr_cd);
 		}
 
-        void apply_coil_sensitivities(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
-        void combine_coils(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
 
 	private:
 		virtual CoilSensitivitiesAsImages* clone_impl() const
