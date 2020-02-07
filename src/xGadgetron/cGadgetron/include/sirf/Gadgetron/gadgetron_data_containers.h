@@ -449,14 +449,14 @@ namespace sirf {
 			dim["n"] = number();
 			return dim;
 		}
-		virtual void get_image_dimensions(unsigned int im_num, int* dim)
+        virtual void get_image_dimensions(unsigned int im_num, int* dim) const
 		{
 			if (im_num >= number())
 				dim[0] = dim[1] = dim[2] = dim[3] = 0;
-			ImageWrap& iw = image_wrap(im_num);
+            const ImageWrap&  iw = image_wrap(im_num);
 			iw.get_dim(dim);
         }
-        bool check_dimension_consistency()
+        bool check_dimension_consistency() const
         {
             size_t const num_dims = 4;
             std::vector<int> first_img_dims(num_dims), temp_img_dims(num_dims);
