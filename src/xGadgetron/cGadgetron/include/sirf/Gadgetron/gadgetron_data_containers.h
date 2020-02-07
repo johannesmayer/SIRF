@@ -455,7 +455,22 @@ namespace sirf {
 				dim[0] = dim[1] = dim[2] = dim[3] = 0;
 			ImageWrap& iw = image_wrap(im_num);
 			iw.get_dim(dim);
-		}
+        }
+        bool check_dimension_consistency()
+        {
+            size_t const num_dims = 4;
+            std::vector<int> first_img_dims(num_dims), temp_img_dims(num_dims);
+
+            this->get_image_dimensions(0, &first_img_dims[0]);
+
+            bool dims_match = true;
+            for(int i=1; i<number(); ++i)
+            {
+                this->get_image_dimensions(0, &temp_img_dims[0]);
+                dims_match *= (first_img_dims == temp_img_dims);
+            }
+            return dims_match;
+        }
 		virtual gadgetron::shared_ptr<ISMRMRDImageData> 
 			new_images_container() const = 0;
 		virtual gadgetron::shared_ptr<ISMRMRDImageData>
