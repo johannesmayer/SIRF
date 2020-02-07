@@ -1743,11 +1743,7 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 	csm_smoothness_ = 0;
 }
 
-virtual void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img)
-{
-
-
-
-}
-virtual void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img)
+void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img)
+{}
+void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img)
 {}
