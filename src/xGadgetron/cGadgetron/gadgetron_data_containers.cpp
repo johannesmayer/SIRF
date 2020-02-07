@@ -1754,12 +1754,16 @@ void CoilSensitivitiesContainer::apply_coil_sensitivities(sirf::GadgetronImageDa
 
 
     individual_channels.set_meta_data( src_img.get_meta_data());
-//    GadgetronImageData& individual_channel_imgs;
+    individual_channels.clear_data();
+    for(size_t i_img=0; i_img<src_img.items(); ++i_img)
+    {
+        ImageWrap& iw_src = src_img.image_wrap(i_img);
+        for(size_t ic=0; ic<this->items(); ++ic)
+        {
 
-//    void set_meta_data(const AcquisitionsInfo &acqs_info) { acqs_info_ = acqs_info; }
-//    /// Get the meta data
-//    const AcquisitionsInfo &get_meta_data() const { return acqs_info_; }
 
+        }
+    }
 }
 void CoilSensitivitiesContainer::combine_coils(sirf::GadgetronImageData& combined_channels, const sirf::GadgetronImageData& inidvidual_channels)
 {

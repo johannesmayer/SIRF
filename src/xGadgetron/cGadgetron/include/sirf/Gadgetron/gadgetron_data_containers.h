@@ -712,7 +712,7 @@ namespace sirf {
 		}
         virtual void clear_data()
         {
-            if( true )
+            if( true )//to make empty_data go out of scope
             {
                 std::vector<gadgetron::shared_ptr<ImageWrap> > empty_data;
                 images_.swap(empty_data);
