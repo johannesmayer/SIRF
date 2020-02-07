@@ -1744,7 +1744,7 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 }
 
 
-sirf::GadgetronImageData& CoilSensitivitiesContainer::apply_coil_sensitivities( const sirf::GadgetronImageData& src_img)
+void CoilSensitivitiesContainer::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img)
 {
     if(!src_img.check_dimension_consistency())
        throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
@@ -1752,14 +1752,22 @@ sirf::GadgetronImageData& CoilSensitivitiesContainer::apply_coil_sensitivities( 
     if(src_img.dimensions()["c"] != 1)
         throw LocalisedException("The source image has more than one channel.",   __FILE__, __LINE__);
 
+
+    individual_channels.set_meta_data( src_img.get_meta_data());
+//    GadgetronImageData& individual_channel_imgs;
+
+//    void set_meta_data(const AcquisitionsInfo &acqs_info) { acqs_info_ = acqs_info; }
+//    /// Get the meta data
+//    const AcquisitionsInfo &get_meta_data() const { return acqs_info_; }
+
 }
-sirf::GadgetronImageData& CoilSensitivitiesContainer::combine_coils(const sirf::GadgetronImageData& src_img)
+void CoilSensitivitiesContainer::combine_coils(sirf::GadgetronImageData& combined_channels, const sirf::GadgetronImageData& inidvidual_channels)
 {
     // check for matching dimensions
-    if(!src_img.check_dimension_consistency())
+    if(!inidvidual_channels.check_dimension_consistency())
         throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
 
-    if(src_img.dimensions()["c"] == this->items())
+    if(inidvidual_channels.dimensions()["c"] != this->items())
         throw LocalisedException("The number of channels in the source image is not equal to the number of supplied sensitivity maps.",   __FILE__, __LINE__);
 
 }

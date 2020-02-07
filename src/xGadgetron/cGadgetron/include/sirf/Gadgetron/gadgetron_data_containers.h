@@ -429,6 +429,7 @@ namespace sirf {
 		virtual const ImageWrap& image_wrap(unsigned int im_num) const = 0;
 		virtual void append(int image_data_type, void* ptr_image) = 0;
 		virtual void append(const ImageWrap& iw) = 0;
+        virtual void clear_data()=0;
 		virtual void get_data(complex_float_t* data) const;
 		virtual void set_data(const complex_float_t* data);
 		virtual void get_real_data(float* data) const;
@@ -436,10 +437,10 @@ namespace sirf {
 		virtual int read(std::string filename, std::string variable = "", int iv = -1);
 		virtual void write(const std::string &filename, const std::string &groupname, const bool dicom) const;
 		virtual void write(const std::string &filename) const { this->write(filename, "", false); }
-		virtual Dimensions dimensions() const
+        virtual Dimensions dimensions() const
 		{
 			Dimensions dim;
-			const ImageWrap& iw = image_wrap(0);
+            const ImageWrap& iw = image_wrap(0);
 			int d[4];
 			iw.get_dim(d);
 			dim["x"] = d[0];
@@ -709,6 +710,14 @@ namespace sirf {
 		{
 			images_.push_back(gadgetron::shared_ptr<ImageWrap>(new ImageWrap(iw)));
 		}
+        virtual void clear_data()
+        {
+            if( true )
+            {
+                std::vector<gadgetron::shared_ptr<ImageWrap> > empty_data;
+                images_.swap(empty_data);
+            }
+        }
 		virtual void sort();
 		virtual gadgetron::shared_ptr<ImageWrap> sptr_image_wrap
 			(unsigned int im_num)
@@ -1068,8 +1077,8 @@ namespace sirf {
 			append(sptr_img);
 		}
 
-        sirf::GadgetronImageData& apply_coil_sensitivities( const sirf::GadgetronImageData& src_img);
-        sirf::GadgetronImageData& combine_coils(const sirf::GadgetronImageData& src_img);
+        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img);
+        void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels);
 
 	protected:
 		int csm_smoothness_;
