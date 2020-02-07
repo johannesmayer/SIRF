@@ -1068,8 +1068,8 @@ namespace sirf {
 			append(sptr_img);
 		}
 
-        void apply_coil_sensitivities(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
-        void combine_coils(sirf::GadgetronImageData& dst_img, const sirf::GadgetronImageData& src_img);
+        sirf::GadgetronImageData& apply_coil_sensitivities( const sirf::GadgetronImageData& src_img);
+        sirf::GadgetronImageData& combine_coils(const sirf::GadgetronImageData& src_img);
 
 	protected:
 		int csm_smoothness_;
