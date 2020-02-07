@@ -981,6 +981,12 @@ namespace sirf {
 		{
 			coil_data_.push_back(sptr_cd);
 		}
+        virtual gadgetron::shared_ptr<CoilData> get_coil_data_sptr()
+        {
+            if(coil_data_.size()!=1)
+                throw LocalisedException("Please provide exactly one coilmap. Maybe you need to call computer() first.", __FILE__,__LINE__);
+            return coil_data_[0];
+        }
 	private:
 		virtual CoilDataVector* clone_impl() const
 		{
@@ -1077,8 +1083,8 @@ namespace sirf {
 			append(sptr_img);
 		}
 
-        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img);
-        void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels);
+        virtual void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img)=0;
+        virtual void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels)=0;
 
 	protected:
 		int csm_smoothness_;
@@ -1140,7 +1146,11 @@ namespace sirf {
 		{
 			CoilDataVector::append(sptr_cd);
 		}
+        virtual CoilDataAsCFImage get_csm_as_CFImage();
 
+
+        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img);
+        void combine_coils(sirf::GadgetronImageData& combined_image, const sirf::GadgetronImageData& individual_channels);
 
 	private:
 		virtual CoilSensitivitiesAsImages* clone_impl() const

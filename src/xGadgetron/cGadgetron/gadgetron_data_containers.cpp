@@ -1743,8 +1743,16 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 	csm_smoothness_ = 0;
 }
 
+CoilDataAsCFImage CoilSensitivitiesAsImages::get_csm_as_CFImage()
+{
 
-void CoilSensitivitiesContainer::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img)
+    gadgetron::shared_ptr<CoilData> sptr_cd = CoilDataVector::get_coil_data_sptr();
+    auto cdi = std::dynamic_pointer_cast<CoilDataAsCFImage>(sptr_cd);
+
+    return *cdi;
+}
+
+void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, const sirf::GadgetronImageData& src_img)
 {
     if(!src_img.check_dimension_consistency())
        throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
@@ -1757,15 +1765,15 @@ void CoilSensitivitiesContainer::apply_coil_sensitivities(sirf::GadgetronImageDa
     individual_channels.clear_data();
     for(size_t i_img=0; i_img<src_img.items(); ++i_img)
     {
-        ImageWrap& iw_src = src_img.image_wrap(i_img);
-        for(size_t ic=0; ic<this->items(); ++ic)
-        {
+//        ImageWrap& iw_src = src_img.image_wrap(i_img);
+//        for(size_t ic=0; ic<this->items(); ++ic)
+//        {
 
 
-        }
+//        }
     }
 }
-void CoilSensitivitiesContainer::combine_coils(sirf::GadgetronImageData& combined_channels, const sirf::GadgetronImageData& inidvidual_channels)
+void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_channels, const sirf::GadgetronImageData& inidvidual_channels)
 {
     // check for matching dimensions
     if(!inidvidual_channels.check_dimension_consistency())
