@@ -209,6 +209,8 @@ namespace sirf {
 		bool sorted() const { return sorted_; }
 		void set_sorted(bool sorted) { sorted_ = sorted; }
 
+        std::vector<std::vector<int> > get_kspace_order();
+
 		std::vector<int> index() { return index_; }
 		const std::vector<int>& index() const { return index_; }
 

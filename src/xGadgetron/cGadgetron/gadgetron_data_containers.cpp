@@ -585,6 +585,61 @@ MRAcquisitionData::sort_by_time()
 
 }
 
+std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order()
+{
+    ISMRMRD::IsmrmrdHeader header;
+    ISMRMRD::deserialize(this->acqs_info_.c_str(), header);
+
+    auto encoding_vector = header.encoding;
+
+    if(encoding_vector.size()>1)
+        throw LocalisedException("Curerntly only one encoding is supported. You supplied multiple in one ismrmrd file.", __FUNCTION__, __LINE__);
+
+    ISMRMRD::Encoding encoding = encoding_vector[0];
+    ISMRMRD::EncodingLimits enc_lims = encoding.encodingLimits;
+
+    ISMRMRD::Limit lim_avg      = enc_lims.average.get();
+    ISMRMRD::Limit lim_slice    = enc_lims.slice.get();
+    ISMRMRD::Limit lim_cont     = enc_lims.contrast.get();
+    ISMRMRD::Limit lim_phase    = enc_lims.phase.get();
+    ISMRMRD::Limit lim_rep      = enc_lims.repetition.get();
+    ISMRMRD::Limit lim_set      = enc_lims.set.get();
+    ISMRMRD::Limit lim_segm     = enc_lims.segment.get();
+
+    int NAvg = lim_avg.maximum      - lim_avg.minimum +1;
+    int NSlice = lim_slice.maximum  - lim_slice.minimum +1;
+    int NCont = lim_cont.maximum    - lim_cont.minimum +1;
+    int NPhase = lim_phase.maximum  - lim_phase.minimum +1;
+    int NRep = lim_rep.maximum      - lim_rep.minimum +1;
+    int NSet = lim_set.maximum      - lim_set.minimum +1;
+    int NSegm = lim_segm.maximum    - lim_segm.minimum +1;
+
+    int num_total_sets = NAvg*NSlice*NCont*NPhase*NRep*NSet*NSegm;
+    std::vector<std::vector<int> > sorted_idx;
+
+    for(int i=0; i<num_total_sets; ++i)
+        sorted_idx.push_back(std::vector<int>{});
+
+    ISMRMRD::Acquisition acq;
+    for(int i=0; i<this->number(); ++i)
+    {
+        this->get_acquisition(i, acq);
+
+        int i_avg =acq.idx().average - lim_avg.minimum;
+        int i_slice =acq.idx().slice - lim_slice.minimum;
+        int i_cont =acq.idx().contrast - lim_cont.minimum;
+        int i_phase =acq.idx().phase - lim_phase.minimum;
+        int i_rep =acq.idx().repetition - lim_rep.minimum;
+        int i_set =acq.idx().set - lim_set.minimum;
+        int i_segm =acq.idx().segment - lim_segm.minimum;
+
+        int access_idx = (((((i_avg * NSlice + i_slice)*NCont + i_cont)*NPhase + i_phase)*NRep + i_rep)*NSet + i_set)*NSegm + i_segm;
+        std::cout << "( " << i << "/" << access_idx << std::endl;
+        sorted_idx.at(access_idx).push_back(i);
+    }
+}
+
+
 AcquisitionsFile::AcquisitionsFile
 (std::string filename, bool create_file, AcquisitionsInfo info)
 {

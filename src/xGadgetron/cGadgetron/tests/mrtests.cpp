@@ -129,6 +129,35 @@ bool test_apply_combine_coil_sensitivities( void )
     }
 }
 
+bool test_get_kspace_order(void)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
+        std::string fname_input = fpath_input + "CV_SR_64Cube_1Echo_10Dyn.h5";
+
+        std::cout << "Reading " << fname_input << std::endl;
+        sirf::AcquisitionsVector av;
+        av.read(fname_input);
+        std::cout << "In file " <<  fname_input << " there are " << av.number() << std::endl;
+
+        auto kspace_sorting = av.get_kspace_order();
+        std::cout << "After sorting we have " <<  kspace_sorting.size() << " different dynamics to reconstruct." << std::endl;
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw e;
+    }
+}
+
+
 
 
 int main ()
@@ -137,7 +166,8 @@ int main ()
 
 //        test_TrajectoryPreparation_constructors();
 //        test_GRPETrajectoryPrep_set_trajectory();
-        test_apply_combine_coil_sensitivities();
+//        test_apply_combine_coil_sensitivities();
+        test_get_kspace_order();
         return 0;
 	}
     catch(const std::exception &error) {
