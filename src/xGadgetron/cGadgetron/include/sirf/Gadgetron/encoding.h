@@ -86,5 +86,37 @@ protected:
 };
 
 
+
+
+class FourierEncoding
+{
+public:
+    FourierEncoding();
+
+    virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
+    virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
+
+};
+
+class Cartesian3DFourierEncoding
+{
+
+    virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac);
+    virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 } // namespace sirf
 #endif // ENCODING_H

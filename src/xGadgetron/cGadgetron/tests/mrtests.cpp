@@ -67,7 +67,7 @@ bool test_apply_combine_coil_sensitivities( void )
         size_t const Nc=4;
 
         CFImage unit_img  = CFImage(Nx,Ny,Nz,1);
-        std::cout << "num channels input "  << unit_img.getNumberOfChannels() << std::endl;
+
         for(size_t i=0;i<unit_img.getNumberOfDataElements();++i)
         {
             *(unit_img.begin()+i) = complex_float_t(1.f, 0.f);
