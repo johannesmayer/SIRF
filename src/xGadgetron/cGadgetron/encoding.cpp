@@ -5,6 +5,9 @@
 #include <sstream>
 #include <math.h>
 
+#include <cassert>
+#define assertm(exp, msg) assert(((void)msg, exp)
+
 #include "sirf/iUtilities/LocalisedException.h"
 
 
@@ -90,58 +93,73 @@ std::vector<float> sirf::GRPETrajectoryPrep::calculate_trajectory(Acquisition& a
 }
 
 
+void sirf::FourierEncoding::match_img_header_to_acquisition(CFImage& img, const ISMRMRD::Acquisition& acq)
+{
+
+    auto acq_hdr = acq.getHead();
+    auto idx = acq_hdr.idx;
+
+    img.setAverage(idx.average);
+    img.setSlice(idx.slice);
+    img.setContrast(idx.contrast);
+    img.setPhase(idx.phase);
+    img.setRepetition(idx.repetition);
+    img.setSet(idx.set);
+
+}
+
 
 
 void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionData& ac)
 {
-    CFImage& img = *ptr_img;
+//    CFImage& img = *ptr_img;
 
-    unsigned int nx = img.getMatrixSizeX();
-    unsigned int ny = img.getMatrixSizeY();
-    unsigned int nz = img.getMatrixSizeZ();
-    unsigned int nc = img.getNumberOfChannels();
+//    unsigned int nx = img.getMatrixSizeX();
+//    unsigned int ny = img.getMatrixSizeY();
+//    unsigned int nz = img.getMatrixSizeZ();
+//    unsigned int nc = img.getNumberOfChannels();
 
-    unsigned int readout = nx; //assumes the acquisitions have oversampling removed
+//    unsigned int readout = nx; //assumes the acquisitions have oversampling removed
 
-    std::vector<size_t> dims;
-    dims.push_back(readout);
-    dims.push_back(ny);
-    dims.push_back(nz);
-    dims.push_back(nc);
+//    std::vector<size_t> dims;
+//    dims.push_back(readout);
+//    dims.push_back(ny);
+//    dims.push_back(nz);
+//    dims.push_back(nc);
 
-    ISMRMRD::NDArray<complex_float_t> ci(dims);
-    memset(ci.getDataPtr(), 0, ci.getDataSize());
+//    ISMRMRD::NDArray<complex_float_t> ci(dims);
+//    memset(ci.getDataPtr(), 0, ci.getDataSize());
 
-    for (unsigned int c = 0; c < nc; c++) {
-        for (unsigned int z = 0; z < nz; z++) {
-            for (unsigned int y = 0; y < ny; y++) {
-                for (unsigned int x = 0; x < nx; x++) {
-                    ci(x, y, z, c) = (complex_float_t)img(x, y, z, c);
-                }
-            }
-        }
-    }
+//    for (unsigned int c = 0; c < nc; c++) {
+//        for (unsigned int z = 0; z < nz; z++) {
+//            for (unsigned int y = 0; y < ny; y++) {
+//                for (unsigned int x = 0; x < nx; x++) {
+//                    ci(x, y, z, c) = (complex_float_t)img(x, y, z, c);
+//                }
+//            }
+//        }
+//    }
 
-    fft3c(ci);
+//    fft3c(ci);
 
-    memset((void*)acq.getDataPtr(), 0, acq.getDataSize());
+//    memset((void*)acq.getDataPtr(), 0, acq.getDataSize());
 
-    ISMRMRD::Acquisition acq;
+//    ISMRMRD::Acquisition acq;
 
-    for(size_t i =0; i<ac.items(); ++i)
-    {
-        ac.get_acquisition(i, acq);
-        acq.resize(nx, nc, 3);
-        ky = acq.idx().kspace_encode_step_1;
-        kz = acq.idx().kspace_encode_step_2;
-        for (unsigned int c = 0; c < nc; c++) {
-            for (unsigned int s = 0; s < nx; s++) {
-                acq.data(xout, c) = ci(s, ky, kz, c);
-            }
-        }
-    }
+//    for(size_t i =0; i<ac.items(); ++i)
+//    {
+//        ac.get_acquisition(i, acq);
+//        acq.resize(nx, nc, 3);
+//        ky = acq.idx().kspace_encode_step_1;
+//        kz = acq.idx().kspace_encode_step_2;
+//        for (unsigned int c = 0; c < nc; c++) {
+//            for (unsigned int s = 0; s < nx; s++) {
+//                acq.data(xout, c) = ci(s, ky, kz, c);
+//            }
+//        }
+//    }
 
-    ac.append_acquisition(acq);
+//    ac.append_acquisition(acq);
 }
 
 void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionData& ac)
@@ -151,107 +169,74 @@ void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionD
     ISMRMRD::IsmrmrdHeader header;
     par = ac.acquisitions_info();
     ISMRMRD::deserialize(par.c_str(), header);
-    ISMRMRD::Encoding e = header.encoding[0];
-    ISMRMRD::Acquisition acq;
-    for (unsigned int i = 0; i < ac.number(); i++) {
-        ac.get_acquisition(i, acq);
-        if (!TO_BE_IGNORED(acq))
-            break;
-    }
 
-    unsigned int nx = e.reconSpace.matrixSize.x;
-    unsigned int ny = e.reconSpace.matrixSize.y;
-    unsigned int nz = e.reconSpace.matrixSize.z;
-//    unsigned int ny = e.encodedSpace.matrixSize.y;
-//    unsigned int nz = e.encodedSpace.matrixSize.z;
+    if( header.encoding.size() > 1)
+        LocalisedException("Currently only one encoding is supported per rawdata file.", __FUNCTION__, __LINE__);
+
+    ISMRMRD::Encoding e = header.encoding[0];
+
+    ISMRMRD::Acquisition acq;
+
+    ac.get_acquisition(0, acq);
+
+    unsigned int nx = e.encodedSpace.matrixSize.x;
+    unsigned int ny = e.encodedSpace.matrixSize.y;
+    unsigned int nz = e.encodedSpace.matrixSize.z;
     unsigned int nc = acq.active_channels();
+
     unsigned int readout = acq.number_of_samples();
 
-    std::vector<size_t> dims;
-    dims.push_back(readout);
-    dims.push_back(ny);
-    dims.push_back(nz);
+    if( readout > nx)
+        LocalisedException("The readout is larger than the encoded space. Possibly need to remove oversampling in r.o. direction first.", __FUNCTION__, __LINE__);
+
+    std::vector<size_t> dims, dims_dcf;
+
+    dims.push_back(nx);
+    dims.push_back(ny); dims_dcf.push_back(ny);
+    dims.push_back(nz); dims_dcf.push_back(nz);
     dims.push_back(nc);
 
+    ISMRMRD::Limit ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
+    ISMRMRD::Limit kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
+
     ISMRMRD::NDArray<complex_float_t> ci(dims);
+    ISMRMRD::NDArray<complex_float_t> dcf(dims);
+
     memset(ci.getDataPtr(), 0, ci.getDataSize());
-    const int NUMVAL = 4;
-    typedef std::array<int, NUMVAL> tuple;
-    tuple t_first;
-    bool first = true;
-    unsigned int& a = off;
-    for (; a < ac.number(); a++) {
+    memset(dcf.getDataPtr(), 1, dcf.getDataSize());
+
+    for (int a=0; a < ac.number(); a++) {
         ac.get_acquisition(a, acq);
-        if (TO_BE_IGNORED(acq))
-            continue;
-        tuple t;
-        t[0] = acq.idx().repetition;
-        t[1] = acq.idx().phase;
-        t[2] = acq.idx().contrast;
-        t[3] = acq.idx().slice;
-        if (first) {
-            t_first = t;
-            first = false;
-            std::cout << "new slice: ";
-            for (int i = 0; i < NUMVAL; i++)
-                std::cout << t[i] << ' ';
-        }
-        else if (t != t_first &&
-            !acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_LAST_IN_MEASUREMENT))
-            break;
-        int yy = acq.idx().kspace_encode_step_1;
-        int zz = acq.idx().kspace_encode_step_2;
+        int yy = ny/2 - ky_lim.center + acq.idx().kspace_encode_step_1 ;
+        int zz = nz/2 - kz_lim.center + acq.idx().kspace_encode_step_2;
+        int ro_offset = nx/2 - acq.center_sample();
         for (unsigned int c = 0; c < nc; c++) {
             for (unsigned int s = 0; s < readout; s++) {
-                ci(s, yy, zz, c) = acq.data(s, c);
+                ci(ro_offset + s, yy, zz, c) += acq.data(s, c);
+                dcf(yy, zz) += 1;
             }
         }
     }
-    std::cout << "done\n";
-    /*
-    int y = 0;
-    for (;;){
-        ac.get_acquisition(off + y, acq);
-        if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
-            break;
-        y++;
-    }
-    for (;;) {
-        ac.get_acquisition(off + y, acq);
-        int yy = acq.idx().kspace_encode_step_1;
-        int zz = acq.idx().kspace_encode_step_2;
-        for (unsigned int c = 0; c < nc; c++) {
-            for (unsigned int s = 0; s < readout; s++) {
-                ci(s, yy, zz, c) = acq.data(s, c);
-            }
-        }
-        y++;
-        if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_LAST_IN_SLICE))
-            break;
-    }
-    off += y;
-    */
+
+    // correct for double acquired PE points
+    for(unsigned int c=0; c<nc; ++c)
+    for(unsigned int z=0; z<nz; ++z)
+    for(unsigned int y=0; y<ny; ++y)
+    for(unsigned int x=0; x<nx; ++x)
+        ci(x,y,z,c) /= dcf(x,y);
+
+
+    // now if image and kspace have different dimension then you need to interpolate or pad with zeros here
 
     ifft3c(ci);
+    CFImage img = *ptr_img;
 
-    T* ptr = im.getDataPtr();
-    T s;
-    memset(ptr, 0, im.getDataSize());
-    long long int i = 0;
-    for (unsigned int c = 0; c < nc; c++) {
-        i = 0;
-        for (unsigned int z = 0; z < nz; z++) {
-            for (unsigned int y = 0; y < ny; y++) {
-                for (unsigned int x = 0; x < nx; x++, i++) {
-                    uint16_t xout = x + (readout - nx) / 2;
-                    complex_float_t zi = ci(xout, y, z, c);
-                    complex_float_t zc = csm(x, y, z, c);
-                    xGadgetronUtilities::convert_complex(std::conj(zc) * zi, s);
-                    ptr[i] += s;
-                }
-            }
-        }
-    }
+    img.resize(nx, ny, nz, nc);
+    memcpy(img.begin(), ci.begin(), ci.getDataSize());
+
+
+    // set the header correctly of the image
+
 }
 
 

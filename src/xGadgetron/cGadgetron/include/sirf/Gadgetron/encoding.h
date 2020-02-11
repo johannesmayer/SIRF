@@ -96,15 +96,16 @@ public:
     virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
     virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
 
+    virtual void match_img_header_to_acquisition(CFImage& img, const ISMRMRD::Acquisition& acq);
 };
 
-class Cartesian3DFourierEncoding
+class Cartesian3DFourierEncoding : public FourierEncoding
 {
 
     virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac);
     virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac);
 
-}
+};
 
 
 
