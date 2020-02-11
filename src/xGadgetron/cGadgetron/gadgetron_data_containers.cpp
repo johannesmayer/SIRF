@@ -612,7 +612,9 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order()
     int NPhase = lim_phase.maximum  - lim_phase.minimum +1;
     int NRep = lim_rep.maximum      - lim_rep.minimum +1;
     int NSet = lim_set.maximum      - lim_set.minimum +1;
-    int NSegm = lim_segm.maximum    - lim_segm.minimum +1;
+
+    int NSegm = 1; // lim_segm.maximum    - lim_segm.minimum +1; this has no correspondence in the header of the image
+
 
     int num_total_sets = NAvg*NSlice*NCont*NPhase*NRep*NSet*NSegm;
     std::vector<std::vector<int> > sorted_idx;
@@ -631,11 +633,26 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order()
         int i_phase =acq.idx().phase - lim_phase.minimum;
         int i_rep =acq.idx().repetition - lim_rep.minimum;
         int i_set =acq.idx().set - lim_set.minimum;
-        int i_segm =acq.idx().segment - lim_segm.minimum;
+        int i_segm = 0; //acq.idx().segment - lim_segm.minimum;
 
         int access_idx = (((((i_avg * NSlice + i_slice)*NCont + i_cont)*NPhase + i_phase)*NRep + i_rep)*NSet + i_set)*NSegm + i_segm;
-        std::cout << "( " << i << "/" << access_idx << std::endl;
         sorted_idx.at(access_idx).push_back(i);
+    }
+    return sorted_idx;
+}
+
+void MRAcquisitionData::get_subset(MRAcquisitionData& subset, std::vector<int> subset_idx)
+{
+    subset.set_acquisitions_info(this->acquisitions_info());
+
+    if(subset.number()>0)
+        throw LocalisedException("Please pass an empty MRAcquisitionnData container to store the subset in", __FUNCTION__, __LINE__);
+
+    ISMRMRD::Acquisition acq;
+    for(int i=0; i<subset_idx.size(); ++i)
+    {
+        this->get_acquisition(subset_idx[i], acq);
+        subset.append_acquisition(acq);
     }
 }
 

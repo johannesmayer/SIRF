@@ -210,6 +210,7 @@ namespace sirf {
 		void set_sorted(bool sorted) { sorted_ = sorted; }
 
         std::vector<std::vector<int> > get_kspace_order();
+        virtual void get_subset(MRAcquisitionData& subset, std::vector<int> subset_idx);
 
 		std::vector<int> index() { return index_; }
 		const std::vector<int>& index() const { return index_; }
@@ -719,11 +720,8 @@ namespace sirf {
 		}
         virtual void clear_data()
         {
-            if( true )//to make empty_data go out of scope
-            {
-                std::vector<gadgetron::shared_ptr<ImageWrap> > empty_data;
-                images_.swap(empty_data);
-            }
+            std::vector<gadgetron::shared_ptr<ImageWrap> > empty_data;
+            images_.swap(empty_data);
         }
 		virtual void sort();
 		virtual gadgetron::shared_ptr<ImageWrap> sptr_image_wrap
