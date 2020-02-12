@@ -32,6 +32,7 @@ limitations under the License.
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
 #include "sirf/Gadgetron/gadgetron_x.h"
 
+
 using namespace gadgetron;
 using namespace sirf;
 
@@ -347,18 +348,53 @@ void MRAcquisitionModel::check_data_role(const GadgetronImageData& ic)
 	}
 }
 
+bool
+MRAcquisitionModel::check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad)
+{
+
+    ISMRMRD::Acquisition acq;
+    ad.get_acquisition(0, acq);
+
+
+
+    bool are_consistent = true;
+
+    are_consistent *= ( acq.idx().average == img.getAverage());
+    are_consistent *= ( acq.idx().slice == img.getSlice());
+    are_consistent *= ( acq.idx().contrast == img.getContrast());
+    are_consistent *= ( acq.idx().phase == img.getPhase());
+    are_consistent *= ( acq.idx().repetition == img.getRepetition());
+    are_consistent *= ( acq.idx().set == img.getSet());
+
+    return are_consistent;
+}
+
 void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
-	if (cc.items() < 1)
-		throw LocalisedException
-		("coil sensitivity maps not found", __FILE__, __LINE__);
-	for (unsigned int i = 0, a = 0; i < ic.number(); i++) {
-		ImageWrap& iw = ic.image_wrap(i);
-		CoilData& csm = cc(i%cc.items());
-		fwd(iw, csm, ac, a);
-	}
+    if (cc.items() < 1)
+        throw LocalisedException
+        ("coil sensitivity maps not found", __FILE__, __LINE__);
+    auto sort_idx = ac.get_kspace_order();
+
+    if( sort_idx.size() != ic.number() )
+        throw LocalisedException("Number of images does not match number of acquisition data bins.", __FILE__, __LINE__);
+
+    for( unsigned int i=0; i<ic.number(); ++i)
+    {
+        sirf::AcquisitionsVector subset;
+        ac.get_subset(subset, sort_idx[i]);
+
+        ImageWrap iw = ic.image_wrap(i);
+        void* vptr_img = iw.ptr_image();
+        CFImage* ptr_img = static_cast<CFImage*>(vptr_img);
+
+        this->check_img_rawdata_consistency(*ptr_img, subset);
+        this->sptr_enc_->forward(ptr_img, subset);
+
+        ac.set_subset(subset, sort_idx[i]); //assume forward does not reorder the acquisitions
+    }
 }
 
 void 
@@ -368,13 +404,21 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
 	ic.set_meta_data(ac.acquisitions_info());
 	if (cc.items() < 1)
 		throw LocalisedException
-		("coil sensitivity maps not found", __FILE__, __LINE__);
-	for (unsigned int i = 0, a = 0; a < ac.number(); i++) {
-		CoilData& csm = cc(i%cc.items());
-		ImageWrap iw(sptr_imgs_->image_wrap(i));
-		bwd(iw, csm, ac, a);
-		ic.append(iw);
-	}
+        ("coil sensitivity maps not found", __FILE__, __LINE__);
+    auto sort_idx = ac.get_kspace_order();
+    for(int i=0; i<sort_idx.size(); ++i)
+    {
+        sirf::AcquisitionsVector subset;
+        ac.get_subset(subset, sort_idx[i]);
+
+        CFImage img;
+        this->sptr_enc_->backward(&img, subset);
+
+        void* vptr_img = new CFImage(img);// god help me I don't trust this!
+        ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
+
+        ic.append(iw);
+    }
 }
 
 /*

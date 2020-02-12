@@ -45,6 +45,7 @@ limitations under the License.
 #include "sirf/Gadgetron/gadgetron_client.h"
 #include "sirf/Gadgetron/gadget_lib.h"
 #include "sirf/Gadgetron/ismrmrd_fftw.h"
+#include "sirf/Gadgetron/encoding.h"
 
 #define N_TRIALS 5
 
@@ -360,7 +361,7 @@ namespace sirf {
 		
 		// make sure ic contains "true" images (and not e.g. G-factors)
 		void check_data_role(const GadgetronImageData& ic);
-
+        bool check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad);
 		// Records the acquisition template to be used. 
 		void set_acquisition_template
 			(gadgetron::shared_ptr<MRAcquisitionData> sptr_ac)
@@ -379,6 +380,11 @@ namespace sirf {
 		{
 			sptr_csms_ = sptr_csms;
 		}
+
+        void set_encoder(gadgetron::shared_ptr<sirf::FourierEncoding> sptr_enc)
+        {
+            sptr_enc_ = sptr_enc;
+        }
 
 		// Records templates
 		void set_up
@@ -460,6 +466,7 @@ namespace sirf {
 		gadgetron::shared_ptr<MRAcquisitionData> sptr_acqs_;
 		gadgetron::shared_ptr<GadgetronImageData> sptr_imgs_;
 		gadgetron::shared_ptr<CoilSensitivitiesContainer> sptr_csms_;
+        gadgetron::shared_ptr<FourierEncoding> sptr_enc_;
 
 		template< typename T>
 		void fwd_(ISMRMRD::Image<T>* ptr_img, CoilData& csm,
