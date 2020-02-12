@@ -112,54 +112,75 @@ void sirf::FourierEncoding::match_img_header_to_acquisition(CFImage& img, const 
 
 void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionData& ac)
 {
-//    CFImage& img = *ptr_img;
 
-//    unsigned int nx = img.getMatrixSizeX();
-//    unsigned int ny = img.getMatrixSizeY();
-//    unsigned int nz = img.getMatrixSizeZ();
-//    unsigned int nc = img.getNumberOfChannels();
+    std::string par;
+    ISMRMRD::IsmrmrdHeader header;
+    par = ac.acquisitions_info();
+    ISMRMRD::deserialize(par.c_str(), header);
 
-//    unsigned int readout = nx; //assumes the acquisitions have oversampling removed
+    if( header.encoding.size() > 1)
+        LocalisedException("Currently only one encoding is supported per rawdata file.", __FUNCTION__, __LINE__);
 
-//    std::vector<size_t> dims;
-//    dims.push_back(readout);
-//    dims.push_back(ny);
-//    dims.push_back(nz);
-//    dims.push_back(nc);
+    ISMRMRD::Encoding e = header.encoding[0];
 
-//    ISMRMRD::NDArray<complex_float_t> ci(dims);
-//    memset(ci.getDataPtr(), 0, ci.getDataSize());
+    ISMRMRD::Acquisition acq;
+    ac.get_acquisition(0, acq);
 
-//    for (unsigned int c = 0; c < nc; c++) {
-//        for (unsigned int z = 0; z < nz; z++) {
-//            for (unsigned int y = 0; y < ny; y++) {
-//                for (unsigned int x = 0; x < nx; x++) {
-//                    ci(x, y, z, c) = (complex_float_t)img(x, y, z, c);
-//                }
-//            }
-//        }
-//    }
 
-//    fft3c(ci);
+    unsigned int readout = acq.number_of_samples();
+    unsigned int ny_k_space = e.encodedSpace.matrixSize.y;
+    unsigned int nz_k_space = e.encodedSpace.matrixSize.z;
 
-//    memset((void*)acq.getDataPtr(), 0, acq.getDataSize());
+    ISMRMRD::Limit ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
+    ISMRMRD::Limit kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
 
-//    ISMRMRD::Acquisition acq;
+    CFImage img = *ptr_img;
 
-//    for(size_t i =0; i<ac.items(); ++i)
-//    {
-//        ac.get_acquisition(i, acq);
-//        acq.resize(nx, nc, 3);
-//        ky = acq.idx().kspace_encode_step_1;
-//        kz = acq.idx().kspace_encode_step_2;
-//        for (unsigned int c = 0; c < nc; c++) {
-//            for (unsigned int s = 0; s < nx; s++) {
-//                acq.data(xout, c) = ci(s, ky, kz, c);
-//            }
-//        }
-//    }
+    unsigned int nx = img.getMatrixSizeX();
+    unsigned int ny = img.getMatrixSizeY();
+    unsigned int nz = img.getMatrixSizeZ();
+    unsigned int nc = img.getNumberOfChannels();
 
-//    ac.append_acquisition(acq);
+    if(nx != readout || ny_k_space!= ny || nz_k_space != nz || nc != acq.active_channels())
+        throw LocalisedException("K-space dimensions and image dimensions don't match.",   __FILE__, __LINE__);
+
+
+    std::vector<size_t> dims;
+    dims.push_back(nx);
+    dims.push_back(ny);
+    dims.push_back(nz);
+    dims.push_back(nc);
+
+    ISMRMRD::NDArray<complex_float_t> ci(dims);
+    memset(ci.getDataPtr(), 0, ci.getDataSize());
+
+    for (unsigned int c = 0; c < nc; c++) {
+        for (unsigned int z = 0; z < nz; z++) {
+            for (unsigned int y = 0; y < ny; y++) {
+                for (unsigned int x = 0; x < nx; x++) {
+                    ci(x, y, z, c) = (complex_float_t)img(x, y, z, c);
+                }
+            }
+        }
+    }
+
+    fft3c(ci);
+
+    for(size_t i =0; i<ac.items(); ++i)
+    {
+        ac.get_acquisition(i, acq);
+        acq.resize(nx, nc); // no trajectory information is set
+
+        int ky = ny/2 - ky_lim.center + acq.idx().kspace_encode_step_1;
+        int kz = nz/2 - kz_lim.center + acq.idx().kspace_encode_step_2;
+
+        for (unsigned int c = 0; c < nc; c++) {
+            for (unsigned int s = 0; s < nx; s++) {
+                acq.data(s, c) = ci(s, ky, kz, c);
+            }
+        }
+        ac.set_acquisition(i, acq);
+    }
 }
 
 void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionData& ac)
