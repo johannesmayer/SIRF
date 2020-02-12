@@ -91,7 +91,7 @@ protected:
 class FourierEncoding
 {
 public:
-    FourierEncoding();
+    FourierEncoding(){}
 
     virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
     virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac)=0;
@@ -101,21 +101,13 @@ public:
 
 class Cartesian3DFourierEncoding : public FourierEncoding
 {
+public:
+    Cartesian3DFourierEncoding() : FourierEncoding() {}
 
     virtual void forward(CFImage* ptr_img, MRAcquisitionData& ac);
     virtual void backward(CFImage* ptr_img, MRAcquisitionData& ac);
 
 };
-
-
-
-
-
-
-
-
-
-
 
 
 

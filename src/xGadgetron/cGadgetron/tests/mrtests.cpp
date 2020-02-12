@@ -4,7 +4,8 @@
 
 #include "sirf/Gadgetron/encoding.h"
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
-
+#include "sirf/Gadgetron/gadgetron_x.h"
+#include "sirf/Gadgetron/gadget_lib.h"
 
 using namespace sirf;
 
@@ -191,6 +192,72 @@ bool test_get_subset()
     }
 }
 
+bool test_bwd()
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
+//        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
+        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
+
+
+//        std::string const fpath_input = "/home/sirfuser/devel/buildVM/sources/SIRF/data/examples/MR/";
+//        std::string fname_input = fpath_input + "ptb_resolutionphantom_fully_ismrmrd.h5";
+
+
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
+
+        sirf::AcquisitionsProcessor preprocessing_chain;
+
+        auto sptr_noise_gadget = std::make_shared<Gadget>(NoiseAdjustGadget());
+        auto sptr_ro_overs_gadget = std::make_shared<Gadget>(RemoveROOversamplingGadget());
+        auto sptr_asymmecho_gadget = std::make_shared<Gadget>(AsymmetricEchoAdjustROGadget());
+        auto sptr_acquisition_finish_gadget = std::make_shared<Gadget>(AcquisitionFinishGadget());
+
+        preprocessing_chain.add_gadget("", sptr_noise_gadget);
+        preprocessing_chain.add_gadget("", sptr_asymmecho_gadget);
+        preprocessing_chain.add_gadget("", sptr_ro_overs_gadget);
+        preprocessing_chain.add_gadget("", sptr_acquisition_finish_gadget);
+
+        preprocessing_chain.process(mr_rawdata);
+        auto sptr_preprocessed_rawdata = preprocessing_chain.get_output();
+
+        ISMRMRD::Acquisition acq;
+        for(int i=0; i<sptr_preprocessed_rawdata->number(); ++i)
+        {
+            sptr_preprocessed_rawdata->get_acquisition(i, acq);
+            mr_rawdata.set_acquisition(i, acq);
+        }
+        mr_rawdata.set_acquisitions_info( sptr_preprocessed_rawdata->acquisitions_info());
+
+        sirf::GadgetronImagesVector img_vec;
+        sirf::MRAcquisitionModel acquis_model;
+
+        sirf::CoilSensitivitiesAsImages csm;
+        csm.compute(mr_rawdata);
+
+        auto sptr_encoder = std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding());
+        acquis_model.set_encoder(sptr_encoder);
+
+        acquis_model.bwd(img_vec, csm, mr_rawdata);
+
+        GadgetronImagesVector combined_img = img_vec;
+        csm.combine_coils(combined_img, img_vec);
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw e;
+    }
+}
+
 int main ()
 {
 	try{
@@ -200,6 +267,7 @@ int main ()
 //        test_apply_combine_coil_sensitivities();
 //        test_get_kspace_order();
 //        test_get_subset();
+        test_bwd();
         return 0;
 	}
     catch(const std::exception &error) {

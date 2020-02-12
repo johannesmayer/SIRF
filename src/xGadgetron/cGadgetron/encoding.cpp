@@ -176,22 +176,22 @@ void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionD
     ISMRMRD::Encoding e = header.encoding[0];
 
     ISMRMRD::Acquisition acq;
-
     ac.get_acquisition(0, acq);
 
-    unsigned int nx = e.encodedSpace.matrixSize.x;
-    unsigned int ny = e.encodedSpace.matrixSize.y;
-    unsigned int nz = e.encodedSpace.matrixSize.z;
+    unsigned int readout = acq.number_of_samples();
     unsigned int nc = acq.active_channels();
 
-    unsigned int readout = acq.number_of_samples();
+    unsigned int ny = e.encodedSpace.matrixSize.y;
+    unsigned int nz = e.encodedSpace.matrixSize.z;
 
-    if( readout > nx)
-        LocalisedException("The readout is larger than the encoded space. Possibly need to remove oversampling in r.o. direction first.", __FUNCTION__, __LINE__);
+    unsigned int nx_img = e.reconSpace.matrixSize.x;
+
+    if(nx_img != readout)
+        throw LocalisedException("Number of readout points and reconstructed image dimension in readout direction are assumed the same.",   __FILE__, __LINE__);
 
     std::vector<size_t> dims, dims_dcf;
 
-    dims.push_back(nx);
+    dims.push_back(readout);
     dims.push_back(ny); dims_dcf.push_back(ny);
     dims.push_back(nz); dims_dcf.push_back(nz);
     dims.push_back(nc);
@@ -200,42 +200,45 @@ void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionD
     ISMRMRD::Limit kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
 
     ISMRMRD::NDArray<complex_float_t> ci(dims);
-    ISMRMRD::NDArray<complex_float_t> dcf(dims);
+    ISMRMRD::NDArray<float> dcf(dims);
 
     memset(ci.getDataPtr(), 0, ci.getDataSize());
-    memset(dcf.getDataPtr(), 1, dcf.getDataSize());
+    memset(dcf.getDataPtr(), 0, dcf.getDataSize());
 
     for (int a=0; a < ac.number(); a++) {
         ac.get_acquisition(a, acq);
-        int yy = ny/2 - ky_lim.center + acq.idx().kspace_encode_step_1 ;
-        int zz = nz/2 - kz_lim.center + acq.idx().kspace_encode_step_2;
-        int ro_offset = nx/2 - acq.center_sample();
+        int y = ny/2 - ky_lim.center + acq.idx().kspace_encode_step_1 ;
+        int z = nz/2 - kz_lim.center + acq.idx().kspace_encode_step_2;
         for (unsigned int c = 0; c < nc; c++) {
             for (unsigned int s = 0; s < readout; s++) {
-                ci(ro_offset + s, yy, zz, c) += acq.data(s, c);
-                dcf(yy, zz) += 1;
+                ci(s, y, z, c) += acq.data(s, c);
+                dcf(y, z) += (float)1;
             }
         }
     }
 
-    // correct for double acquired PE points
+    // correct for multi-acquired PE points
     for(unsigned int c=0; c<nc; ++c)
     for(unsigned int z=0; z<nz; ++z)
     for(unsigned int y=0; y<ny; ++y)
-    for(unsigned int x=0; x<nx; ++x)
-        ci(x,y,z,c) /= dcf(x,y);
+    for(unsigned int x=0; x<readout; ++x)
+        ci(x,y,z,c) /= (complex_float_t)std::max(1.f, dcf(y,z));
 
 
     // now if image and kspace have different dimension then you need to interpolate or pad with zeros here
-
     ifft3c(ci);
-    CFImage img = *ptr_img;
 
-    img.resize(nx, ny, nz, nc);
-    memcpy(img.begin(), ci.begin(), ci.getDataSize());
+    unsigned int ny_img = e.reconSpace.matrixSize.y;
+    unsigned int nz_img = e.reconSpace.matrixSize.z;
 
+    if( ny!=ny_img || nz!=nz_img)
+        throw LocalisedException("Phase and slice encoding are not consistent between reconstructed image and k-space.", __FILE__, __LINE__);
+
+    ptr_img->resize(nx_img, ny_img, nz_img, nc);
+    memcpy(ptr_img->begin(), ci.begin(), ci.getDataSize());
 
     // set the header correctly of the image
+    this->match_img_header_to_acquisition(*ptr_img, acq);
 
 }
 
