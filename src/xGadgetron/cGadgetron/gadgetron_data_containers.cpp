@@ -656,6 +656,18 @@ void MRAcquisitionData::get_subset(MRAcquisitionData& subset, std::vector<int> s
     }
 }
 
+void MRAcquisitionData::set_subset(MRAcquisitionData& subset, std::vector<int> subset_idx)
+{
+    if(subset.number() != subset_idx)
+        throw LocalisedException("Number of subset positions and number of acquisitions in subset don't match.", __FILE__, __LINE__);
+
+    ISMRMRD::Acquisition acq;
+    for(int i=0; i<subset_idx.size(); ++i)
+    {
+        subset.get_acquisition(i, acq);
+        this->set_acquisition(subset_idx[i], acq);
+    }
+}
 
 AcquisitionsFile::AcquisitionsFile
 (std::string filename, bool create_file, AcquisitionsInfo info)

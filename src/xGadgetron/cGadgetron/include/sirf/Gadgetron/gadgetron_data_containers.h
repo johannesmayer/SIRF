@@ -211,6 +211,7 @@ namespace sirf {
 
         std::vector<std::vector<int> > get_kspace_order();
         virtual void get_subset(MRAcquisitionData& subset, std::vector<int> subset_idx);
+        virtual void set_subset(MRAcquisitionData& subset, std::vector<int> subset_idx);
 
 		std::vector<int> index() { return index_; }
 		const std::vector<int>& index() const { return index_; }
