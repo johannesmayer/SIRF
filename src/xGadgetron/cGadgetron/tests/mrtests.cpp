@@ -199,8 +199,8 @@ bool test_bwd()
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
-//        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
-        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
+        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
+//        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
 
 
 //        std::string const fpath_input = "/home/sirfuser/devel/buildVM/sources/SIRF/data/examples/MR/";
@@ -244,8 +244,13 @@ bool test_bwd()
 
         acquis_model.bwd(img_vec, csm, mr_rawdata);
 
-        GadgetronImagesVector combined_img = img_vec;
-        csm.combine_coils(combined_img, img_vec);
+//        GadgetronImagesVector combined_img = img_vec;
+//        csm.combine_coils(combined_img, img_vec);
+
+        AcquisitionsVector mr_rawdata_simul = mr_rawdata;
+        acquis_model.fwd(img_vec, csm, mr_rawdata_simul);
+
+
 
         return true;
 
