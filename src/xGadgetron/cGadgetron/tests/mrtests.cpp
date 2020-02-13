@@ -247,10 +247,16 @@ bool test_bwd()
 //        GadgetronImagesVector combined_img = img_vec;
 //        csm.combine_coils(combined_img, img_vec);
 
+
         AcquisitionsVector mr_rawdata_simul = mr_rawdata;
         acquis_model.fwd(img_vec, csm, mr_rawdata_simul);
 
+        std::string fpath_output = "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/";
 
+        std::stringstream fname_output;
+        fname_output << fpath_output <<  "output_" << __FUNCTION__ <<"_bwdfwd.h5" ;
+
+        mr_rawdata_simul.write(fname_output.str());
 
         return true;
 
