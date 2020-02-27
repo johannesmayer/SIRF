@@ -197,8 +197,7 @@ bool test_bwd()
 {
     try
     {
-        std::cout << "nag " << std::endl;
-        std::cout << "Running test " << __FUNCTION__ << std::endl;
+       std::cout << "Running test " << __FUNCTION__ << std::endl;
 
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
         std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
@@ -245,6 +244,54 @@ bool test_bwd()
     }
 }
 
+
+bool test_compute_csm_from_gadgetron()
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
+//        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
+        std::string fname_input = fpath_input + "CSM_FULLY_FOV180.h5";
+
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
+
+        preprocess_acquisition_data(mr_rawdata);
+
+        sirf::GadgetronImagesVector img_vec;
+        sirf::MRAcquisitionModel acquis_model;
+
+        sirf::CoilSensitivitiesAsImages csm;
+        csm.compute(mr_rawdata);
+
+        auto sptr_encoder = std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding());
+        acquis_model.set_encoder(sptr_encoder);
+
+        acquis_model.bwd(img_vec, csm, mr_rawdata);
+
+        sirf::ImagesProcessor img_proc_chain;
+        auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
+        img_proc_chain.add_gadget("", sptr_csm_gadget);
+
+        img_proc_chain.process(img_vec);
+
+        auto sptr_gtc_output = img_proc_chain.get_output();
+
+        std::stringstream fname_output;
+        fname_output << "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/output_" << __FUNCTION__;
+        write_cfimage_to_raw(fname_output.str(), sptr_gtc_output->image_wrap(0));
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw e;
+    }
+}
+
 int main ()
 {
 	try{
@@ -254,7 +301,8 @@ int main ()
 //        test_apply_combine_coil_sensitivities();
 //        test_get_kspace_order();
 //        test_get_subset();
-        test_bwd();
+//        test_bwd();
+        test_compute_csm_from_gadgetron();
         return 0;
 	}
     catch(const std::exception &error) {
