@@ -268,6 +268,19 @@ namespace sirf {
 		}
 	};
 
+    class CoilComputationGadget : public Gadget {
+    public:
+        CoilComputationGadget() :
+            Gadget("CoilComputation", "gadgetron_mricore", "CoilComputationGadget")
+        {
+        }
+        static const char* class_name()
+        {
+            return "CoilComputationGadget";
+        }
+
+    };
+
 	class AsymmetricEchoAdjustROGadget : public Gadget {
 	public:
 		AsymmetricEchoAdjustROGadget() :
