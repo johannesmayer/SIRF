@@ -197,30 +197,16 @@ bool test_bwd()
 {
     try
     {
+        std::cout << "nag " << std::endl;
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
         std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
-//        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
-
-
-//        std::string const fpath_input = "/home/sirfuser/devel/buildVM/sources/SIRF/data/examples/MR/";
-//        std::string fname_input = fpath_input + "ptb_resolutionphantom_fully_ismrmrd.h5";
-
 
         sirf::AcquisitionsVector mr_rawdata;
         mr_rawdata.read(fname_input);
 
-        sirf::AcquisitionsVector preproc_data;
-        preprocess_acquisition_data(mr_rawdata, preproc_data);
-
-        ISMRMRD::Acquisition acq;
-        for(int i=0; i<preproc_data.number(); ++i)
-        {
-            preproc_data.get_acquisition(i, acq);
-            mr_rawdata.set_acquisition(i, acq);
-        }
-        mr_rawdata.set_acquisitions_info( preproc_data.acquisitions_info());
+        preprocess_acquisition_data(mr_rawdata);
 
         sirf::GadgetronImagesVector img_vec;
         sirf::MRAcquisitionModel acquis_model;
@@ -233,16 +219,17 @@ bool test_bwd()
 
         acquis_model.bwd(img_vec, csm, mr_rawdata);
 
-//        GadgetronImagesVector combined_img = img_vec;
-//        csm.combine_coils(combined_img, img_vec);
+        // write results
+        std::string fpath_output = "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/";
 
+        std::stringstream fname_output;
+        fname_output << "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/output_" << __FUNCTION__;
+        write_cfimage_to_raw(fname_output.str(), img_vec.image_wrap(0));
 
         AcquisitionsVector mr_rawdata_simul = mr_rawdata;
         acquis_model.fwd(img_vec, csm, mr_rawdata_simul);
 
-        std::string fpath_output = "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/";
-
-        std::stringstream fname_output;
+        fname_output.str(std::string());
         fname_output << fpath_output <<  "output_" << __FUNCTION__ <<"_bwdfwd.h5" ;
 
         mr_rawdata_simul.write(fname_output.str());
