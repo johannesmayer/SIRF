@@ -373,9 +373,6 @@ void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
-    if (cc.items() < 1)
-        throw LocalisedException
-        ("coil sensitivity maps not found", __FILE__, __LINE__);
     auto sort_idx = ac.get_kspace_order();
 
     if( sort_idx.size() != ic.number() )
@@ -413,9 +410,7 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
 	MRAcquisitionData& ac)
 {
     ic.set_meta_data(ac.acquisitions_info());
-	if (cc.items() < 1)
-		throw LocalisedException
-        ("coil sensitivity maps not found", __FILE__, __LINE__);
+
     auto sort_idx = ac.get_kspace_order();
     for(int i=0; i<sort_idx.size(); ++i)
     {
