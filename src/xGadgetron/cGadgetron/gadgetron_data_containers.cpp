@@ -33,6 +33,8 @@ limitations under the License.
 #include "sirf/Gadgetron/cgadgetron_shared_ptr.h"
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
 #include "sirf/Gadgetron/gadgetron_x.h"
+#include "sirf/Gadgetron/gadget_lib.h"
+#include "sirf/Gadgetron/encoding.h"
 
 using namespace gadgetron;
 using namespace sirf;
@@ -446,6 +448,19 @@ MRAcquisitionData::norm() const
 		r += s*s;
 	}
 	return sqrt(r);
+}
+
+
+ISMRMRD::TrajectoryType
+MRAcquisitionData::get_trajectory_type() const
+{
+    AcquisitionsInfo hdr_as_ai = acquisitions_info();
+    ISMRMRD::IsmrmrdHeader hdr = hdr_as_ai.get_IsmrmrdHeader();
+
+    if(hdr.encoding.size()!= 1)
+        throw LocalisedException("Curerntly only one encoding is supported. You supplied multiple in one ismrmrd file.", __FUNCTION__, __LINE__);
+    else
+        return hdr.encoding[0].trajectory;
 }
 
 MRAcquisitionData*
@@ -1486,89 +1501,116 @@ CoilDataAsCFImage::set_data(const float* re, const float* im)
 void 
 CoilImagesContainer::compute(MRAcquisitionData& ac)
 {
-	std::string par;
-	ISMRMRD::IsmrmrdHeader header;
-	ISMRMRD::Acquisition acq;
-	par = ac.acquisitions_info();
-	set_meta_data(par);
-	ISMRMRD::deserialize(par.c_str(), header);
-	//ac.get_acquisition(0, acq);
-	for (unsigned int i = 0; i < ac.number(); i++) {
-		ac.get_acquisition(i, acq);
-		if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
-			break;
-	}
-	encoding_ = header.encoding[0];
+    std::string par;
+    ISMRMRD::IsmrmrdHeader header;
+    ISMRMRD::Acquisition acq;
+    par = ac.acquisitions_info();
+    set_meta_data(par);
+    ISMRMRD::deserialize(par.c_str(), header);
+    //ac.get_acquisition(0, acq);
+    for (unsigned int i = 0; i < ac.number(); i++) {
+        ac.get_acquisition(i, acq);
+        if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
+            break;
+    }
+    encoding_ = header.encoding[0];
 
-	ISMRMRD::Encoding e = header.encoding[0];
-	bool parallel = e.parallelImaging.is_present() &&
-		e.parallelImaging().accelerationFactor.kspace_encoding_step_1 > 1;
-	unsigned int nx = e.reconSpace.matrixSize.x;
-	//unsigned int ny = e.reconSpace.matrixSize.y;
-	//unsigned int nz = e.reconSpace.matrixSize.z;
-	unsigned int ny = e.encodedSpace.matrixSize.y;
-	unsigned int nz = e.encodedSpace.matrixSize.z;
-	unsigned int nc = acq.active_channels();
-	unsigned int readout = acq.number_of_samples();
-	//std::cout << readout << '\n';
-	//std::cout << nx << ' ' << ny << ' ' << nz << ' ' << nc << '\n';
+    ISMRMRD::Encoding e = header.encoding[0];
+    bool parallel = e.parallelImaging.is_present() &&
+        e.parallelImaging().accelerationFactor.kspace_encoding_step_1 > 1;
+    unsigned int nx = e.reconSpace.matrixSize.x;
+    //unsigned int ny = e.reconSpace.matrixSize.y;
+    //unsigned int nz = e.reconSpace.matrixSize.z;
+    unsigned int ny = e.encodedSpace.matrixSize.y;
+    unsigned int nz = e.encodedSpace.matrixSize.z;
+    unsigned int nc = acq.active_channels();
+    unsigned int readout = acq.number_of_samples();
+    //std::cout << readout << '\n';
+    //std::cout << nx << ' ' << ny << ' ' << nz << ' ' << nc << '\n';
 
-	int nmap = 0;
-	std::cout << "map ";
+    int nmap = 0;
+    std::cout << "map ";
 
-	for (unsigned int na = 0; na < ac.number();) {
+    for (unsigned int na = 0; na < ac.number();) {
 
-		std::cout << ++nmap << ' ' << std::flush;
+        std::cout << ++nmap << ' ' << std::flush;
 
-		std::vector<size_t> ci_dims;
-		ci_dims.push_back(readout);
-		ci_dims.push_back(ny);
-		ci_dims.push_back(nz);
-		ci_dims.push_back(nc);
-		ISMRMRD::NDArray<complex_float_t> ci(ci_dims);
-		memset(ci.getDataPtr(), 0, ci.getDataSize());
+        std::vector<size_t> ci_dims;
+        ci_dims.push_back(readout);
+        ci_dims.push_back(ny);
+        ci_dims.push_back(nz);
+        ci_dims.push_back(nc);
+        ISMRMRD::NDArray<complex_float_t> ci(ci_dims);
+        memset(ci.getDataPtr(), 0, ci.getDataSize());
 
-		int y = 0;
-		for (;;) {
-			ac.get_acquisition(na + y, acq);
-			if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
-				break;
-			y++;
-		}
-		for (;;) {
-			ac.get_acquisition(na + y, acq);
-			int yy = acq.idx().kspace_encode_step_1;
-			int zz = acq.idx().kspace_encode_step_2;
-			//if (!e.parallelImaging.is_present() ||
-			if (!parallel ||
-				acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION) ||
-				acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION_AND_IMAGING)) {
-				for (unsigned int c = 0; c < nc; c++) {
-					for (unsigned int s = 0; s < readout; s++) {
-						ci(s, yy, zz, c) = acq.data(s, c);
-					}
-				}
-			}
-			y++;
-			if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_LAST_IN_SLICE))
-				break;
-		}
-		na += y;
+        int y = 0;
+        for (;;) {
+            ac.get_acquisition(na + y, acq);
+            if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
+                break;
+            y++;
+        }
+        for (;;) {
+            ac.get_acquisition(na + y, acq);
+            int yy = acq.idx().kspace_encode_step_1;
+            int zz = acq.idx().kspace_encode_step_2;
+            //if (!e.parallelImaging.is_present() ||
+            if (!parallel ||
+                acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION) ||
+                acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION_AND_IMAGING)) {
+                for (unsigned int c = 0; c < nc; c++) {
+                    for (unsigned int s = 0; s < readout; s++) {
+                        ci(s, yy, zz, c) = acq.data(s, c);
+                    }
+                }
+            }
+            y++;
+            if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_LAST_IN_SLICE))
+                break;
+        }
+        na += y;
 
-		ifft3c(ci);
+        ifft3c(ci);
 
-		shared_ptr<CoilData>
-			sptr_ci(new CoilDataAsCFImage(readout, ny, nz, nc));
-		CFImage& coil_im = (*(CoilDataAsCFImage*)sptr_ci.get()).image();
-		memcpy(coil_im.getDataPtr(), ci.getDataPtr(), ci.getDataSize());
-		append(sptr_ci);
-	}
-	std::cout << '\n';
+        shared_ptr<CoilData>
+            sptr_ci(new CoilDataAsCFImage(readout, ny, nz, nc));
+        CFImage& coil_im = (*(CoilDataAsCFImage*)sptr_ci.get()).image();
+        memcpy(coil_im.getDataPtr(), ci.getDataPtr(), ci.getDataSize());
+        append(sptr_ci);
+    }
+    std::cout << '\n';
+}
+
+void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
+{
+
+    sirf::MRAcquisitionModel acquis_model;
+
+    ISMRMRD::TrajectoryType trajtype = ac.get_trajectory_type();
+    if( trajtype == ISMRMRD::TrajectoryType::CARTESIAN )
+        acquis_model.set_encoder(std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding()));
+    else
+        throw LocalisedException("The trajectory type in the raw data is not recognized.",   __FILE__, __LINE__);
+
+    sirf::GadgetronImagesVector img_vec;
+    gadgetron::shared_ptr< sirf::CoilSensitivitiesContainer > sptr_dummy_csm;
+
+    acquis_model.bwd(img_vec, *sptr_dummy_csm, ac);
+
+    sirf::ImagesProcessor img_proc_chain;
+    auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
+    img_proc_chain.add_gadget("", sptr_csm_gadget);
+
+    img_proc_chain.process(img_vec);
+
+    this->sptr_csm_gid_ = img_proc_chain.get_output();
 }
 
 void 
 CoilSensitivitiesContainer::compute(CoilImagesContainer& cis)
 {
+    throw LocalisedException("Don't call this no more please. This has been covered elsewhere.",   __FILE__, __LINE__);
+
 	set_meta_data(cis.get_meta_data());
 	ISMRMRD::Encoding e = cis.encoding();
 	unsigned int nx = e.reconSpace.matrixSize.x;
@@ -1718,6 +1760,8 @@ CoilSensitivitiesContainer::compute_csm_(
 	ISMRMRD::NDArray<complex_float_t>& csm
 )
 {
+    throw LocalisedException("Don't call this no more please. This has been covered elsewhere.",   __FILE__, __LINE__);
+
 	int ndims = cm.getNDim();
 	const size_t* dims = cm.getDims();
 	unsigned int readout = (unsigned int)dims[0];

@@ -196,6 +196,8 @@ namespace sirf {
 		AcquisitionsInfo acquisitions_info() const { return acqs_info_; }
 		void set_acquisitions_info(std::string info) { acqs_info_ = info; }
 
+        ISMRMRD::TrajectoryType get_trajectory_type() const;
+
 		gadgetron::unique_ptr<MRAcquisitionData> clone() const
 		{
 			return gadgetron::unique_ptr<MRAcquisitionData>(this->clone_impl());
@@ -1000,7 +1002,7 @@ namespace sirf {
         virtual gadgetron::shared_ptr<CoilData> get_coil_data_sptr()
         {
             if(coil_data_.size()!=1)
-                throw LocalisedException("Please provide exactly one coilmap. Maybe you need to call computer() first.", __FILE__,__LINE__);
+                throw LocalisedException("Please provide exactly one coilmap. Maybe you need to call compute() first.", __FILE__,__LINE__);
             return coil_data_[0];
         }
 	private:
@@ -1079,15 +1081,9 @@ namespace sirf {
 		virtual CoilData& operator()(int slice) = 0;
 		virtual unsigned int items() const = 0;
 
-		virtual void compute(MRAcquisitionData& ac)
-		{
-			//if (!ac.sorted())
-			//	ac.sort();
-			CoilImagesVector cis;
-			cis.compute(ac);
-			compute(cis);
-		}
+        GadgetronImageData& get_csm(void){ return *(this->sptr_csm_gid_); }
 
+        virtual void compute(MRAcquisitionData& ac);
 		virtual void compute(CoilImagesContainer& cis);
 
 		void append_csm
@@ -1103,6 +1099,9 @@ namespace sirf {
         virtual void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)=0;
 
 	protected:
+
+        gadgetron::shared_ptr<sirf::GadgetronImageData> sptr_csm_gid_;
+
 		int csm_smoothness_;
 
 	private:
