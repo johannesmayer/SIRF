@@ -245,7 +245,7 @@ bool test_bwd()
 }
 
 
-bool test_compute_csm_from_gadgetron()
+bool test_compute_csm_from_gadget_chain()
 {
     try
     {
@@ -253,14 +253,14 @@ bool test_compute_csm_from_gadgetron()
 
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
 //        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_1Echo.h5";
-        std::string fname_input = fpath_input + "CSM_FULLY_FOV180.h5";
+        std::string fname_input = fpath_input + "CV_2D_Stack_144.h5";
 
         sirf::AcquisitionsVector mr_rawdata;
         mr_rawdata.read(fname_input);
 
         preprocess_acquisition_data(mr_rawdata);
 
-        sirf::GadgetronImagesVector img_vec;
+
         sirf::MRAcquisitionModel acquis_model;
 
         sirf::CoilSensitivitiesAsImages csm;
@@ -269,6 +269,7 @@ bool test_compute_csm_from_gadgetron()
         auto sptr_encoder = std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding());
         acquis_model.set_encoder(sptr_encoder);
 
+        sirf::GadgetronImagesVector img_vec;
         acquis_model.bwd(img_vec, csm, mr_rawdata);
 
         sirf::ImagesProcessor img_proc_chain;
@@ -277,11 +278,11 @@ bool test_compute_csm_from_gadgetron()
 
         img_proc_chain.process(img_vec);
 
-        auto sptr_gtc_output = img_proc_chain.get_output();
+        auto sptr_gadget_chain_output = img_proc_chain.get_output();
 
         std::stringstream fname_output;
         fname_output << "/media/sf_CCPPETMR/TestData/Output/xGadgetron/cGadgetron/output_" << __FUNCTION__;
-        write_cfimage_to_raw(fname_output.str(), sptr_gtc_output->image_wrap(0));
+        write_cfimage_to_raw(fname_output.str(), sptr_gadget_chain_output->image_wrap(0));
 
     }
     catch( std::runtime_error const &e)
@@ -291,6 +292,8 @@ bool test_compute_csm_from_gadgetron()
         throw e;
     }
 }
+
+
 
 int main ()
 {
@@ -302,7 +305,7 @@ int main ()
 //        test_get_kspace_order();
 //        test_get_subset();
 //        test_bwd();
-        test_compute_csm_from_gadgetron();
+        test_compute_csm_from_gadget_chain();
         return 0;
 	}
     catch(const std::exception &error) {
