@@ -15,7 +15,7 @@ void sirf::preprocess_acquisition_data(MRAcquisitionData& ad, MRAcquisitionData&
     preprocessing_chain.add_gadget("", sptr_ro_overs_gadget);
     preprocessing_chain.add_gadget("", sptr_acquisition_finish_gadget);
 
-    preprocessing_chain.process(mr_rawdata);
+    preprocessing_chain.process(ad);
     preproc_ad = *(preprocessing_chain.get_output());
 
 }

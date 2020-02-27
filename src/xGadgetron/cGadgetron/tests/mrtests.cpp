@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 
+#include "mrtest_auxiliary_funs.h"
 
 #include "sirf/Gadgetron/encoding.h"
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
@@ -210,28 +211,16 @@ bool test_bwd()
         sirf::AcquisitionsVector mr_rawdata;
         mr_rawdata.read(fname_input);
 
-        sirf::AcquisitionsProcessor preprocessing_chain;
-
-        auto sptr_noise_gadget = std::make_shared<Gadget>(NoiseAdjustGadget());
-        auto sptr_ro_overs_gadget = std::make_shared<Gadget>(RemoveROOversamplingGadget());
-        auto sptr_asymmecho_gadget = std::make_shared<Gadget>(AsymmetricEchoAdjustROGadget());
-        auto sptr_acquisition_finish_gadget = std::make_shared<Gadget>(AcquisitionFinishGadget());
-
-        preprocessing_chain.add_gadget("", sptr_noise_gadget);
-        preprocessing_chain.add_gadget("", sptr_asymmecho_gadget);
-        preprocessing_chain.add_gadget("", sptr_ro_overs_gadget);
-        preprocessing_chain.add_gadget("", sptr_acquisition_finish_gadget);
-
-        preprocessing_chain.process(mr_rawdata);
-        auto sptr_preprocessed_rawdata = preprocessing_chain.get_output();
+        sirf::AcquisitionsVector preproc_data;
+        preprocess_acquisition_data(mr_rawdata, preproc_data);
 
         ISMRMRD::Acquisition acq;
-        for(int i=0; i<sptr_preprocessed_rawdata->number(); ++i)
+        for(int i=0; i<preproc_data.number(); ++i)
         {
-            sptr_preprocessed_rawdata->get_acquisition(i, acq);
+            preproc_data.get_acquisition(i, acq);
             mr_rawdata.set_acquisition(i, acq);
         }
-        mr_rawdata.set_acquisitions_info( sptr_preprocessed_rawdata->acquisitions_info());
+        mr_rawdata.set_acquisitions_info( preproc_data.acquisitions_info());
 
         sirf::GadgetronImagesVector img_vec;
         sirf::MRAcquisitionModel acquis_model;
