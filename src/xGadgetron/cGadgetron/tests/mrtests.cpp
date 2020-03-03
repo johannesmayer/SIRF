@@ -140,19 +140,19 @@ bool test_get_kspace_order(void)
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
         std::string fname_input = fpath_input + "CV_SR_64Cube_1Echo_10Dyn.h5";
 
-//        sirf::AcquisitionsVector av;
-//        av.read(fname_input);
-//        av.sort();
+        sirf::AcquisitionsVector av;
+        av.read(fname_input);
+        av.sort();
 
-//        auto kspace_sorting = av.get_kspace_order();
+        auto kspace_sorting = av.get_kspace_order();
 
-//        fname_input = fpath_input + "CV_SR_128Cube_1Echo_3Dyn.h5";
+        fname_input = fpath_input + "CV_SR_128Cube_1Echo_3Dyn.h5";
 
-//        sirf::AcquisitionsVector av_contrast;
-//        av_contrast.read(fname_input);
-//        av_contrast.sort();
+        sirf::AcquisitionsVector av_contrast;
+        av_contrast.read(fname_input);
+        av_contrast.sort();
 
-//        auto kspace_sorting_contrast = av_contrast.get_kspace_order();
+        auto kspace_sorting_contrast = av_contrast.get_kspace_order();
 
 
         fname_input = fpath_input + "CV_2D_Stack_144.h5";
@@ -162,7 +162,6 @@ bool test_get_kspace_order(void)
         av_slice.sort();
 
         auto kspace_sorting_slice = av_slice.get_kspace_order();
-
 
         return true;
 
@@ -305,7 +304,33 @@ bool test_compute_csm_from_gadget_chain()
     }
 }
 
+bool test_compute_csm()
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
 
+        std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
+//        std::string fname_input = fpath_input + "CV_2D_Stack_144.h5";
+        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
+
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
+
+        preprocess_acquisition_data(mr_rawdata);
+
+        sirf::CoilSensitivitiesAsImages csm;
+        csm.compute(mr_rawdata);
+
+        return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw e;
+    }
+}
 
 int main ()
 {
@@ -314,10 +339,11 @@ int main ()
 //        test_TrajectoryPreparation_constructors();
 //        test_GRPETrajectoryPrep_set_trajectory();
 //        test_apply_combine_coil_sensitivities();
-        test_get_kspace_order();
+//        test_get_kspace_order();
 //        test_get_subset();
 //        test_bwd();
 //        test_compute_csm_from_gadget_chain();
+        test_compute_csm();
         return 0;
 	}
     catch(const std::exception &error) {

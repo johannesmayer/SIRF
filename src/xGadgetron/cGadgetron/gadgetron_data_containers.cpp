@@ -1607,9 +1607,27 @@ CoilImagesContainer::compute(MRAcquisitionData& ac)
 void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
 {
 
+    ac.sort();
+    auto sort_idx = ac.get_kspace_order(true);
+
+    AcquisitionsVector dat(ac.acquisitions_info());
+    for(int i=0; i<sort_idx.size(); ++i)
+    {
+        sirf::AcquisitionsVector subset;
+        ac.get_subset(subset, sort_idx[i]);
+
+        ISMRMRD::Acquisition acq;
+        for(int j=0; j<subset.number(); ++j)
+        {
+            subset.get_acquisition(j, acq);
+            dat.append_acquisition(acq);
+        }
+    }
+    dat.sort();
+
     sirf::MRAcquisitionModel acquis_model;
 
-    ISMRMRD::TrajectoryType trajtype = ac.get_trajectory_type();
+    ISMRMRD::TrajectoryType trajtype = dat.get_trajectory_type();
     if( trajtype == ISMRMRD::TrajectoryType::CARTESIAN )
         acquis_model.set_encoder(std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding()));
     else
@@ -1618,7 +1636,7 @@ void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
     sirf::GadgetronImagesVector img_vec;
     gadgetron::shared_ptr< sirf::CoilSensitivitiesContainer > sptr_dummy_csm;
 
-    acquis_model.bwd(img_vec, *sptr_dummy_csm, ac);
+    acquis_model.bwd(img_vec, *sptr_dummy_csm, dat);
 
     sirf::ImagesProcessor img_proc_chain;
     auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
