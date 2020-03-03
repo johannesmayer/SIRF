@@ -163,7 +163,6 @@ bool test_get_kspace_order(void)
 
         auto kspace_sorting_slice = av_slice.get_kspace_order();
 
-
         return true;
 
     }

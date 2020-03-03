@@ -119,10 +119,13 @@ namespace sirf {
 
     class KSpaceSorting
     {
-        typedef std::array<int, this->num_kspace_dims_> TagType;
-        typedef std::vector<size_t> SetType;
+        static int const num_kspace_dims_ = 7 + ISMRMRD::ISMRMRD_Constants::ISMRMRD_USER_INTS;
 
     public:
+
+        typedef std::array<int, num_kspace_dims_> TagType;
+        typedef std::vector<int> SetType;
+
         KSpaceSorting(){
             for(int i=0; i<num_kspace_dims_; ++i)
                 this->tag_[i] = -1;
@@ -138,7 +141,7 @@ namespace sirf {
             this->idx_set_ = idx_set;
         }
 
-        IdxType get_tag(void) const {return tag_;}
+        TagType get_tag(void) const {return tag_;}
         SetType get_set(void) const {return idx_set_;}
         void add_idx_to_set(size_t const idx){this->idx_set_.push_back(idx);}
 
@@ -153,14 +156,14 @@ namespace sirf {
             tag[5] = acq.idx().set;
             tag[6] = 0; //acq.idx().segment;
 
-            for(int i=7; i<num_kspace_dims_; ++i)
+            for(int i=7; i<tag.size(); ++i)
                 tag[i]=acq.idx().user[i];
 
             return tag;
         }
 
         bool is_first_set() const {
-            bool is_fist= (tag_[0] == 0);
+            bool is_first= (tag_[0] == 0);
             if(is_first)
             {
                for(int dim=2; dim<num_kspace_dims_; ++dim)
@@ -171,7 +174,6 @@ namespace sirf {
 
     private:
 
-        static int const num_kspace_dims_ = 7 + ISMRMRD::ISMRMRD_Constants::ISMRMRD_USER_INTS;
         // order is [average, slice, contrast, phase, repetition, set, segment, user_ (0,...,ISMRMRD_USER_INTS-1)]
         TagType tag_;
         SetType idx_set_;
@@ -272,7 +274,9 @@ namespace sirf {
 		bool sorted() const { return sorted_; }
 		void set_sorted(bool sorted) { sorted_ = sorted; }
 
-        std::vector<std::vector<int> > get_kspace_order();
+        std::vector<std::vector<int> > get_kspace_order(bool const get_first_subset_order=false);
+        void organise_kspace();
+
         virtual void get_subset(MRAcquisitionData& subset, std::vector<int> subset_idx);
         virtual void set_subset(MRAcquisitionData& subset, std::vector<int> subset_idx);
 
@@ -304,6 +308,7 @@ namespace sirf {
 	protected:
 		bool sorted_=false;
 		std::vector<int> index_;
+        std::vector<KSpaceSorting> sorting_;
 		AcquisitionsInfo acqs_info_;
 
 		static std::string _storage_scheme;
