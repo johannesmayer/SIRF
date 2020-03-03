@@ -621,15 +621,22 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order()
     ISMRMRD::Limit lim_set      = enc_lims.set.get();
     ISMRMRD::Limit lim_segm     = enc_lims.segment.get();
 
-    int NAvg = lim_avg.maximum      - lim_avg.minimum +1;
-    int NSlice = lim_slice.maximum  - lim_slice.minimum +1;
-    int NCont = lim_cont.maximum    - lim_cont.minimum +1;
-    int NPhase = lim_phase.maximum  - lim_phase.minimum +1;
-    int NRep = lim_rep.maximum      - lim_rep.minimum +1;
-    int NSet = lim_set.maximum      - lim_set.minimum +1;
+    int NAvg    = lim_avg.maximum     - lim_avg.minimum   +1;
+    int NSlice  = lim_slice.maximum   - lim_slice.minimum +1;
+    int NCont    = lim_cont.maximum   - lim_cont.minimum  +1;
+    int NPhase   = lim_phase.maximum  - lim_phase.minimum +1;
+    int NRep    = lim_rep.maximum     - lim_rep.minimum   +1;
+    int NSet    = lim_set.maximum     - lim_set.minimum   +1;
 
     int NSegm = 1; // lim_segm.maximum    - lim_segm.minimum +1; this has no correspondence in the header of the image
 
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
+    for(int = 0; <N; ++)
 
     int num_total_sets = NAvg*NSlice*NCont*NPhase*NRep*NSet*NSegm;
     std::vector<std::vector<int> > sorted_idx;
@@ -642,15 +649,9 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order()
     {
         this->get_acquisition(i, acq);
 
-        int i_avg =acq.idx().average - lim_avg.minimum;
-        int i_slice =acq.idx().slice - lim_slice.minimum;
-        int i_cont =acq.idx().contrast - lim_cont.minimum;
-        int i_phase =acq.idx().phase - lim_phase.minimum;
-        int i_rep =acq.idx().repetition - lim_rep.minimum;
-        int i_set =acq.idx().set - lim_set.minimum;
-        int i_segm = 0; //acq.idx().segment - lim_segm.minimum;
+        KSpaceSorting::TagType tag = KSpaceSorting::get_tag_from_acquisition(acq);
 
-        int access_idx = (((((i_avg * NSlice + i_slice)*NCont + i_cont)*NPhase + i_phase)*NRep + i_rep)*NSet + i_set)*NSegm + i_segm;
+        int access_idx = (((((tag[0] * NSlice + tag[1])*NCont + tag[2])*NPhase + tag[3])*NRep + tag[4])*NSet + tag[5])*NSegm + tag[6];
         sorted_idx.at(access_idx).push_back(i);
     }
     return sorted_idx;

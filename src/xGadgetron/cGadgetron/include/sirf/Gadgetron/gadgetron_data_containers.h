@@ -117,6 +117,67 @@ namespace sirf {
 		bool have_header_;
 	};
 
+    class KSpaceSorting
+    {
+        typedef std::array<int, this->num_kspace_dims_> TagType;
+        typedef std::vector<size_t> SetType;
+
+    public:
+        KSpaceSorting(){
+            for(int i=0; i<num_kspace_dims_; ++i)
+                this->tag_[i] = -1;
+        }
+
+        KSpaceSorting(TagType tag){
+            this->tag_ = tag;
+            this->idx_set_ = {};
+        }
+
+        KSpaceSorting(TagType tag, SetType idx_set){
+            this->tag_ = tag;
+            this->idx_set_ = idx_set;
+        }
+
+        IdxType get_tag(void) const {return tag_;}
+        SetType get_set(void) const {return idx_set_;}
+        void add_idx_to_set(size_t const idx){this->idx_set_.push_back(idx);}
+
+        static TagType get_tag_from_acquisition(ISMRMRD::Acquisition acq)
+        {
+            TagType tag;
+            tag[0] = acq.idx().average;
+            tag[1] = acq.idx().slice;
+            tag[2] = acq.idx().contrast;
+            tag[3] = acq.idx().phase;
+            tag[4] = acq.idx().repetition;
+            tag[5] = acq.idx().set;
+            tag[6] = 0; //acq.idx().segment;
+
+            for(int i=7; i<num_kspace_dims_; ++i)
+                tag[i]=acq.idx().user[i];
+
+            return tag;
+        }
+
+        bool is_first_set() const {
+            bool is_fist= (tag_[0] == 0);
+            if(is_first)
+            {
+               for(int dim=2; dim<num_kspace_dims_; ++dim)
+                   is_first *= (tag_[dim] == 0);
+            }
+            return is_first;
+        }
+
+    private:
+
+        static int const num_kspace_dims_ = 7 + ISMRMRD::ISMRMRD_Constants::ISMRMRD_USER_INTS;
+        // order is [average, slice, contrast, phase, repetition, set, segment, user_ (0,...,ISMRMRD_USER_INTS-1)]
+        TagType tag_;
+        SetType idx_set_;
+
+    };
+
 	/*!
 	\ingroup Gadgetron Data Containers
 	\brief Abstract MR acquisition data container class.
@@ -251,7 +312,7 @@ namespace sirf {
 		static gadgetron::shared_ptr<MRAcquisitionData> acqs_templ_;
 
 		virtual MRAcquisitionData* clone_impl() const = 0;
-		MRAcquisitionData* clone_base() const;
+        MRAcquisitionData* clone_base() const;
 	};
 
 	/*!
