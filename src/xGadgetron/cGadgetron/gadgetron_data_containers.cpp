@@ -611,9 +611,12 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order(bool get_firs
     for(int i = 0; i<sorting_.size(); ++i)
     {
         if(!get_first_subset_order)
-            output.push_back(sorting_.at(i).get_set());
+        {
+            if(sorting_.at(i).get_set().size()>0)
+               output.push_back(sorting_.at(i).get_set());
+        }
         else
-            if(sorting_.at(i).is_first_set())
+            if(sorting_.at(i).is_first_set() && sorting_.at(i).get_set().size()>0)
                 output.push_back(sorting_.at(i).get_set());
     }
     return output;
@@ -1975,10 +1978,10 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
 
     CFImage coilmaps = get_csm_as_CFImage();
 
-    size_t const Nx = coilmaps.getMatrixSizeX();
-    size_t const Ny = coilmaps.getMatrixSizeY();
-    size_t const Nz = coilmaps.getMatrixSizeZ();
-    size_t const Nc = coilmaps.getNumberOfChannels();
+    int const Nx = (int)coilmaps.getMatrixSizeX();
+    int const Ny = (int)coilmaps.getMatrixSizeY();
+    int const Nz = (int)coilmaps.getMatrixSizeZ();
+    int const Nc = (int)coilmaps.getNumberOfChannels();
 
     std::vector<int> csm_dims{Nx, Ny, Nz, Nc};
 

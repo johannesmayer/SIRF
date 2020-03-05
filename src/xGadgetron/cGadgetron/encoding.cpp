@@ -186,6 +186,9 @@ void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionDa
 void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionData& ac)
 {
 
+    if(ac.items()<1)
+        LocalisedException("No acquisitions in vector. Trying to backward transform empty vector.", __FUNCTION__, __LINE__);
+
     std::string par;
     ISMRMRD::IsmrmrdHeader header;
     par = ac.acquisitions_info();
@@ -197,6 +200,7 @@ void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionD
     ISMRMRD::Encoding e = header.encoding[0];
 
     ISMRMRD::Acquisition acq;
+
     ac.get_acquisition(0, acq);
 
     unsigned int readout = acq.number_of_samples();

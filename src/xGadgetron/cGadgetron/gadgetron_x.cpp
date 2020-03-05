@@ -414,8 +414,8 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
     auto sort_idx = ac.get_kspace_order();
     for(int i=0; i<sort_idx.size(); ++i)
     {
-
         sirf::AcquisitionsVector subset;
+
         ac.get_subset(subset, sort_idx[i]);
 
         CFImage img;
@@ -425,6 +425,7 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
         ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
 
         ic.append(iw);
+
     }
 }
 
