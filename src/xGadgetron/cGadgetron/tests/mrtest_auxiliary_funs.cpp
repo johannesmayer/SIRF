@@ -17,12 +17,10 @@ void sirf::preprocess_acquisition_data(MRAcquisitionData& ad)
     auto sptr_noise_gadget = std::make_shared<Gadget>(NoiseAdjustGadget());
     auto sptr_ro_overs_gadget = std::make_shared<Gadget>(RemoveROOversamplingGadget());
     auto sptr_asymmecho_gadget = std::make_shared<Gadget>(AsymmetricEchoAdjustROGadget());
-    auto sptr_acquisition_finish_gadget = std::make_shared<Gadget>(AcquisitionFinishGadget());
 
-    preprocessing_chain.add_gadget("", sptr_noise_gadget);
-    preprocessing_chain.add_gadget("", sptr_asymmecho_gadget);
-    preprocessing_chain.add_gadget("", sptr_ro_overs_gadget);
-    preprocessing_chain.add_gadget("", sptr_acquisition_finish_gadget);
+    preprocessing_chain.add_gadget("dummy1", sptr_noise_gadget);
+    preprocessing_chain.add_gadget("dummy2", sptr_asymmecho_gadget);
+    preprocessing_chain.add_gadget("dummy3", sptr_ro_overs_gadget);
 
     preprocessing_chain.process(ad);
     auto sptr_preproc_ad =preprocessing_chain.get_output();
@@ -36,10 +34,6 @@ void sirf::preprocess_acquisition_data(MRAcquisitionData& ad)
     ad.set_acquisitions_info( sptr_preproc_ad->acquisitions_info());
 
 }
-
-
-
-
 
 void sirf::write_cfimage_to_raw(std::string const fname_prefix, CFImage& img)
 {
