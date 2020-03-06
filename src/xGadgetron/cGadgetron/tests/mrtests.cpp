@@ -311,8 +311,8 @@ bool test_compute_csm()
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
         std::string const fpath_input = "/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/";
-//        std::string fname_input = fpath_input + "CV_2D_Stack_144.h5";
-        std::string fname_input = fpath_input + "CV_nav_cart_128Cube_3Echo.h5";
+        std::string fname_input = fpath_input + "CV_2D_Stack_144.h5";
+//        std::string fname_input = fpath_input + "CV_nav_cart_64Cube_3Echo.h5";
 
         sirf::AcquisitionsVector mr_rawdata;
         mr_rawdata.read(fname_input);
