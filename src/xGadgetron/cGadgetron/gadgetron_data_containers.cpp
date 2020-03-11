@@ -622,6 +622,18 @@ std::vector<std::vector<int> > MRAcquisitionData::get_kspace_order(bool get_firs
     return output;
 }
 
+static int get_num_enc_states( const ISMRMRD::Optional<ISMRMRD::Limit>& enc_lim)
+{
+	int num_states =1;
+
+	if(enc_lim.is_present())
+	{
+	    ISMRMRD::Limit lim = enc_lim.get();
+		num_states = lim.maximum - lim.minimum +1;
+	}
+
+	return num_states;
+}
 
 void MRAcquisitionData::organise_kspace()
 {
@@ -636,20 +648,12 @@ void MRAcquisitionData::organise_kspace()
     ISMRMRD::Encoding encoding = encoding_vector[0];
     ISMRMRD::EncodingLimits enc_lims = encoding.encodingLimits;
 
-    ISMRMRD::Limit lim_avg      = enc_lims.average.get();
-    ISMRMRD::Limit lim_slice    = enc_lims.slice.get();
-    ISMRMRD::Limit lim_cont     = enc_lims.contrast.get();
-    ISMRMRD::Limit lim_phase    = enc_lims.phase.get();
-    ISMRMRD::Limit lim_rep      = enc_lims.repetition.get();
-    ISMRMRD::Limit lim_set      = enc_lims.set.get();
-    ISMRMRD::Limit lim_segm     = enc_lims.segment.get();
-
-    int NAvg    = lim_avg.maximum     - lim_avg.minimum   +1;
-    int NSlice  = lim_slice.maximum   - lim_slice.minimum +1;
-    int NCont    = lim_cont.maximum   - lim_cont.minimum  +1;
-    int NPhase   = lim_phase.maximum  - lim_phase.minimum +1;
-    int NRep    = lim_rep.maximum     - lim_rep.minimum   +1;
-    int NSet    = lim_set.maximum     - lim_set.minimum   +1;
+    int NAvg    = get_num_enc_states(enc_lims.average); 
+    int NSlice  = get_num_enc_states(enc_lims.slice); 
+    int NCont   = get_num_enc_states(enc_lims.contrast);
+    int NPhase  = get_num_enc_states(enc_lims.phase); 
+    int NRep    = get_num_enc_states(enc_lims.repetition);
+    int NSet    = get_num_enc_states(enc_lims.set);
     int NSegm = 1; // lim_segm.maximum    - lim_segm.minimum +1; // this has no correspondence in the header of the image of course. currently no sorting wrt to this
 
     for(int ia= 0; ia <NAvg; ia++)
@@ -1700,7 +1704,7 @@ void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
 void 
 CoilSensitivitiesContainer::compute(CoilImagesContainer& cis)
 {
-    throw LocalisedException("Don't call this no more please. This has been covered elsewhere.",   __FILE__, __LINE__);
+    // throw LocalisedException("Don't call this no more please. This has been covered elsewhere.",   __FILE__, __LINE__);
 
 	set_meta_data(cis.get_meta_data());
 	ISMRMRD::Encoding e = cis.encoding();
@@ -1851,8 +1855,7 @@ CoilSensitivitiesContainer::compute_csm_(
 	ISMRMRD::NDArray<complex_float_t>& csm
 )
 {
-    throw LocalisedException("Don't call this no more please. This has been covered elsewhere.",   __FILE__, __LINE__);
-
+    
 	int ndims = cm.getNDim();
 	const size_t* dims = cm.getDims();
 	unsigned int readout = (unsigned int)dims[0];
