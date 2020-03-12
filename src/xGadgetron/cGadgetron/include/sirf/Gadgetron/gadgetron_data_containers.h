@@ -259,6 +259,8 @@ namespace sirf {
 		AcquisitionsInfo acquisitions_info() const { return acqs_info_; }
 		void set_acquisitions_info(std::string info) { acqs_info_ = info; }
 
+        ISMRMRD::TrajectoryType get_trajectory_type() const;
+
 		gadgetron::unique_ptr<MRAcquisitionData> clone() const
 		{
 			return gadgetron::unique_ptr<MRAcquisitionData>(this->clone_impl());
@@ -499,6 +501,7 @@ namespace sirf {
 		virtual const ImageWrap& image_wrap(unsigned int im_num) const = 0;
 		virtual void append(int image_data_type, void* ptr_image) = 0;
 		virtual void append(const ImageWrap& iw) = 0;
+        virtual void clear_data()=0;
 		virtual void get_data(complex_float_t* data) const;
 		virtual void set_data(const complex_float_t* data);
 		virtual void get_real_data(float* data) const;
@@ -526,6 +529,21 @@ namespace sirf {
             const ImageWrap&  iw = image_wrap(im_num);
 			iw.get_dim(dim);
 		}
+        bool check_dimension_consistency() const
+        {
+            size_t const num_dims = 4;
+            std::vector<int> first_img_dims(num_dims), temp_img_dims(num_dims);
+
+            this->get_image_dimensions(0, &first_img_dims[0]);
+
+            bool dims_match = true;
+            for(int i=1; i<number(); ++i)
+            {
+                this->get_image_dimensions(0, &temp_img_dims[0]);
+                dims_match *= (first_img_dims == temp_img_dims);
+            }
+            return dims_match;
+        }
 		virtual gadgetron::shared_ptr<ISMRMRDImageData> 
 			new_images_container() const = 0;
 		virtual gadgetron::shared_ptr<ISMRMRDImageData>
@@ -760,10 +778,20 @@ namespace sirf {
 			images_.push_back(gadgetron::shared_ptr<ImageWrap>
 				(new ImageWrap(image_data_type, ptr_image)));
 		}
+        virtual void append(CFImage& img)
+        {
+            void* vptr_img = new CFImage(img);
+            this->append(7, vptr_img);
+        }
 		virtual void append(const ImageWrap& iw)
 		{
 			images_.push_back(gadgetron::shared_ptr<ImageWrap>(new ImageWrap(iw)));
 		}
+        virtual void clear_data()
+        {
+            std::vector<gadgetron::shared_ptr<ImageWrap> > empty_data;
+            images_.swap(empty_data);
+        }
 		virtual void sort();
 		virtual gadgetron::shared_ptr<ImageWrap> sptr_image_wrap
 			(unsigned int im_num)
@@ -1136,7 +1164,13 @@ namespace sirf {
 			append(sptr_img);
 		}
 
+        virtual void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)=0;
+        virtual void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)=0;
+
 	protected:
+
+        gadgetron::shared_ptr<sirf::GadgetronImageData> sptr_csm_gid_;
+
 		int csm_smoothness_;
 
 	private:
@@ -1200,6 +1234,12 @@ namespace sirf {
 		{
 			CoilDataVector::append(sptr_cd);
 		}
+
+        virtual CFImage get_csm_as_CFImage();
+
+        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
+        void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
+
 	private:
 		virtual CoilSensitivitiesAsImages* clone_impl() const
 		{
