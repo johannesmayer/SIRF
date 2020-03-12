@@ -170,6 +170,7 @@ bool test_bwd(const std::string& fname_input)
         mr_rawdata.read(fname_input);
 
         preprocess_acquisition_data(mr_rawdata);
+        mr_rawdata.sort();
 
         sirf::GadgetronImagesVector img_vec;
         sirf::MRAcquisitionModel acquis_model;
@@ -177,7 +178,7 @@ bool test_bwd(const std::string& fname_input)
         sirf::CoilSensitivitiesAsImages csm;
         csm.compute(mr_rawdata);
 
-        auto sptr_encoder = std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding());
+        auto sptr_encoder = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
         acquis_model.set_encoder(sptr_encoder);
 
         acquis_model.bwd(img_vec, csm, mr_rawdata);
@@ -207,13 +208,14 @@ int main (int argc, char* argv[])
         else
             SIRF_PATH = argv[1];
 
-        std::string data_path = SIRF_PATH + "/data/examples/MR/simulated_MR_2D_cartesian_Grappa2.h5";
+        std::string simul_data_path = SIRF_PATH + "/data/examples/MR/simulated_MR_2D_cartesian_Grappa2.h5";
+        std::string real_data_path = SIRF_PATH + "/data/examples/MR/grappa2_6rep.h5";
 
-        test_GRPETrajectoryPrep_set_trajectory(data_path);
+        test_GRPETrajectoryPrep_set_trajectory(simul_data_path);
         test_apply_combine_coil_sensitivities();
-        test_get_kspace_order(data_path);
-        test_get_subset(data_path);
-        test_bwd(data_path);
+        test_get_kspace_order(simul_data_path);
+        test_get_subset(simul_data_path);
+        test_bwd(simul_data_path);
         return 0;
 	}
     catch(const std::exception &error) {

@@ -60,8 +60,11 @@ void sirf::GRPETrajectoryPrep::set_acquisition_trajectory(Acquisition& acq)
 
 std::vector<float> sirf::GRPETrajectoryPrep::calculate_trajectory(Acquisition& acq)
 {
-    const ISMRMRD::Limit rad_lims = this->kspace_encoding_.encodingLimits.kspace_encoding_step_1.get();
-    const ISMRMRD::Limit ang_lims = this->kspace_encoding_.encodingLimits.kspace_encoding_step_2.get();
+    ISMRMRD::Limit rad_lims(0,0,0), ang_lims(0,0,0);
+    if(this->kspace_encoding_.encodingLimits.kspace_encoding_step_1.is_present())
+        rad_lims = this->kspace_encoding_.encodingLimits.kspace_encoding_step_1.get();
+    if(this->kspace_encoding_.encodingLimits.kspace_encoding_step_2.is_present())
+        ang_lims = this->kspace_encoding_.encodingLimits.kspace_encoding_step_2.get();
 
     const ISMRMRD::EncodingCounters idx = acq.idx();
 
@@ -103,7 +106,7 @@ void sirf::FourierEncoding::match_img_header_to_acquisition(CFImage& img, const 
 
 }
 
-void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionData& ac)
+void sirf::CartesianFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionData& ac)
 {
 
     std::string par;
@@ -124,8 +127,12 @@ void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionDa
     unsigned int ny_k_space = e.encodedSpace.matrixSize.y;
     unsigned int nz_k_space = e.encodedSpace.matrixSize.z;
 
-    ISMRMRD::Limit ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
-    ISMRMRD::Limit kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
+    ISMRMRD::Limit ky_lim, kz_lim(0,0,0);
+
+    ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
+    if(e.encodingLimits.kspace_encoding_step_2.is_present())
+        kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
+
 
     CFImage img = *ptr_img;
 
@@ -176,7 +183,7 @@ void sirf::Cartesian3DFourierEncoding::forward(CFImage* ptr_img, MRAcquisitionDa
     }
 }
 
-void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionData& ac)
+void sirf::CartesianFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionData& ac)
 {
 
     if(ac.items()<1)
@@ -214,8 +221,11 @@ void sirf::Cartesian3DFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionD
     dims.push_back(nz); dims_dcf.push_back(nz);
     dims.push_back(nc);
 
-    ISMRMRD::Limit ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
-    ISMRMRD::Limit kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
+    ISMRMRD::Limit ky_lim, kz_lim(0,0,0);
+
+    ky_lim = e.encodingLimits.kspace_encoding_step_1.get();
+    if(e.encodingLimits.kspace_encoding_step_2.is_present())
+        kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
 
     ISMRMRD::NDArray<complex_float_t> ci(dims);
     ISMRMRD::NDArray<float> dcf(dims);
