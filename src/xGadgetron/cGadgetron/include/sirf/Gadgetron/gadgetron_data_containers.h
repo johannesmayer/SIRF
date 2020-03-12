@@ -1068,6 +1068,12 @@ namespace sirf {
 		{
 			coil_data_.push_back(sptr_cd);
 		}
+        virtual gadgetron::shared_ptr<CoilData> get_coil_data_sptr()
+        {
+            if(coil_data_.size()!=1)
+                throw LocalisedException("Please provide exactly one coilmap. Maybe you need to call compute() first.", __FILE__,__LINE__);
+            return coil_data_[0];
+        }
 	private:
 		virtual CoilDataVector* clone_impl() const
 		{

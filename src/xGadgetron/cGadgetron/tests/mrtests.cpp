@@ -25,7 +25,7 @@ bool test_TrajectoryPreparation_constructors( void )
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
@@ -51,7 +51,7 @@ bool test_GRPETrajectoryPrep_set_trajectory(const std::string& fname_input)
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
@@ -106,7 +106,7 @@ bool test_apply_combine_coil_sensitivities( void )
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
@@ -193,7 +193,7 @@ bool test_bwd(const std::string& fname_input)
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
