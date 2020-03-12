@@ -129,7 +129,7 @@ bool test_get_kspace_order(const std::string& fname_input)
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
@@ -156,7 +156,7 @@ bool test_get_subset(const std::string& fname_input)
     {
         std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
         std::cout << e.what() << std::endl;
-        throw e;
+        throw;
     }
 }
 
