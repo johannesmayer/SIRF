@@ -372,6 +372,9 @@ void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
+    if(!ac.sorted())
+        ac.sort();
+
     auto sort_idx = ac.get_kspace_order();
 
     if( sort_idx.size() != ic.number() )
@@ -410,7 +413,12 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
 {
 	ic.set_meta_data(ac.acquisitions_info());
 
+    if(!ac.sorted())
+        ac.sort();
+
+
     auto sort_idx = ac.get_kspace_order();
+
     for(int i=0; i<sort_idx.size(); ++i)
     {
         sirf::AcquisitionsVector subset;

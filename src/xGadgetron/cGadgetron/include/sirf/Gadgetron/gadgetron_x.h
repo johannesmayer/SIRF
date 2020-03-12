@@ -356,6 +356,7 @@ namespace sirf {
 			gadgetron::shared_ptr<GadgetronImageData> sptr_ic
 			) : sptr_acqs_(sptr_ac) //, sptr_imgs_(sptr_ic)
 		{
+            sptr_enc_ = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
 			set_image_template(sptr_ic);
 		}
 		
@@ -431,18 +432,22 @@ namespace sirf {
 		// coil sensitivity maps referred to by sptr_csms_.
 		gadgetron::shared_ptr<MRAcquisitionData> fwd(GadgetronImageData& ic)
 		{
-			if (!sptr_acqs_.get())
+
+            if (!sptr_acqs_.get())
 				throw LocalisedException
 				("acquisition data template not set", __FILE__, __LINE__);
 			if (!sptr_csms_.get() || sptr_csms_->items() < 1)
 				throw LocalisedException
 				("coil sensitivity maps not found", __FILE__, __LINE__);
 			check_data_role(ic);
-			gadgetron::shared_ptr<MRAcquisitionData> sptr_acqs =
-				sptr_acqs_->new_acquisitions_container();
-			sptr_acqs->copy_acquisitions_info(*sptr_acqs_);
-			fwd(ic, *sptr_csms_, *sptr_acqs);
-			return sptr_acqs;
+
+            gadgetron::unique_ptr<MRAcquisitionData> uptr_acqs =
+                sptr_acqs_->clone();
+
+            fwd(ic, *sptr_csms_, *uptr_acqs);
+
+            return std::shared_ptr<MRAcquisitionData>(std::move(uptr_acqs));// something else wouldn't work for some reason...
+
 		}
 
 		// Backprojects the whole AcquisitionContainer using

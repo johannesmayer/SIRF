@@ -115,6 +115,7 @@ MRAcquisitionData::read( const std::string& filename_ismrmrd_with_ext )
 		}
 		if( verbose )
 			std::cout<< "Finished reading acquisitions from " << filename_ismrmrd_with_ext << std::endl;
+        this->sort();
 	}
 	catch( std::runtime_error& e)
 	{
@@ -598,6 +599,7 @@ MRAcquisitionData::sort_by_time()
 	else
 		Multisort::sort( vt, &index_[0] );
     this->organise_kspace();
+    sorted_ = true;
 
 }
 
