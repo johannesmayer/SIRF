@@ -372,6 +372,9 @@ void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
+
+    cc.apply_coil_sensitivities(ic, ic);
+
     if(!ac.sorted())
         ac.sort();
 
