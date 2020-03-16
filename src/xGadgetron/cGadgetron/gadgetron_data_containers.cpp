@@ -1929,6 +1929,9 @@ CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage()
 
 void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
 {
+    if(src_img.items() != this->items() )
+        throw LocalisedException("The number of coilmaps does not equal the number of images to which they should be applied to.",   __FILE__, __LINE__);
+
     if(!src_img.check_dimension_consistency())
        throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
 
@@ -1971,6 +1974,9 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
 }
 void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& inidvidual_channels)
 {
+    if(individual_channels.items() != this->items() )
+        throw LocalisedException("The number of coilmaps does not equal the number of images to be combined.",   __FILE__, __LINE__);
+
     // check for matching dimensions
     if(!inidvidual_channels.check_dimension_consistency())
         throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
