@@ -898,6 +898,42 @@ AcquisitionsVector::copy_acquisitions_data(const MRAcquisitionData& ac)
 	}
 }
 
+KSpaceSorting::TagType KSpaceSorting::get_tag_from_img(const CFImage& img)
+{
+    TagType tag;
+
+    tag[0] = img.getAverage();
+    tag[1] = img.getSlice();
+    tag[2] = img.getContrast();
+    tag[3] = img.getPhase();
+    tag[4] = img.getRepetition();
+    tag[5] = img.getSet();
+    tag[6] = 0; //segments area always zero
+
+    for(int i=0; i<ISMRMRD::ISMRMRD_Constants::ISMRMRD_USER_INTS; ++i)
+        tag[7+i] = img.getUserInt(i);
+
+    return tag;
+}
+
+
+KSpaceSorting::TagType KSpaceSorting::get_tag_from_acquisition(ISMRMRD::Acquisition acq)
+{
+    TagType tag;
+    tag[0] = acq.idx().average;
+    tag[1] = acq.idx().slice;
+    tag[2] = acq.idx().contrast;
+    tag[3] = acq.idx().phase;
+    tag[4] = acq.idx().repetition;
+    tag[5] = acq.idx().set;
+    tag[6] = 0; //acq.idx().segment;
+
+    for(int i=7; i<tag.size(); ++i)
+        tag[i]=acq.idx().user[i];
+
+    return tag;
+}
+
 void
 GadgetronImageData::dot(const DataContainer& dc, void* ptr) const
 {
@@ -1918,14 +1954,29 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 	csm_smoothness_ = 0;
 }
 
-CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage()
+CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const unsigned int ic) const
 {
-    gadgetron::shared_ptr<CoilData> sptr_cd = CoilDataVector::get_coil_data_sptr();
+    gadgetron::shared_ptr<CoilData> sptr_cd = CoilDataVector::get_coil_data_sptr(ic);
     auto cdi = std::dynamic_pointer_cast<CoilDataAsCFImage>(sptr_cd);
     CFImage csm_as_cfimage = cdi->image();
     return csm_as_cfimage;
 }
 
+CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const
+{
+
+    for(int i=0; i<this->items();++i)
+    {
+        int const access_idx = ((offset + i) % this->items());
+        CFImage csm_img = get_csm_as_CFImage(access_idx);
+        KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
+
+        if(tag_csm == tag)
+            return csm_img;
+    }
+
+    throw LocalisedException("No coilmap with this tag was in the coilsensitivity container.",   __FILE__, __LINE__);
+}
 
 void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
 {
@@ -1941,8 +1992,6 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
     individual_channels.set_meta_data( src_img.get_meta_data());
     individual_channels.clear_data();
 
-    CFImage coilmaps = get_csm_as_CFImage();
-
     for(size_t i_img=0; i_img<src_img.items(); ++i_img)
     {
         ImageWrap& iw_src = src_img.image_wrap(i_img);
@@ -1950,9 +1999,11 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
 
         CFImage* ptr_src_img = static_cast<CFImage*>(vptr_src_img);
 
-        CFImage dst_img(coilmaps);
+        CFImage coilmap = get_csm_as_CFImage( KSpaceSorting::get_tag_from_img(*ptr_src_img), i_img);
+
+        CFImage dst_img(coilmap);
         dst_img.setHead((*ptr_src_img).getHead());
-        dst_img.setNumberOfChannels(coilmaps.getNumberOfChannels());
+        dst_img.setNumberOfChannels(coilmap.getNumberOfChannels());
 
         size_t const Nx = dst_img.getMatrixSizeX();
         size_t const Ny = dst_img.getMatrixSizeY();
@@ -1964,7 +2015,7 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
         for( size_t ny=0;ny<Ny ; ny++)
         for( size_t nx=0;nx<Nx ; nx++)
         {
-            dst_img(nx, ny, nz, nc) = coilmaps(nx, ny, nz, nc) * ((*ptr_src_img)(nx, ny, nz, 0));
+            dst_img(nx, ny, nz, nc) = coilmap(nx, ny, nz, nc) * ((*ptr_src_img)(nx, ny, nz, 0));
         }
 
         void* vptr_dst_img = new CFImage(dst_img); //urgh this is so horrible
@@ -1972,42 +2023,42 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
         individual_channels.append(iw_dst);
     }
 }
-void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& inidvidual_channels)
+void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)
 {
     if(individual_channels.items() != this->items() )
         throw LocalisedException("The number of coilmaps does not equal the number of images to be combined.",   __FILE__, __LINE__);
 
     // check for matching dimensions
-    if(!inidvidual_channels.check_dimension_consistency())
+    if(!individual_channels.check_dimension_consistency())
         throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
 
     std::vector<int> img_dims(4);
-    inidvidual_channels.get_image_dimensions(0, &img_dims[0]);
+    individual_channels.get_image_dimensions(0, &img_dims[0]);
 
-    CFImage coilmaps = get_csm_as_CFImage();
-
-    int const Nx = (int)coilmaps.getMatrixSizeX();
-    int const Ny = (int)coilmaps.getMatrixSizeY();
-    int const Nz = (int)coilmaps.getMatrixSizeZ();
-    int const Nc = (int)coilmaps.getNumberOfChannels();
-
-    std::vector<int> csm_dims{Nx, Ny, Nz, Nc};
-
-    if( img_dims != csm_dims)
-        throw LocalisedException("The data dimensions of the image don't match the sensitivity maps.",   __FILE__, __LINE__);
-
-    combined_image.set_meta_data(inidvidual_channels.get_meta_data());
-    combined_image.clear_data();
-
-    CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);;
-
-
-    for(size_t i_img=0; i_img<inidvidual_channels.items(); ++i_img)
+    for(size_t i_img=0; i_img<individual_channels.items(); ++i_img)
     {
-        ImageWrap& iw_src = inidvidual_channels.image_wrap(i_img);
+        ImageWrap& iw_src = individual_channels.image_wrap(i_img);
         void* vptr_src_img = iw_src.ptr_image();
 
         CFImage* ptr_src_img = static_cast<CFImage*>(vptr_src_img);
+
+        CFImage coilmap= get_csm_as_CFImage(KSpaceSorting::get_tag_from_img(*ptr_src_img), i_img);
+
+        int const Nx = (int)coilmap.getMatrixSizeX();
+        int const Ny = (int)coilmap.getMatrixSizeY();
+        int const Nz = (int)coilmap.getMatrixSizeZ();
+        int const Nc = (int)coilmap.getNumberOfChannels();
+
+        std::vector<int> csm_dims{Nx, Ny, Nz, Nc};
+
+        if( img_dims != csm_dims)
+            throw LocalisedException("The data dimensions of the image don't match the sensitivity maps.",   __FILE__, __LINE__);
+
+        combined_image.set_meta_data(individual_channels.get_meta_data());
+        combined_image.clear_data();
+
+        CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);
+
         dst_img.setHead((*ptr_src_img).getHead());
         dst_img.setNumberOfChannels(1);
 
@@ -2016,8 +2067,8 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         for( size_t ny=0;ny<Ny ; ny++)
         for( size_t nx=0;nx<Nx ; nx++)
         {
-            tmp_img(nx, ny, nz, nc) = std::conj(coilmaps(nx, ny, nz, nc)) * ((*ptr_src_img)(nx, ny, nz, nc));
-            coil_norm(nx, ny, nz, 0) += std::conj(coilmaps(nx, ny, nz, nc)) * coilmaps(nx, ny, nz, nc);
+            tmp_img(nx, ny, nz, nc) = std::conj(coilmap(nx, ny, nz, nc)) * ((*ptr_src_img)(nx, ny, nz, nc));
+            coil_norm(nx, ny, nz, 0) += std::conj(coilmap(nx, ny, nz, nc)) * coilmap(nx, ny, nz, nc);
         }
 
         for( size_t nc=0;nc<Nc ; nc++)

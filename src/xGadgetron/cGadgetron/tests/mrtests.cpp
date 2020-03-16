@@ -93,10 +93,7 @@ bool test_apply_combine_coil_sensitivities( void )
         CoilSensitivitiesAsImages csm;
         csm.append_csm(Nx, Ny, Nz, Nc, &csm_real[0], &csm_imag[0]);
 
-        CFImage csm_img = csm.get_csm_as_CFImage();
-
         csm.apply_coil_sensitivities(miv, giv);
-
         csm.combine_coils(giv, miv);
 
         return true;

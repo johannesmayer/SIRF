@@ -145,22 +145,6 @@ namespace sirf {
         SetType get_idx_set(void) const {return idx_set_;}
         void add_idx_to_set(size_t const idx){this->idx_set_.push_back(idx);}
 
-        static TagType get_tag_from_acquisition(ISMRMRD::Acquisition acq)
-        {
-            TagType tag;
-            tag[0] = acq.idx().average;
-            tag[1] = acq.idx().slice;
-            tag[2] = acq.idx().contrast;
-            tag[3] = acq.idx().phase;
-            tag[4] = acq.idx().repetition;
-            tag[5] = acq.idx().set;
-            tag[6] = 0; //acq.idx().segment;
-
-            for(int i=7; i<tag.size(); ++i)
-                tag[i]=acq.idx().user[i];
-
-            return tag;
-        }
 
         bool is_first_set() const {
             bool is_first= (tag_[0] == 0);
@@ -171,6 +155,9 @@ namespace sirf {
             }
             return is_first;
         }
+
+        static TagType get_tag_from_acquisition(ISMRMRD::Acquisition acq);
+        static TagType get_tag_from_img(const CFImage& img);
 
     private:
 
@@ -1068,11 +1055,12 @@ namespace sirf {
 		{
 			coil_data_.push_back(sptr_cd);
 		}
-        virtual gadgetron::shared_ptr<CoilData> get_coil_data_sptr()
+        virtual gadgetron::shared_ptr<CoilData> get_coil_data_sptr(const unsigned int ic) const
         {
-            if(coil_data_.size()!=1)
-                throw LocalisedException("Please provide exactly one coilmap. Maybe you need to call compute() first.", __FILE__,__LINE__);
-            return coil_data_[0];
+            if(ic>coil_data_.size() && !coil_data_.empty())
+                throw LocalisedException("You tried to access a coilmap which is out of range.",   __FILE__, __LINE__);
+
+            return coil_data_[ic];
         }
 	private:
 		virtual CoilDataVector* clone_impl() const
@@ -1241,7 +1229,9 @@ namespace sirf {
 			CoilDataVector::append(sptr_cd);
 		}
 
-        virtual CFImage get_csm_as_CFImage();
+        virtual CFImage get_csm_as_CFImage(const unsigned int ic) const;
+        virtual CFImage get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset=0) const;
+
 
         void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
         void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
