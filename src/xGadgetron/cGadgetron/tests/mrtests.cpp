@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib>
+#include <vector>
+#include <numeric>
 
 #include "mrtest_auxiliary_funs.h"
 
@@ -157,6 +159,25 @@ bool test_get_subset(const std::string& fname_input)
     }
 }
 
+bool test_append_image_wrap()
+{
+    int const num_iter = 3;
+
+    sirf::GadgetronImagesVector ic;
+
+    for(int i=0; i<num_iter; ++i)
+    {
+        CFImage img;
+
+        void* vptr_img = new CFImage(img);// god help me I don't trust this!
+        ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
+
+        ic.append(iw);
+    }
+
+    return ic.number() == num_iter;
+}
+
 bool test_bwd(const std::string& fname_input)
 {
     try
@@ -208,17 +229,30 @@ int main (int argc, char* argv[])
         std::string simul_data_path = SIRF_PATH + "/data/examples/MR/simulated_MR_2D_cartesian_Grappa2.h5";
         std::string real_data_path = SIRF_PATH + "/data/examples/MR/grappa2_6rep.h5";
 
-        test_GRPETrajectoryPrep_set_trajectory(simul_data_path);
-        test_apply_combine_coil_sensitivities();
-        test_get_kspace_order(simul_data_path);
-        test_get_subset(simul_data_path);
-        test_bwd(simul_data_path);
-        return 0;
+        std::vector<bool> test_results;
+        //test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
+        //test_results.push_back(test_apply_combine_coil_sensitivities());
+        //test_results.push_back(test_get_kspace_order(simul_data_path));
+        //test_results.push_back(test_get_subset(simul_data_path));
+        test_results.push_back(test_append_image_wrap());
+        //test_results.push_back(test_bwd(real_data_path));
+
+        bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
+
+        if(all_tests_successful)
+            return EXIT_SUCCESS;
+        else
+        {
+            for(int i=0; i<test_results.size(); ++i)
+            {
+                std::cout << "Test Result #" << i <<" = " << test_results[i] << std::endl;
+            }
+            return EXIT_FAILURE;
+        }
 	}
     catch(const std::exception &error) {
         std::cerr << "\nHere's the error:\n\t" << error.what() << "\n\n";
         return EXIT_FAILURE;
     }
-    return EXIT_SUCCESS;
 }
 
