@@ -347,66 +347,47 @@ void MRAcquisitionModel::check_data_role(const GadgetronImageData& ic)
 	}
 }
 
-bool
-MRAcquisitionModel::check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad)
-{
-
-    ISMRMRD::Acquisition acq;
-    ad.get_acquisition(0, acq);
-
-
-
-    bool are_consistent = true;
-
-    are_consistent *= ( acq.idx().average == img.getAverage());
-    are_consistent *= ( acq.idx().slice == img.getSlice());
-    are_consistent *= ( acq.idx().contrast == img.getContrast());
-    are_consistent *= ( acq.idx().phase == img.getPhase());
-    are_consistent *= ( acq.idx().repetition == img.getRepetition());
-    are_consistent *= ( acq.idx().set == img.getSet());
-
-    return are_consistent;
-}
-
 void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
 
-    cc.apply_coil_sensitivities(ic, ic);
+    GadgetronImagesVector indiv_channels;
+    cc.apply_coil_sensitivities(indiv_channels, ic);
 
     if(!ac.sorted())
         ac.sort();
 
-    auto sort_idx = ac.get_kspace_order();
+    auto kspace_sorting = ac.get_kspace_sorting();
 
-    if( sort_idx.size() != ic.number() )
+    if( kspace_sorting.size() != indiv_channels.number() )
         throw LocalisedException("Number of images does not match number of acquisition data bins.", __FILE__, __LINE__);
 
-    for( unsigned int i=0; i<ic.number(); ++i)
+    for( unsigned int i=0; i<indiv_channels.number(); ++i)
     {
-        ImageWrap iw = ic.image_wrap(i);
+        ImageWrap iw = indiv_channels.image_wrap(i);
         void* vptr_img = iw.ptr_image();
         CFImage* ptr_img = static_cast<CFImage*>(vptr_img);
 
-        sirf::AcquisitionsVector subset;
-        ac.get_subset(subset, sort_idx[i]);
+        auto tag_img = KSpaceSorting::get_tag_from_img(*ptr_img);
 
-        unsigned int n_trials = 0;
-        while( !this->check_img_rawdata_consistency(*ptr_img, subset) && n_trials<ic.number() )
+        sirf::AcquisitionsVector subset;
+        KSpaceSorting::SetType idx_set;
+        for(int j=0; j<kspace_sorting.size(); ++j)
         {
-            n_trials++;
-            subset = sirf::AcquisitionsVector();
-            unsigned int subset_access = (i+n_trials) % ic.number();
-            ac.get_subset(subset, sort_idx[subset_access]);
+            if(tag_img == kspace_sorting[j].get_tag())
+            {
+                idx_set = kspace_sorting[j].get_idx_set();
+                ac.get_subset(subset, idx_set);
+                break;
+            }
         }
 
-        if(!this->check_img_rawdata_consistency(*ptr_img, subset))
-            throw LocalisedException("There seems to be no compatible subset in the rawdata for the image which is attempted to be forward-projected.",__FILE__,__LINE__);
+        if(subset.number() == 0)
+            throw LocalisedException("You didn't find rawdata corresponding to your image in the acquisition data.", __FILE__, __LINE__);
 
         this->sptr_enc_->forward(ptr_img, subset);
-
-        ac.set_subset(subset, sort_idx[i]); //assume forward does not reorder the acquisitions
+        ac.set_subset(subset, idx_set); //assume forward does not reorder the acquisitions
     }
 }
 
@@ -425,7 +406,6 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
     for(int i=0; i<sort_idx.size(); ++i)
     {
         sirf::AcquisitionsVector subset;
-
         ac.get_subset(subset, sort_idx[i]);
 
         CFImage img;
@@ -437,6 +417,9 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
         ic.append(iw);
 
 	}
+
+    cc.combine_coils(ic, ic);
+
 }
 
 /*
