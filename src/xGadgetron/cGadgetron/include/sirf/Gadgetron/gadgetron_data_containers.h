@@ -262,6 +262,8 @@ namespace sirf {
 		void set_sorted(bool sorted) { sorted_ = sorted; }
 
         std::vector<std::vector<int> > get_kspace_order(const bool get_first_subset_order=false) const;
+        std::vector<KSpaceSorting> get_kspace_sorting() const { return this->sorting_; }
+
         void organise_kspace();
 
         virtual void get_subset(MRAcquisitionData& subset, const std::vector<int> subset_idx) const;

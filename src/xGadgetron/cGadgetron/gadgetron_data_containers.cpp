@@ -1786,17 +1786,14 @@ CoilSensitivitiesContainer::compute(CoilImagesContainer& cis)
 
 	unsigned int nmap = 0;
 
-	std::cout << "map ";
-	for (nmap = 1; nmap <= cis.items(); nmap++) {
-		std::cout << nmap << ' ' << std::flush;
-		cis(nmap - 1).get_data(cm.getDataPtr());
+    for (nmap = 1; nmap <= cis.items(); nmap++) {
+        cis(nmap - 1).get_data(cm.getDataPtr());
 		CoilData* ptr_img = new CoilDataAsCFImage(nx, ny, nz, nc);
 		shared_ptr<CoilData> sptr_img(ptr_img);
 		compute_csm_(cm, img, csm);
 		ptr_img->set_data(csm.getDataPtr());
 		append(sptr_img);
 	}
-	std::cout << '\n';
 }
 
 float 
@@ -2116,7 +2113,7 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
 
         CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);
 
-        dst_img.setHead((*ptr_src_img).getHead());
+        dst_img.setHead(ptr_src_img->getHead());
         dst_img.setNumberOfChannels(1);
 
         for( size_t nc=0;nc<Nc ; nc++)
