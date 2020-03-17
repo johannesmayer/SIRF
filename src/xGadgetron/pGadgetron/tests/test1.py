@@ -29,6 +29,7 @@ def test_main(rec=False, verb=False, throw=True):
 
     data_path = examples_data_path('MR')
     input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
+    input_data.set_storage_scheme('memory')
     test.check(input_data.norm())
 
     prep_gadgets = ['RemoveROOversamplingGadget']
