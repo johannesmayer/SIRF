@@ -395,11 +395,11 @@ void
 MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)
 {
-	ic.set_meta_data(ac.acquisitions_info());
+    GadgetronImagesVector iv;
+    iv.set_meta_data(ac.acquisitions_info());
 
     if(!ac.sorted())
         ac.sort();
-
 
     auto sort_idx = ac.get_kspace_order();
 
@@ -414,12 +414,11 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc,
         void* vptr_img = new CFImage(img);// god help me I don't trust this!
         ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
 
-        ic.append(iw);
+        iv.append(iw);
 
 	}
 
-    cc.combine_coils(ic, ic);
-
+    cc.combine_coils(ic, iv);
 }
 
 /*
