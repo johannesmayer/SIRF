@@ -638,6 +638,8 @@ static int get_num_enc_states( const ISMRMRD::Optional<ISMRMRD::Limit>& enc_lim)
 
 void MRAcquisitionData::organise_kspace()
 {
+    std::vector<KSpaceSorting>().swap(this->sorting_);
+
     ISMRMRD::IsmrmrdHeader header;
     ISMRMRD::deserialize(this->acqs_info_.c_str(), header);
 
@@ -932,6 +934,17 @@ KSpaceSorting::TagType KSpaceSorting::get_tag_from_acquisition(ISMRMRD::Acquisit
         tag[i]=acq.idx().user[i];
 
     return tag;
+}
+void KSpaceSorting::print_acquisition_tag(ISMRMRD::Acquisition acq)
+{
+    TagType tag = get_tag_from_acquisition(acq);
+    std::cout << "(";
+
+    for(int i=0; i<tag.size();++i)
+        std::cout << tag[i] <<",";
+
+    std::cout << ")" << std::endl;
+
 }
 
 void
@@ -2112,6 +2125,20 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         combined_image.clear_data();
 
         CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);
+
+        complex_float_t* it_dst = dst_img.begin();
+        complex_float_t* it_norm = coil_norm.begin();
+
+        while(it_dst != dst_img.end())
+        {
+            *it_dst = complex_float_t(0.f,0.f);
+            it_dst++;
+        }
+        while(it_norm != coil_norm.end())
+        {
+            *it_norm = complex_float_t(0.f,0.f);
+            it_norm++;
+        }
 
         dst_img.setHead(ptr_src_img->getHead());
         dst_img.setNumberOfChannels(1);

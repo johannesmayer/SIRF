@@ -156,6 +156,7 @@ namespace sirf {
             return is_first;
         }
 
+        static void print_acquisition_tag(ISMRMRD::Acquisition acq);
         static TagType get_tag_from_acquisition(ISMRMRD::Acquisition acq);
         static TagType get_tag_from_img(const CFImage& img);
 
