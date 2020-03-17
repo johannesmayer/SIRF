@@ -938,16 +938,21 @@ KSpaceSorting::TagType KSpaceSorting::get_tag_from_acquisition(ISMRMRD::Acquisit
 
     return tag;
 }
-void KSpaceSorting::print_acquisition_tag(ISMRMRD::Acquisition acq)
+
+void KSpaceSorting::print_tag(const TagType& tag)
 {
-    TagType tag = get_tag_from_acquisition(acq);
     std::cout << "(";
 
     for(int i=0; i<tag.size();++i)
         std::cout << tag[i] <<",";
 
     std::cout << ")" << std::endl;
+}
 
+void KSpaceSorting::print_acquisition_tag(ISMRMRD::Acquisition acq)
+{
+    TagType tag = get_tag_from_acquisition(acq);
+    print_tag(tag);
 }
 
 void
@@ -2034,14 +2039,13 @@ CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const unsigned int ic) con
 
 CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const
 {
-
     for(int i=0; i<this->items();++i)
     {
         int const access_idx = ((offset + i) % this->items());
         CFImage csm_img = get_csm_as_CFImage(access_idx);
         KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
 
-        if(tag_csm == tag)
+        if(tag_csm[1] == tag[1]) //for now if the same slice is available then take it!
             return csm_img;
     }
 
