@@ -10,7 +10,7 @@
 
 void sirf::preprocess_acquisition_data(MRAcquisitionData& ad)
 {
-    std::cout << "Processing Acquisition Data" << std::endl;
+    std::cout << "Pre-processing Acquisition Data" << std::endl;
 
     sirf::AcquisitionsProcessor preprocessing_chain;
 
