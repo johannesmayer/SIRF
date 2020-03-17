@@ -684,6 +684,9 @@ void MRAcquisitionData::organise_kspace()
         int access_idx = (((((tag[0] * NSlice + tag[1])*NCont + tag[2])*NPhase + tag[3])*NRep + tag[4])*NSet + tag[5])*NSegm + tag[6];
         this->sorting_.at(access_idx).add_idx_to_set(i);
     }
+    this->sorting_.erase(
+                std::remove_if(sorting_.begin(), sorting_.end(),[](const KSpaceSorting& s){ return s.get_idx_set().empty();}),
+                sorting_.end());
 }
 
 void MRAcquisitionData::get_subset(MRAcquisitionData& subset, const std::vector<int> subset_idx) const
