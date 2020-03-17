@@ -230,11 +230,11 @@ int main (int argc, char* argv[])
         std::string real_data_path = SIRF_PATH + "/data/examples/MR/grappa2_6rep.h5";
 
         std::vector<bool> test_results;
-        //test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
-        //test_results.push_back(test_apply_combine_coil_sensitivities());
-        //test_results.push_back(test_get_kspace_order(simul_data_path));
-        //test_results.push_back(test_get_subset(simul_data_path));
-//        test_results.push_back(test_append_image_wrap());
+        test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
+        test_results.push_back(test_apply_combine_coil_sensitivities());
+        test_results.push_back(test_get_kspace_order(simul_data_path));
+        test_results.push_back(test_get_subset(simul_data_path));
+        test_results.push_back(test_append_image_wrap());
         test_results.push_back(test_bwd(simul_data_path));
 
         bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
