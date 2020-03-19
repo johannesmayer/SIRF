@@ -2045,6 +2045,9 @@ CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagTy
         CFImage csm_img = get_csm_as_CFImage(access_idx);
         KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
 
+        KSpaceSorting::print_tag(tag_csm);
+        KSpaceSorting::print_tag(tag);
+
         if(tag_csm[1] == tag[1]) //for now if the same slice is available then take it!
             return csm_img;
     }
@@ -2131,22 +2134,14 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
             throw LocalisedException("The data dimensions of the image don't match the sensitivity maps.",   __FILE__, __LINE__);
 
 
-
-
-        CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);
+        CFImage dst_img(Nx, Ny, Nz, 1);
 
         complex_float_t* it_dst = dst_img.begin();
-        complex_float_t* it_norm = coil_norm.begin();
 
         while(it_dst != dst_img.end())
         {
             *it_dst = complex_float_t(0.f,0.f);
             it_dst++;
-        }
-        while(it_norm != coil_norm.end())
-        {
-            *it_norm = complex_float_t(0.f,0.f);
-            it_norm++;
         }
 
         dst_img.setHead(ptr_src_img->getHead());
@@ -2157,16 +2152,8 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         for( size_t ny=0;ny<Ny ; ny++)
         for( size_t nx=0;nx<Nx ; nx++)
         {
-            tmp_img(nx, ny, nz, nc) = std::conj(coilmap(nx, ny, nz, nc)) * ((*ptr_src_img)(nx, ny, nz, nc));
-            coil_norm(nx, ny, nz, 0) += std::conj(coilmap(nx, ny, nz, nc)) * coilmap(nx, ny, nz, nc);
-        }
+            dst_img(nx, ny, nz, 0) += std::conj(coilmap(nx, ny, nz, nc)) * ((*ptr_src_img)(nx, ny, nz, nc));
 
-        for( size_t nc=0;nc<Nc ; nc++)
-        for( size_t nz=0;nz<Nz ; nz++)
-        for( size_t ny=0;ny<Ny ; ny++)
-        for( size_t nx=0;nx<Nx ; nx++)
-        {
-            dst_img(nx, ny, nz, 0) += tmp_img(nx, ny, nz, nc);// / coil_norm(nx,ny,nz,0);
         }
 
         void* vptr_dst_img = new CFImage(dst_img); //urgh this is so horrible
