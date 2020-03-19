@@ -2166,7 +2166,7 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         for( size_t ny=0;ny<Ny ; ny++)
         for( size_t nx=0;nx<Nx ; nx++)
         {
-            dst_img(nx, ny, nz, 0) += tmp_img(nx, ny, nz, nc) / coil_norm(nx,ny,nz,0);
+            dst_img(nx, ny, nz, 0) += tmp_img(nx, ny, nz, nc);// / coil_norm(nx,ny,nz,0);
         }
 
         void* vptr_dst_img = new CFImage(dst_img); //urgh this is so horrible
