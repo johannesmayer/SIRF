@@ -1239,8 +1239,8 @@ namespace sirf {
         virtual CFImage get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset=0) const;
 
 
-        void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
-        void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
+        virtual void apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
+        virtual void combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
 
 	private:
 		virtual CoilSensitivitiesAsImages* clone_impl() const

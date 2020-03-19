@@ -2108,6 +2108,8 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
 
     std::vector<int> img_dims(4);
     individual_channels.get_image_dimensions(0, &img_dims[0]);
+    combined_image.set_meta_data(individual_channels.get_meta_data());
+    combined_image.clear_data();
 
     for(size_t i_img=0; i_img<individual_channels.items(); ++i_img)
     {
@@ -2128,8 +2130,8 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         if( img_dims != csm_dims)
             throw LocalisedException("The data dimensions of the image don't match the sensitivity maps.",   __FILE__, __LINE__);
 
-        combined_image.set_meta_data(individual_channels.get_meta_data());
-        combined_image.clear_data();
+
+
 
         CFImage tmp_img(Nx, Ny, Nz, Nc), coil_norm(Nx,Ny,Nz,1), dst_img(Nx, Ny, Nz, 1);
 

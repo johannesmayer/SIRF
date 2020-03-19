@@ -201,9 +201,12 @@ bool test_bwd(const std::string& fname_input)
 
         acquis_model.bwd(img_vec, csm, mr_rawdata);
 
-        std::stringstream fname_output;
-        fname_output << "output_" << __FUNCTION__;
-        write_cfimage_to_raw(fname_output.str(), img_vec.image_wrap(0));
+        for(int i=0; i<img_vec.items(); ++i)
+        {
+            std::stringstream fname_output;
+            fname_output << "output_" << __FUNCTION__ << "_image_" << i;
+            write_cfimage_to_raw(fname_output.str(), img_vec.image_wrap(i));
+        }
 
         return true;
 
