@@ -991,6 +991,7 @@ const void* ptr_b, const DataContainer& a_y)
 		w.axpby(b, v, one);
 		append(w);
 	}
+	this->set_meta_data(x.get_meta_data());
 }
 
 void
@@ -1007,6 +1008,7 @@ const DataContainer& a_y)
 		w.multiply(y.image_wrap(i));
 		append(w);
 	}
+	this->set_meta_data(x.get_meta_data());
 }
 
 void
@@ -1023,6 +1025,7 @@ const DataContainer& a_y)
 		w.divide(y.image_wrap(i));
 		append(w);
 	}
+	this->set_meta_data(x.get_meta_data());
 }
 
 float 
