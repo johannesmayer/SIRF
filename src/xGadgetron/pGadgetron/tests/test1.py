@@ -17,6 +17,9 @@ Options:
 """
 # Created on Tue Nov 21 10:17:28 2017
 from sirf.Gadgetron import *
+import nibabel as nib
+import numpy as np
+
 from sirf.Utilities import runner, RE_PYEXT, __license__
 __version__ = "0.2.3"
 __author__ = "Evgueni Ovtchinnikov, Casper da Costa-Luis"
@@ -27,8 +30,15 @@ def test_main(rec=False, verb=False, throw=True):
     test = pTest(datafile, rec, throw=throw)
     test.verbose = verb
 
-    data_path = examples_data_path('MR')
-    input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
+    #data_path = examples_data_path('MR')
+    #input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
+    
+    #data_path = '/home/sirfuser/data/PTB_ACRPhantom_GRAPPA/' 
+    #input_data = AcquisitionData(data_path + '/ptb_resolutionphantom_fully_ismrmrd.h5')
+        
+    data_path = '/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/'  
+    input_data = AcquisitionData(data_path + 'CV_2D_Stack_144.h5')
+        
     input_data.set_storage_scheme('memory')
     test.check(input_data.norm())
 
@@ -64,6 +74,17 @@ def test_main(rec=False, verb=False, throw=True):
     imgs_diff = bwd_images - complex_images
     rd = imgs_diff.norm()/complex_images.norm()
     test.check(rd, abs_tol = 1e-4)
+
+
+    gt_img_arr = np.abs(np.moveaxis(complex_images.as_array(), 0, -1))
+    gt_img_nifti = nib.Nifti1Image(gt_img_arr .astype(np.float32), affine=np.eye(4))
+    gt_img_nifti.to_filename('/media/sf_CCPPETMR/tmp_gtrecon.nii')
+
+    bwd_img_arr = np.moveaxis(bwd_images.as_array(), 0, -1)
+    bwd_img_arr = np.abs( bwd_img_arr  )
+    bwd_img_nifti = nib.Nifti1Image(bwd_img_arr.astype(np.float32), affine=np.eye(4))
+    bwd_img_nifti.to_filename('/media/sf_CCPPETMR/tmp_sirfbwd.nii')
+
 
 ##    xFy = processed_data * fwd_acqs
 ##    Bxy = bwd_images * complex_images
