@@ -2048,9 +2048,6 @@ CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagTy
         CFImage csm_img = get_csm_as_CFImage(access_idx);
         KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
 
-        KSpaceSorting::print_tag(tag_csm);
-        KSpaceSorting::print_tag(tag);
-
         if(tag_csm[1] == tag[1]) //for now if the same slice is available then take it!
             return csm_img;
     }

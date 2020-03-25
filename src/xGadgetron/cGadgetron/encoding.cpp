@@ -228,7 +228,7 @@ void sirf::CartesianFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionDat
         kz_lim = e.encodingLimits.kspace_encoding_step_2.get();
 
     ISMRMRD::NDArray<complex_float_t> ci(dims);
-    ISMRMRD::NDArray<float> dcf(dims);
+    ISMRMRD::NDArray<float> dcf(dims_dcf);
 
     memset(ci.getDataPtr(), 0, ci.getDataSize());
     memset(dcf.getDataPtr(), 0, dcf.getDataSize());
@@ -237,10 +237,10 @@ void sirf::CartesianFourierEncoding::backward(CFImage* ptr_img, MRAcquisitionDat
         ac.get_acquisition(a, acq);
         int y = ny/2 - ky_lim.center + acq.idx().kspace_encode_step_1 ;
         int z = nz/2 - kz_lim.center + acq.idx().kspace_encode_step_2;
+        dcf(y, z) += (float)1;
         for (unsigned int c = 0; c < nc; c++) {
             for (unsigned int s = 0; s < readout; s++) {
                 ci(s, y, z, c) += acq.data(s, c);
-                dcf(y, z) += (float)1;
             }
         }
     }

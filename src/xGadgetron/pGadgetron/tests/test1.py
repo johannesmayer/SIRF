@@ -30,15 +30,9 @@ def test_main(rec=False, verb=False, throw=True):
     test = pTest(datafile, rec, throw=throw)
     test.verbose = verb
 
-    #data_path = examples_data_path('MR')
-    #input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
+    data_path = examples_data_path('MR')
+    input_data = AcquisitionData(data_path + '/simulated_MR_2D_cartesian.h5')
     
-    #data_path = '/home/sirfuser/data/PTB_ACRPhantom_GRAPPA/' 
-    #input_data = AcquisitionData(data_path + '/ptb_resolutionphantom_fully_ismrmrd.h5')
-        
-    data_path = '/media/sf_CCPPETMR/TestData/Input/xGadgetron/cGadgetron/'  
-    input_data = AcquisitionData(data_path + 'CV_2D_Stack_144.h5')
-        
     input_data.set_storage_scheme('memory')
     test.check(input_data.norm())
 
