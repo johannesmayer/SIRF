@@ -362,7 +362,7 @@ namespace sirf {
 		
 		// make sure ic contains "true" images (and not e.g. G-factors)
 		void check_data_role(const GadgetronImageData& ic);
-
+        bool check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad);
 		// Records the acquisition template to be used. 
 		void set_acquisition_template
 			(gadgetron::shared_ptr<MRAcquisitionData> sptr_ac)

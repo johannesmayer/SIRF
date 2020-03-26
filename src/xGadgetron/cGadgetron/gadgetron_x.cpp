@@ -347,6 +347,27 @@ void MRAcquisitionModel::check_data_role(const GadgetronImageData& ic)
 	}
 }
 
+bool
+MRAcquisitionModel::check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad)
+{
+
+    ISMRMRD::Acquisition acq;
+    ad.get_acquisition(0, acq);
+
+
+
+    bool are_consistent = true;
+
+    are_consistent *= ( acq.idx().average == img.getAverage());
+    are_consistent *= ( acq.idx().slice == img.getSlice());
+    are_consistent *= ( acq.idx().contrast == img.getContrast());
+    are_consistent *= ( acq.idx().phase == img.getPhase());
+    are_consistent *= ( acq.idx().repetition == img.getRepetition());
+    are_consistent *= ( acq.idx().set == img.getSet());
+
+    return are_consistent;
+}
+
 void
 MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesContainer& cc, 
 	MRAcquisitionData& ac)

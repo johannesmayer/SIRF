@@ -1144,15 +1144,9 @@ namespace sirf {
 			csm_smoothness_ = s;
 		}
 
-		virtual void compute(MRAcquisitionData& ac)
-		{
-			//if (!ac.sorted())
-			//	ac.sort();
-			CoilImagesVector cis;
-			cis.compute(ac);
-			compute(cis);
-		}
+        GadgetronImageData& get_csm(void){ return *(this->sptr_csm_gid_); }
 
+        virtual void compute(MRAcquisitionData& ac);
 		virtual void compute(CoilImagesContainer& cis);
 
 		void append_csm
