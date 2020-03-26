@@ -178,6 +178,29 @@ bool test_append_image_wrap()
     return ic.number() == num_iter;
 }
 
+bool test_memory_safety_preprocessing(const std::string& fname_input)
+{
+    // this test is for valgrind use only to see if there is memory trouble when connecting to Gadgetron
+    try
+    {
+    std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+     sirf::AcquisitionsVector mr_rawdata;
+     mr_rawdata.read(fname_input);
+
+     preprocess_acquisition_data(mr_rawdata);
+
+     return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+
+}
+
 bool test_bwd(const std::string& fname_input)
 {
     try
@@ -238,6 +261,7 @@ int main (int argc, char* argv[])
 //        test_results.push_back(test_get_kspace_order(simul_data_path));
 //        test_results.push_back(test_get_subset(simul_data_path));
 //        test_results.push_back(test_append_image_wrap());
+//        test_results.push_back(test_memory_safety_preprocessing(simul_data_path));
         test_results.push_back(test_bwd(simul_data_path));
 
         bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
