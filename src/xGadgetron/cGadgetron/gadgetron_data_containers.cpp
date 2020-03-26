@@ -1777,42 +1777,42 @@ CoilImagesContainer::compute(MRAcquisitionData& ac)
 void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
 {
 
-    ac.sort();
-    auto sort_idx = ac.get_kspace_order(true);
+    gadgetron::shared_ptr<sirf::FourierEncoding> sptr_enc;
 
-    AcquisitionsVector dat(ac.acquisitions_info());
+    ISMRMRD::TrajectoryType trajtype = ac.get_trajectory_type();
+    if( trajtype == ISMRMRD::TrajectoryType::CARTESIAN )
+        sptr_enc = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
+    else
+        throw LocalisedException("The encoding you wanted to apply was not implemented yet.", __FILE__,__LINE__);
+
+    GadgetronImagesVector iv;
+    iv.set_meta_data(ac.acquisitions_info());
+
+
+    if(!ac.sorted())
+        ac.sort();
+
+    auto sort_idx = ac.get_kspace_order();
+
     for(int i=0; i<sort_idx.size(); ++i)
     {
         sirf::AcquisitionsVector subset;
         ac.get_subset(subset, sort_idx[i]);
 
-        ISMRMRD::Acquisition acq;
-        for(int j=0; j<subset.number(); ++j)
-        {
-            subset.get_acquisition(j, acq);
-            dat.append_acquisition(acq);
-        }
+        CFImage img;
+        sptr_enc->backward(&img, subset);
+
+        void* vptr_img = new CFImage(img);// god help me I don't trust this!
+        ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
+
+        iv.append(iw);
     }
-    dat.sort();
-
-    sirf::MRAcquisitionModel acquis_model;
-
-    ISMRMRD::TrajectoryType trajtype = dat.get_trajectory_type();
-    if( trajtype == ISMRMRD::TrajectoryType::CARTESIAN )
-        acquis_model.set_encoder(std::make_shared<sirf::Cartesian3DFourierEncoding>(sirf::Cartesian3DFourierEncoding()));
-    else
-        throw LocalisedException("The trajectory type in the raw data is not recognized.",   __FILE__, __LINE__);
-
-    sirf::GadgetronImagesVector img_vec;
-    gadgetron::shared_ptr< sirf::CoilSensitivitiesContainer > sptr_dummy_csm;
-
-    acquis_model.bwd(img_vec, *sptr_dummy_csm, dat);
 
     sirf::ImagesProcessor img_proc_chain;
     auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
     img_proc_chain.add_gadget("", sptr_csm_gadget);
 
-    img_proc_chain.process(img_vec);
+    img_proc_chain.process(iv);
 
     this->sptr_csm_gid_ = img_proc_chain.get_output();
 }
