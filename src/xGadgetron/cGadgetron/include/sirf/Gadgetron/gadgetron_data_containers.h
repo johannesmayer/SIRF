@@ -1144,6 +1144,11 @@ namespace sirf {
 			csm_smoothness_ = s;
 		}
 
+        unsigned int items() const
+        {
+            return this->sptr_csm_gid_->items();
+        }
+
         GadgetronImageData& get_csm(void){ return *(this->sptr_csm_gid_); }
 
         virtual void compute(MRAcquisitionData& ac);
@@ -1214,7 +1219,7 @@ namespace sirf {
 
 		virtual unsigned int items() const
 		{
-			return CoilDataVector::items();
+            return std::max(CoilSensitivitiesContainer::items(), CoilDataVector::items());
 		}
 		virtual CoilData& operator()(int slice)
 		{

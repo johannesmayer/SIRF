@@ -1810,7 +1810,7 @@ void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
 
     sirf::ImagesProcessor img_proc_chain;
     auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
-    img_proc_chain.add_gadget("", sptr_csm_gadget);
+    img_proc_chain.add_gadget("CoilComputationGadget", sptr_csm_gadget);
 
     img_proc_chain.process(iv);
 
@@ -2078,17 +2078,18 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 
 CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const unsigned int ic) const
 {
-    gadgetron::shared_ptr<CoilData> sptr_cd = CoilDataVector::get_coil_data_sptr(ic);
-    auto cdi = std::dynamic_pointer_cast<CoilDataAsCFImage>(sptr_cd);
-    CFImage csm_as_cfimage = cdi->image();
-    return csm_as_cfimage;
+    gadgetron::shared_ptr<ImageWrap> sptr_iw = this->sptr_csm_gid_->sptr_image_wrap(ic);
+    void* vptr_img = sptr_iw->ptr_image();
+    CFImage* ptr_cfi = static_cast<CFImage*>(vptr_img);
+    return *ptr_cfi;
 }
 
 CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const
 {
-    for(int i=0; i<this->items();++i)
+    int const num_csms = this->items();
+    for(int i=0; i<num_csms;++i)
     {
-        int const access_idx = ((offset + i) % this->items());
+        int const access_idx = ((offset + i) % num_csms);
         CFImage csm_img = get_csm_as_CFImage(access_idx);
         KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
 
@@ -2146,7 +2147,9 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
 }
 void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)
 {
-    if(individual_channels.items() != this->items() )
+    std::cout << this->CoilSensitivitiesContainer::items() <<std::endl;
+    std::cout << individual_channels.items() << std::endl;
+    if(individual_channels.items() != this->CoilSensitivitiesContainer::items() )
         throw LocalisedException("The number of coilmaps does not equal the number of images to be combined.",   __FILE__, __LINE__);
 
     // check for matching dimensions
