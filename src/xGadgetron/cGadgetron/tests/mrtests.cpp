@@ -201,6 +201,45 @@ bool test_memory_safety_preprocessing(const std::string& fname_input)
 
 }
 
+bool test_compute_coilmaps(const std::string& fname_input)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
+
+        preprocess_acquisition_data(mr_rawdata);
+        mr_rawdata.sort();
+
+        sirf::CoilSensitivitiesAsImages csm;
+
+        size_t const ks = 7;
+        size_t const kz = 5;
+        size_t const power = 7;
+        csm.set_csm_gadget_params(ks,kz,power);
+
+        csm.compute(mr_rawdata);
+
+        for(int i=0; i<csm.items(); ++i)
+        {
+            std::stringstream fname_output;
+            fname_output << "output_" << __FUNCTION__ << "_csm_ks_" << ks << "_kz_" << kz << "power_" << power << "_"  <<  i;
+            CFImage csm_img = csm.get_csm_as_CFImage(i);
+            write_cfimage_to_raw(fname_output.str(), csm_img);
+        }
+
+        return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
 bool test_bwd(const std::string& fname_input)
 {
     try
@@ -256,13 +295,14 @@ int main (int argc, char* argv[])
         std::string real_data_path = SIRF_PATH + "/data/examples/MR/CV_2D_Stack_144.h5";
 
         std::vector<bool> test_results;
-//        test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
-//        test_results.push_back(test_apply_combine_coil_sensitivities());
-//        test_results.push_back(test_get_kspace_order(simul_data_path));
-//        test_results.push_back(test_get_subset(simul_data_path));
-//        test_results.push_back(test_append_image_wrap());
-//        test_results.push_back(test_memory_safety_preprocessing(simul_data_path));
-        test_results.push_back(test_bwd(simul_data_path));
+        //test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
+        //test_results.push_back(test_apply_combine_coil_sensitivities());
+        //test_results.push_back(test_get_kspace_order(simul_data_path));
+        //test_results.push_back(test_get_subset(simul_data_path));
+        //test_results.push_back(test_append_image_wrap());
+        //test_results.push_back(test_memory_safety_preprocessing(simul_data_path));
+        test_results.push_back(test_compute_coilmaps(simul_data_path));
+//        test_results.push_back(test_bwd(simul_data_path));
 
         bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
 

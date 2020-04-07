@@ -1809,7 +1809,7 @@ void CoilSensitivitiesContainer::compute(MRAcquisitionData &ac)
     }
 
     sirf::ImagesProcessor img_proc_chain;
-    auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget());
+    auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget(csm_gadget_params_[0], csm_gadget_params_[1], csm_gadget_params_[2]));
     img_proc_chain.add_gadget("CoilComputationGadget", sptr_csm_gadget);
 
     img_proc_chain.process(iv);

@@ -1144,6 +1144,11 @@ namespace sirf {
 			csm_smoothness_ = s;
 		}
 
+        void set_csm_gadget_params(size_t const ks, size_t const kz, size_t const power)
+        {
+            this->csm_gadget_params_ = std::array<size_t, 3>{ks,kz,power};
+        }
+
         unsigned int items() const
         {
             return this->sptr_csm_gid_->items();
@@ -1169,7 +1174,7 @@ namespace sirf {
 	protected:
 
         gadgetron::shared_ptr<sirf::GadgetronImageData> sptr_csm_gid_;
-
+        std::array<size_t, 3> csm_gadget_params_{13,9,3};
 		int csm_smoothness_;
 
 	private:
