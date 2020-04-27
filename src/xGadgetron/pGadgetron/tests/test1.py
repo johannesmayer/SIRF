@@ -74,10 +74,13 @@ def test_main(rec=False, verb=False, throw=True):
     gt_img_nifti = nib.Nifti1Image(gt_img_arr .astype(np.float32), affine=np.eye(4))
     gt_img_nifti.to_filename('/media/sf_CCPPETMR/tmp_gtrecon.nii')
 
-    bwd_img_arr = np.moveaxis(bwd_images.as_array(), 0, -1)
-    bwd_img_arr = np.abs( bwd_img_arr  )
+    bwd_img_arr = np.abs(np.moveaxis(bwd_images.as_array(), 0, -1))
     bwd_img_nifti = nib.Nifti1Image(bwd_img_arr.astype(np.float32), affine=np.eye(4))
     bwd_img_nifti.to_filename('/media/sf_CCPPETMR/tmp_sirfbwd.nii')
+    
+    ratio_img_arr = gt_img_arr / bwd_img_arr;
+    ratio_img_nifti = nib.Nifti1Image(ratio_img_arr.astype(np.float32), affine=np.eye(4))
+    ratio_img_nifti.to_filename('/media/sf_CCPPETMR/tmp_gt_by_sirf_ratio.nii')
 
 
 ##    xFy = processed_data * fwd_acqs
