@@ -2001,6 +2001,7 @@ CoilSensitivitiesContainer::compute_csm_(
 
 }
 
+
 CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 {
     Mutex mtx;
@@ -2019,8 +2020,17 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
     csm_smoothness_ = 0;
 }
 
+void CoilSensitivitiesVector::calculate_csm(void)
+{
+    if(!this->flag_imgs_suitable_for_csm_computation_)
+        throw LocalisedException("The images in container are not suitable for coilmap computation. Maybe you already computed them." , __FILE__, __LINE__);
 
-void CoilSensitivitiesVector::calculcate(const MRAcquisitionData& ac)
+    calculate_csm(*this);
+    this->flag_imgs_suitable_for_csm_computation_ = false;
+
+}
+
+void CoilSensitivitiesVector::calculate_images(const MRAcquisitionData& ac)
 {
     std::string par;
     ISMRMRD::IsmrmrdHeader header;
@@ -2095,5 +2105,227 @@ void CoilSensitivitiesVector::calculcate(const MRAcquisitionData& ac)
         sirf::ImageWrap iw(ISMRMRD::ISMRMRD_CXFLOAT, vptr_coil_img);
         append(iw);
     }
+    this->flag_imgs_suitable_for_csm_computation_ = true;
     std::cout << '\n';
+}
+
+
+void CoilSensitivitiesVector::calculate_csm(GadgetronImagesVector iv)
+{
+
+    this->empty();
+
+    for(int i_img=0; i_img<iv.items();++i_img)
+    {
+        gadgetron::shared_ptr<ImageWrap> sptr_iw = iv.sptr_image_wrap(i_img);
+
+        int dim[4];
+        sptr_iw->get_dim(dim);
+        std::vector<size_t> img_dims;
+        for(int i_dim=0; i_dim<4; ++i_dim)
+            img_dims.push_back(dim[i_dim]);
+
+        ISMRMRD::NDArray<complex_float_t> cm(img_dims);
+        ISMRMRD::NDArray<float> img(img_dims);
+        ISMRMRD::NDArray<complex_float_t> csm(img_dims);
+
+        sptr_iw->get_complex_data(cm.getDataPtr());
+        this->calculate_csm(cm, img, csm);
+
+        ImageWrap iw_output(*sptr_iw);
+        iw_output.set_complex_data(csm.getDataPtr());
+        this->append(iw_output);
+    }
+}
+
+void CoilSensitivitiesVector::calculate_csm
+                    (ISMRMRD::NDArray<complex_float_t>& cm,
+                     ISMRMRD::NDArray<float>& img,
+                     ISMRMRD::NDArray<complex_float_t>& csm)
+{
+    int ndims = cm.getNDim();
+    const size_t* dims = cm.getDims();
+    unsigned int readout = (unsigned int)dims[0];
+    unsigned int ny = (unsigned int)dims[1];
+    unsigned int nz = (unsigned int)dims[2];
+    unsigned int nc = (unsigned int)dims[3];
+    unsigned int nx = (unsigned int)img.getDims()[0];
+
+    std::vector<size_t> cm0_dims;
+    cm0_dims.push_back(nx);
+    cm0_dims.push_back(ny);
+    cm0_dims.push_back(nz);
+    cm0_dims.push_back(nc);
+
+    ISMRMRD::NDArray<complex_float_t> cm0(cm0_dims);
+    for (unsigned int c = 0; c < nc; c++) {
+        for (unsigned int z = 0; z < nz; z++) {
+            for (unsigned int y = 0; y < ny; y++) {
+                for (unsigned int x = 0; x < nx; x++) {
+                    uint16_t xout = x + (readout - nx) / 2;
+                    cm0(x, y, z, c) = cm(xout, y, z, c);
+                }
+            }
+        }
+    }
+
+    int* object_mask = new int[nx*ny*nz];
+    memset(object_mask, 0, nx*ny*nz * sizeof(int));
+
+    ISMRMRD::NDArray<complex_float_t> v(cm0);
+    ISMRMRD::NDArray<complex_float_t> w(cm0);
+
+    float* ptr_img = img.getDataPtr();
+    for (unsigned int z = 0; z < nz; z++) {
+        for (unsigned int y = 0; y < ny; y++) {
+            for (unsigned int x = 0; x < nx; x++) {
+                float r = 0.0;
+                for (unsigned int c = 0; c < nc; c++) {
+                    float s = std::abs(cm0(x, y, z, c));
+                    r += s*s;
+                }
+                img(x, y, z) = (float)std::sqrt(r);
+            }
+        }
+    }
+
+    float max_im = max_(nx, ny, nz, ptr_img);
+    float small_grad = max_im * 2 / (nx + ny + 0.0f);
+    for (int i = 0; i < 3; i++)
+        smoothen_(nx, ny, nz, nc, v.getDataPtr(), w.getDataPtr(), 0, 1);
+    float noise = max_diff_(nx, ny, nz, nc, small_grad,
+        v.getDataPtr(), cm0.getDataPtr());
+    mask_noise_(nx, ny, nz, ptr_img, noise, object_mask);
+
+    for (int i = 0; i < csm_smoothness_; i++)
+        smoothen_(nx, ny, nz, nc, cm0.getDataPtr(), w.getDataPtr(), //0, 1);
+            object_mask, 1);
+
+    for (unsigned int z = 0; z < nz; z++) {
+        for (unsigned int y = 0; y < ny; y++) {
+            for (unsigned int x = 0; x < nx; x++) {
+                float r = 0.0;
+                for (unsigned int c = 0; c < nc; c++) {
+                    float s = std::abs(cm0(x, y, z, c));
+                    r += s*s;
+                }
+                img(x, y, z) = (float)std::sqrt(r);
+            }
+        }
+    }
+
+    for (unsigned int z = 0, i = 0; z < nz; z++) {
+        for (unsigned int y = 0; y < ny; y++) {
+            for (unsigned int x = 0; x < nx; x++, i++) {
+                float r = img(x, y, z);
+                float s;
+                if (r != 0.0)
+                    s = (float)(1.0 / r);
+                else
+                    s = 0.0;
+                complex_float_t zs(s, 0.0);
+                for (unsigned int c = 0; c < nc; c++) {
+                    csm(x, y, z, c) = zs * cm0(x, y, z, c);
+                }
+            }
+        }
+    }
+
+    delete[] object_mask;
+}
+
+
+
+void CoilSensitivitiesVector::mask_noise_
+(int nx, int ny, int nz, float* u, float noise, int* mask)
+{
+    int i = 0;
+    for (int iz = 0; iz < nz; iz++)
+        for (int iy = 0; iy < ny; iy++)
+            for (int ix = 0; ix < nx; ix++, i++) {
+            float t = fabs(u[i]);
+            mask[i] = (t > noise);
+        }
+}
+
+void
+CoilSensitivitiesVector::smoothen_
+(int nx, int ny, int nz, int nc,
+    complex_float_t* u, complex_float_t* v,
+    int* obj_mask, int w)
+{
+    const complex_float_t ONE(1.0, 0.0);
+    const complex_float_t TWO(2.0, 0.0);
+    for (int ic = 0, i = 0; ic < nc; ic++)
+        for (int iz = 0, k = 0; iz < nz; iz++)
+            for (int iy = 0; iy < ny; iy++)
+                for (int ix = 0; ix < nx; ix++, i++, k++) {
+                    if (obj_mask && !obj_mask[k]) {
+                        v[i] = u[i];
+                        continue;
+                    }
+                    int n = 0;
+                    complex_float_t r(0.0, 0.0);
+                    complex_float_t s(0.0, 0.0);
+                    for (int jy = -w; jy <= w; jy++)
+                        for (int jx = -w; jx <= w; jx++) {
+                            if (ix + jx < 0 || ix + jx >= nx)
+                                continue;
+                            if (iy + jy < 0 || iy + jy >= ny)
+                                continue;
+                            int j = i + jx + jy*nx;
+                            int l = k + jx + jy*nx;
+                            if (i != j && (!obj_mask || obj_mask[l])) {
+                                n++;
+                                r += ONE;
+                                s += u[j];
+                            }
+                        }
+                    if (n > 0)
+                        v[i] = (u[i] + s / r) / TWO;
+                    else
+                        v[i] = u[i];
+                }
+    memcpy(u, v, nx*ny*nz*nc * sizeof(complex_float_t));
+}
+
+float
+CoilSensitivitiesVector::max_(int nx, int ny, int nz, float* u)
+{
+    float r = 0.0;
+    int i = 0;
+    for (int iz = 0; iz < nz; iz++)
+        for (int iy = 0; iy < ny; iy++)
+            for (int ix = 0; ix < nx; ix++, i++) {
+            float t = fabs(u[i]);
+            if (t > r)
+                r = t;
+        }
+    return r;
+}
+
+float
+CoilSensitivitiesVector::max_diff_
+(int nx, int ny, int nz, int nc, float small_grad,
+    complex_float_t* u, complex_float_t* v)
+{
+    int nxy = nx*ny;
+    int nxyz = nxy*nz;
+    float s = 0.0f;
+    for (int ic = 0; ic < nc; ic++) {
+        for (int iz = 0; iz < nz; iz++) {
+            for (int iy = 1; iy < ny - 1; iy++) {
+                for (int ix = 1; ix < nx - 1; ix++) {
+                    int i = ix + nx*iy + nxy*iz + nxyz*ic;
+                    float gx = abs(u[i + 1] - u[i - 1]) / 2.0f;
+                    float gy = abs(u[i + nx] - u[i - nx]) / 2.0f;
+                    float g = (float)std::sqrt(gx*gx + gy*gy);
+                    float si = abs(u[i] - v[i]);
+                    if (g <= small_grad && si > s)
+                        s = si;
+                }
+            }
+        }
+    }
+    return s;
 }

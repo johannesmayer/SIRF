@@ -1247,14 +1247,42 @@ namespace sirf {
 
     public:
 
+        void set_csm_smoothness(int s)
+        {
+            csm_smoothness_ = s;
+        }
+
         CoilSensitivitiesVector() : GadgetronImagesVector(){}
-        void calculcate(const MRAcquisitionData& acq);
+
+        void calculate(const MRAcquisitionData& acq)
+        {
+            this->calculate_images(acq);
+            this->calculate_csm();
+        }
 
     protected:
 
-        void forward(){}
-        void backward(){}
+        bool flag_imgs_suitable_for_csm_computation_=false;
 
+        void calculate_images(const MRAcquisitionData& acq);
+        void calculate_csm(void);
+        void calculate_csm(GadgetronImagesVector iv);
+        void calculate_csm(ISMRMRD::NDArray<complex_float_t>& cm, ISMRMRD::NDArray<float>& img, ISMRMRD::NDArray<complex_float_t>& csm);
+
+        void forward(){
+            throw LocalisedException("This has not been implemented yet." , __FILE__, __LINE__);
+        }
+        void backward(){
+            throw LocalisedException("This has not been implemented yet." , __FILE__, __LINE__);
+        }
+
+
+    private:
+        int csm_smoothness_=0;
+        void smoothen_(int nx, int ny, int nz, int nc, complex_float_t* u, complex_float_t* v, int* obj_mask, int w);
+        void mask_noise_(int nx, int ny, int nz, float* u, float noise, int* mask);
+        float max_diff_(int nx, int ny, int nz, int nc, float small_grad, complex_float_t* u, complex_float_t* v);
+        float max_(int nx, int ny, int nz, float* u);
 
     };
 
