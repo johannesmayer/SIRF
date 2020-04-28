@@ -1247,12 +1247,18 @@ namespace sirf {
 
     public:
 
+        CoilSensitivitiesVector() : GadgetronImagesVector(){}
+        CoilSensitivitiesVector(const char * file)
+        {
+            throw std::runtime_error("This has not been implemented yet.");
+        }
+
         void set_csm_smoothness(int s)
         {
             csm_smoothness_ = s;
         }
 
-        CoilSensitivitiesVector() : GadgetronImagesVector(){}
+
 
         void calculate(const MRAcquisitionData& acq)
         {

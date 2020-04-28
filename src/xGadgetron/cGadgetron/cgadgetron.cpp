@@ -210,14 +210,14 @@ cGT_CoilSensitivities(const char* file)
 {
 	try {
 		if (std::strlen(file) > 0) {
-			shared_ptr<CoilSensitivitiesContainer>
-				csms(new CoilSensitivitiesAsImages(file));
-			return newObjectHandle<CoilSensitivitiesContainer>(csms);
+			shared_ptr<CoilSensitivitiesVector>
+                csms(new CoilSensitivitiesVector(file));
+			return newObjectHandle<CoilSensitivitiesVector>(csms);
 		}
 		else {
-			shared_ptr<CoilSensitivitiesContainer>
-				csms(new CoilSensitivitiesAsImages());
-			return newObjectHandle<CoilSensitivitiesContainer>(csms);
+			shared_ptr<CoilSensitivitiesVector>
+                csms(new CoilSensitivitiesVector());
+			return newObjectHandle<CoilSensitivitiesVector>(csms);
 		}
 	}
 	CATCH;
@@ -228,8 +228,8 @@ void*
 cGT_setCSParameter(void* ptr, const char* par, const void* val)
 {
 	CAST_PTR(DataHandle, h_csms, ptr);
-	CoilSensitivitiesContainer& csms =
-		objectFromHandle<CoilSensitivitiesContainer>(h_csms);
+	CoilSensitivitiesVector& csms =
+		objectFromHandle<CoilSensitivitiesVector>(h_csms);
 	if (boost::iequals(par, "smoothness"))
 		csms.set_csm_smoothness(dataFromHandle<int>(val));
 	//csms.set_csm_smoothness(intDataFromHandle(val)); // causes problems with Matlab
@@ -262,8 +262,8 @@ cGT_computeCSMsFromCIs(void* ptr_csms, void* ptr_cis)
 	try {
 		CAST_PTR(DataHandle, h_csms, ptr_csms);
 		CAST_PTR(DataHandle, h_cis, ptr_cis);
-		CoilSensitivitiesContainer& csms =
-			objectFromHandle<CoilSensitivitiesContainer>(h_csms);
+		CoilSensitivitiesVector& csms =
+			objectFromHandle<CoilSensitivitiesVector>(h_csms);
 		CoilImagesContainer& cis =
 			objectFromHandle<CoilImagesContainer>(h_cis);
 		csms.compute(cis);
@@ -279,8 +279,8 @@ cGT_computeCoilSensitivities(void* ptr_csms, void* ptr_acqs)
 	try {
 		CAST_PTR(DataHandle, h_csms, ptr_csms);
 		CAST_PTR(DataHandle, h_acqs, ptr_acqs);
-		CoilSensitivitiesContainer& csms =
-			objectFromHandle<CoilSensitivitiesContainer>(h_csms);
+		CoilSensitivitiesVector& csms =
+			objectFromHandle<CoilSensitivitiesVector>(h_csms);
 		MRAcquisitionData& acqs =
 			objectFromHandle<MRAcquisitionData>(h_acqs);
 		csms.compute(acqs);
@@ -298,8 +298,8 @@ cGT_appendCSM
 		CAST_PTR(DataHandle, h_csms, ptr_csms);
 		float* re = (float*)ptr_re;
 		float* im = (float*)ptr_im;
-		CoilSensitivitiesContainer& csms =
-			objectFromHandle<CoilSensitivitiesContainer>(h_csms);
+		CoilSensitivitiesVector& csms =
+			objectFromHandle<CoilSensitivitiesVector>(h_csms);
 		csms.append_csm(nx, ny, nz, nc, re, im);
 		return (void*)new DataHandle;
 	}
@@ -391,8 +391,8 @@ cGT_setAcquisitionModelParameter
 		else if (boost::iequals(name, "coil_sensitivity_maps")) {
 			CAST_PTR(DataHandle, handle, ptr);
 			MRAcquisitionModel& am = objectFromHandle<MRAcquisitionModel>(h_am);
-			shared_ptr<CoilSensitivitiesContainer> sptr_csc;
-			getObjectSptrFromHandle<CoilSensitivitiesContainer>(handle, sptr_csc);
+			shared_ptr<CoilSensitivitiesVector> sptr_csc;
+			getObjectSptrFromHandle<CoilSensitivitiesVector>(handle, sptr_csc);
 			am.setCSMs(sptr_csc);
 		}
 		else
@@ -410,8 +410,8 @@ cGT_setCSMs(void* ptr_am, const void* ptr_csms)
 		CAST_PTR(DataHandle, h_am, ptr_am);
 		CAST_PTR(DataHandle, h_csms, ptr_csms);
 		MRAcquisitionModel& am = objectFromHandle<MRAcquisitionModel>(h_am);
-		shared_ptr<CoilSensitivitiesContainer> sptr_csms;
-		getObjectSptrFromHandle<CoilSensitivitiesContainer>(h_csms, sptr_csms);
+		shared_ptr<CoilSensitivitiesVector> sptr_csms;
+		getObjectSptrFromHandle<CoilSensitivitiesVector>(h_csms, sptr_csms);
 		am.setCSMs(sptr_csms);
 		return (void*)new DataHandle;
 	}
