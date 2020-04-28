@@ -2020,6 +2020,19 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
     csm_smoothness_ = 0;
 }
 
+
+CFImage CoilSensitivitiesVector::get_csm_as_cfimage(size_t const i)
+{
+    auto sptr_iw = this->sptr_image_wrap(i);
+    if(sptr_iw->type() != 7)
+        throw LocalisedException("The coilmaps must be supplied as a complex float ismrmrd image, i.e. type = 7." , __FILE__, __LINE__);
+
+    void* ptr_cf_img = sptr_iw->ptr_image();
+    return *( (CFImage*)ptr_cf_img);
+
+}
+
+
 void CoilSensitivitiesVector::calculate_csm(void)
 {
     if(!this->flag_imgs_suitable_for_csm_computation_)

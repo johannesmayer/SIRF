@@ -1260,6 +1260,8 @@ namespace sirf {
             this->calculate_csm();
         }
 
+        CFImage get_csm_as_cfimage(size_t const i);
+
     protected:
 
         bool flag_imgs_suitable_for_csm_computation_=false;
