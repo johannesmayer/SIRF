@@ -107,9 +107,9 @@ void* cGT_newObject(const char* name)
 			return NEW_OBJECT_HANDLE(Mutex);
 		if (boost::iequals(name, "GTConnector"))
 			return NEW_OBJECT_HANDLE(GTConnector);
-		if (boost::iequals(name, "CoilImages"))
-			return NEW_OBJECT_HANDLE(CoilImagesVector);
-		if (boost::iequals(name, "AcquisitionModel"))
+//        if (boost::iequals(name, "CoilImages"))
+//            return NEW_OBJECT_HANDLE(CoilImagesVector);
+        if (boost::iequals(name, "AcquisitionModel"))
 			return NEW_OBJECT_HANDLE(MRAcquisitionModel);
 		NEW_GADGET_CHAIN(GadgetChain);
 		NEW_GADGET_CHAIN(AcquisitionsProcessor);
@@ -240,23 +240,6 @@ cGT_setCSParameter(void* ptr, const char* par, const void* val)
 
 extern "C"
 void*
-cGT_computeCoilImages(void* ptr_cis, void* ptr_acqs)
-{
-	try {
-		CAST_PTR(DataHandle, h_csms, ptr_cis);
-		CAST_PTR(DataHandle, h_acqs, ptr_acqs);
-		CoilImagesContainer& cis =
-			objectFromHandle<CoilImagesContainer>(h_csms);
-		MRAcquisitionData& acqs =
-			objectFromHandle<MRAcquisitionData>(h_acqs);
-		cis.compute(acqs);
-		return (void*)new DataHandle;
-	}
-	CATCH;
-}
-
-extern "C"
-void*
 cGT_computeCoilSensitivities(void* ptr_csms, void* ptr_acqs)
 {
 	try {
@@ -312,8 +295,8 @@ cGT_getCoilDataDimensions(void* ptr_csms, int csm_num, size_t ptr_dim)
 {
 	int* dim = (int*)ptr_dim;
 	CAST_PTR(DataHandle, h_csms, ptr_csms);
-	CoilDataContainer& csms =
-		objectFromHandle<CoilDataContainer>(h_csms);
+    CoilSensitivitiesVector& csms =
+        objectFromHandle<CoilSensitivitiesVector>(h_csms);
 	csms.get_dim(csm_num, dim);
 }
 
@@ -324,8 +307,8 @@ cGT_getCoilData(void* ptr_csms, int csm_num, size_t ptr_re, size_t ptr_im)
 	float* re = (float*)ptr_re;
 	float* im = (float*)ptr_im;
 	CAST_PTR(DataHandle, h_csms, ptr_csms);
-	CoilDataContainer& csms =
-		objectFromHandle<CoilDataContainer>(h_csms);
+    CoilSensitivitiesVector& csms =
+        objectFromHandle<CoilSensitivitiesVector>(h_csms);
 	csms.get_data(csm_num, re, im);
 }
 
