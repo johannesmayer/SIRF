@@ -356,7 +356,7 @@ MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesVector& cc,
 		("coil sensitivity maps not found", __FILE__, __LINE__);
 	for (unsigned int i = 0, a = 0; i < ic.number(); i++) {
 		ImageWrap& iw = ic.image_wrap(i);
-        CFImage& csm = cc.get_csm_as_cfimage(i%cc.items());
+        CFImage csm = cc.get_csm_as_cfimage(i%cc.items());
 		fwd(iw, csm, ac, a);
 	}
 }
@@ -370,7 +370,7 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesVector& cc,
 		throw LocalisedException
 		("coil sensitivity maps not found", __FILE__, __LINE__);
 	for (unsigned int i = 0, a = 0; a < ac.number(); i++) {
-        CFImage& csm = cc.get_csm_as_cfimage(i%cc.items());
+        CFImage csm = cc.get_csm_as_cfimage(i%cc.items());
 		ImageWrap iw(sptr_imgs_->image_wrap(i));
 		bwd(iw, csm, ac, a);
 		ic.append(iw);
