@@ -230,25 +230,25 @@ class CoilSensitivityData(DataContainer):
                 (self.handle, 'coil_sensitivity', 'smoothness', self.smoothness)
             try_calling(pygadgetron.cGT_computeCoilSensitivities \
                 (self.handle, data.handle))
-#        elif isinstance(data, CoilImageData):
-#            assert data.handle is not None
-#            if method_name == 'Inati':
-#                try:
-#                    from ismrmrdtools import coils
-#                except:
-#                    raise error('Inati method requires ismrmrd-python-tools')
-#                cis_array = data.as_array()
-#                csm, _ = coils.calculate_csm_inati_iter(cis_array)
-#                self.append(csm.astype(numpy.complex64))
-#            elif method_name == 'SRSS':
-#                if 'niter' in parm:
-#                    nit = int(parm['niter'])
-#                    parms.set_int_par \
-#                        (self.handle, 'coil_sensitivity', 'smoothness', nit)
-#                try_calling(pygadgetron.cGT_computeCSMsFromCIs \
-#                    (self.handle, data.handle))
-#            else:
-#                raise error('Unknown method %s' % method_name)
+        elif isinstance(data, ImageData):
+            assert data.handle is not None
+            if method_name == 'Inati':
+                try:
+                    from ismrmrdtools import coils
+                except:
+                    raise error('Inati method requires ismrmrd-python-tools')
+                cis_array = data.as_array()
+                csm, _ = coils.calculate_csm_inati_iter(cis_array)
+                self.append(csm.astype(numpy.complex64))
+            elif method_name == 'SRSS':
+                if 'niter' in parm:
+                    nit = int(parm['niter'])
+                    parms.set_int_par \
+                        (self.handle, 'coil_sensitivity', 'smoothness', nit)
+                try_calling(pygadgetron.cGT_computeCoilSensitivitiesFromGadgetronImages \
+                    (self.handle, data.handle))
+            else:
+                raise error('Unknown method %s' % method_name)
         else:
             raise error('Cannot calculate coil sensitivities from %s' % \
                         repr(type(data)))

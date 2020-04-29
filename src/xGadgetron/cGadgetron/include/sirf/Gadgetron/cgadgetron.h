@@ -45,6 +45,7 @@ extern "C" {
     void* cGT_computeCoilImages(void* ptr_cis, void* ptr_acqs);
     void* cGT_CoilSensitivities(const char* file);
 	void* cGT_computeCoilSensitivities(void* ptr_csms, void* ptr_acqs);
+    void* cGT_computeCoilSensitivitiesFromGadgetronImages(void* ptr_csms, void* ptr_imgs);
 	void* cGT_appendCSM
 		(void* ptr_csms, int nx, int ny, int nz, int nc, 
 		PTR_FLOAT ptr_re, PTR_FLOAT ptr_im);
