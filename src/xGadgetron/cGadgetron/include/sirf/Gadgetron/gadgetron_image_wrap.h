@@ -376,6 +376,16 @@ namespace sirf {
 			}
 			//IMAGE_PROCESSING_SWITCH(type_, set_complex_data_, ptr_, data);
 		}
+
+        void set_complex_data(const float* re, const float* im)
+        {
+            ImageWrap::Iterator i = begin();
+            ImageWrap::Iterator stop = end();
+            for (; i != stop; ++i, ++re, ++im){
+                *i = complex_float_t(*re, *im);
+            }
+        }
+
         /// Get data type
         ISMRMRD::ISMRMRD_DataTypes get_data_type() const
         {
