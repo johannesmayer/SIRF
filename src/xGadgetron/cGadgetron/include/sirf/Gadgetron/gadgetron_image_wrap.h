@@ -365,6 +365,20 @@ namespace sirf {
 			}
 			//IMAGE_PROCESSING_SWITCH_CONST(type_, get_complex_data_, ptr_, data);
 		}
+
+        void get_complex_data(float* re, float* im) const
+        {
+            //std::cout << "in get_complex_data\n";
+            //std::cout << "trying new const image wrap iterator...\n";
+            ImageWrap::Iterator_const i = begin_const();
+            ImageWrap::Iterator_const stop = end_const();
+            for (; i != stop; ++re, ++im, ++i) {
+                *re= std::real((*i).complex_float());
+                *im= std::imag((*i).complex_float());
+            }
+            //IMAGE_PROCESSING_SWITCH_CONST(type_, get_complex_data_, ptr_, data);
+        }
+
 		void set_complex_data(const complex_float_t* data)
 		{
 			//std::cout << "in set_complex_data\n";
