@@ -2049,8 +2049,6 @@ void CoilSensitivitiesVector::calculate_csm(void)
         throw LocalisedException("The images in container are not suitable for coilmap computation. Maybe you already computed them." , __FILE__, __LINE__);
 
     calculate_csm(*this);
-    this->flag_imgs_suitable_for_csm_computation_ = false;
-
 }
 
 void CoilSensitivitiesVector::calculate_images(const MRAcquisitionData& ac)
@@ -2159,6 +2157,8 @@ void CoilSensitivitiesVector::calculate_csm(GadgetronImagesVector iv)
         iw_output.set_complex_data(csm.getDataPtr());
         this->append(iw_output);
     }
+
+    this->flag_imgs_suitable_for_csm_computation_ = false;
 }
 
 void CoilSensitivitiesVector::calculate_csm
