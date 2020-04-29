@@ -257,23 +257,6 @@ cGT_computeCoilImages(void* ptr_cis, void* ptr_acqs)
 
 extern "C"
 void*
-cGT_computeCSMsFromCIs(void* ptr_csms, void* ptr_cis)
-{
-	try {
-		CAST_PTR(DataHandle, h_csms, ptr_csms);
-		CAST_PTR(DataHandle, h_cis, ptr_cis);
-		CoilSensitivitiesVector& csms =
-			objectFromHandle<CoilSensitivitiesVector>(h_csms);
-		CoilImagesContainer& cis =
-			objectFromHandle<CoilImagesContainer>(h_cis);
-		csms.compute(cis);
-		return (void*)new DataHandle;
-	}
-	CATCH;
-}
-
-extern "C"
-void*
 cGT_computeCoilSensitivities(void* ptr_csms, void* ptr_acqs)
 {
 	try {
@@ -283,7 +266,7 @@ cGT_computeCoilSensitivities(void* ptr_csms, void* ptr_acqs)
 			objectFromHandle<CoilSensitivitiesVector>(h_csms);
 		MRAcquisitionData& acqs =
 			objectFromHandle<MRAcquisitionData>(h_acqs);
-		csms.compute(acqs);
+        csms.calculate(acqs);
 		return (void*)new DataHandle;
 	}
 	CATCH;
