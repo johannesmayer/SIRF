@@ -1253,12 +1253,8 @@ namespace sirf {
             throw std::runtime_error("This has not been implemented yet.");
         }
 
-        void set_csm_smoothness(int s)
-        {
-            csm_smoothness_ = s;
-        }
-
-
+        void set_csm_smoothness(int s){csm_smoothness_ = s;}
+        void append_csm(int nx, int ny, int nz, int nc, const float* re, const float* im);
 
         void calculate(const MRAcquisitionData& acq)
         {

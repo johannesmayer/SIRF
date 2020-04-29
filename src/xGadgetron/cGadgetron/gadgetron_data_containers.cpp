@@ -2021,11 +2021,21 @@ CoilSensitivitiesAsImages::CoilSensitivitiesAsImages(const char* file)
 }
 
 
+
+void CoilSensitivitiesVector::append_csm(int nx, int ny, int nz, int nc, const float* re, const float* im)
+{
+    CFImage coil_img(nx, ny, nz, nc);
+    void* vptr_coil_img = new CFImage(coil_img);
+    sirf::ImageWrap iw(ISMRMRD::ISMRMRD_CXFLOAT, vptr_coil_img);
+    iw.set_complex_data(re, im);
+    this->append(iw);
+}
+
 CFImage CoilSensitivitiesVector::get_csm_as_cfimage(size_t const i)
 {
     auto sptr_iw = this->sptr_image_wrap(i);
-    if(sptr_iw->type() != 7)
-        throw LocalisedException("The coilmaps must be supplied as a complex float ismrmrd image, i.e. type = 7." , __FILE__, __LINE__);
+    if(sptr_iw->type() != ISMRMRD::ISMRMRD_CXFLOAT)
+        throw LocalisedException("The coilmaps must be supplied as a complex float ismrmrd image, i.e. type = ISMRMRD::ISMRMRD_CXFLOAT." , __FILE__, __LINE__);
 
     void* ptr_cf_img = sptr_iw->ptr_image();
     return *( (CFImage*)ptr_cf_img);
