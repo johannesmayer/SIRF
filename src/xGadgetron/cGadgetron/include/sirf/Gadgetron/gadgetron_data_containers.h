@@ -1,10 +1,12 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
+Copyright 2020 University College London
+Copyright 2020 Physikalisch-Technische Bundesanstalt (PTB)
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +26,7 @@ limitations under the License.
 \brief Specification file for data container classes for Gadgetron data.
 
 \author Evgueni Ovtchinnikov
-\author CCP PETMR
+\author SyneRBI
 */
 
 #ifndef GADGETRON_DATA_CONTAINERS
@@ -210,6 +212,9 @@ namespace sirf {
 
 		// abstract methods
 
+		virtual void empty() = 0;
+		virtual void take_over(MRAcquisitionData&) = 0;
+
 		// the number of acquisitions in the container
 		virtual unsigned int number() const = 0;
 
@@ -277,7 +282,7 @@ namespace sirf {
 		int index(int i) const
 		{
 			int ni = index_.size();
-			if (ni > 0 && i >= ni || i < 0)
+			if (ni > 0 && i >= ni || i < 0 || i >= number())
 				THROW("Aquisition number is out of range");
 			if (ni > 0)
 				return index_[i];
@@ -297,7 +302,7 @@ namespace sirf {
 		void read( const std::string& filename_ismrmrd_with_ext );
 
 	protected:
-		bool sorted_=false;
+		bool sorted_ = false;
 		std::vector<int> index_;
         std::vector<KSpaceSorting> sorting_;
 		AcquisitionsInfo acqs_info_;
@@ -309,6 +314,12 @@ namespace sirf {
 
 		virtual MRAcquisitionData* clone_impl() const = 0;
 		MRAcquisitionData* clone_base() const;
+
+	private:
+		void binary_op_(int op, 
+			const MRAcquisitionData& a_x, const MRAcquisitionData& a_y,
+			complex_float_t a = 0, complex_float_t b = 0);
+
 	};
 
 	/*!
@@ -346,19 +357,26 @@ namespace sirf {
 
 		// implements 'overwriting' of an acquisition file data with new values:
 		// in reality, creates new file with new data and deletes the old one
-		void take_over(AcquisitionsFile& ac);
+		void take_over_impl(AcquisitionsFile& ac);
 
 		void write_acquisitions_info();
 
 		// implementations of abstract methods
 
+		virtual void empty();
+		virtual void take_over(MRAcquisitionData& ad)
+		{
+			AcquisitionsFile& af = dynamic_cast<AcquisitionsFile&>(ad);
+			take_over_impl(af);
+		}
 		virtual void set_data(const complex_float_t* z, int all = 1);
 		virtual unsigned int items() const;
 		virtual unsigned int number() const { return items(); }
 		virtual void get_acquisition(unsigned int num, ISMRMRD::Acquisition& acq) const;
 		virtual void set_acquisition(unsigned int num, ISMRMRD::Acquisition& acq)
 		{
-			std::cerr << "AcquisitionsFile::set_acquisition not implemented yet, sorry\n";
+			//std::cerr << 
+			THROW("AcquisitionsFile::set_acquisition not implemented yet, sorry\n");
 		}
 		virtual void append_acquisition(ISMRMRD::Acquisition& acq);
 		virtual void copy_acquisitions_info(const MRAcquisitionData& ac);
@@ -418,6 +436,8 @@ namespace sirf {
 			acqs_templ_.reset(new AcquisitionsVector);
 			_storage_scheme = "memory";
 		}
+		virtual void empty();
+		virtual void take_over(MRAcquisitionData& ad) {}
 		virtual unsigned int number() const { return (unsigned int)acqs_.size(); }
 		virtual unsigned int items() const { return (unsigned int)acqs_.size(); }
 		virtual void append_acquisition(ISMRMRD::Acquisition& acq)
@@ -482,14 +502,14 @@ namespace sirf {
 		//ISMRMRDImageData(ISMRMRDImageData& id, const char* attr, 
 		//const char* target); //does not build, have to be in the derived class
 		
-
+		virtual void empty() = 0;
 		virtual unsigned int number() const = 0;
 		virtual gadgetron::shared_ptr<ImageWrap> sptr_image_wrap
 			(unsigned int im_num) = 0;
 		virtual gadgetron::shared_ptr<const ImageWrap> sptr_image_wrap
 			(unsigned int im_num) const = 0;
-		virtual ImageWrap& image_wrap(unsigned int im_num) = 0;
-		virtual const ImageWrap& image_wrap(unsigned int im_num) const = 0;
+//		virtual ImageWrap& image_wrap(unsigned int im_num) = 0;
+//		virtual const ImageWrap& image_wrap(unsigned int im_num) const = 0;
 		virtual void append(int image_data_type, void* ptr_image) = 0;
 		virtual void append(const ImageWrap& iw) = 0;
         virtual void clear_data()=0;
@@ -564,12 +584,23 @@ namespace sirf {
 		int index(int i) const
 		{
 			int ni = index_.size();
-			if (ni > 0 && i >= ni || i < 0)
+			if (ni > 0 && i >= ni || i < 0 || i >= number())
 				THROW("Image number is out of range");
 			if (ni > 0)
 				return index_[i];
 			else
 				return i;
+		}
+		ImageWrap& image_wrap(unsigned int im_num)
+		{
+			gadgetron::shared_ptr<ImageWrap> sptr_iw = sptr_image_wrap(im_num);
+			return *sptr_iw;
+		}
+		const ImageWrap& image_wrap(unsigned int im_num) const
+		{
+			const gadgetron::shared_ptr<const ImageWrap>& sptr_iw = 
+				sptr_image_wrap(im_num);
+			return *sptr_iw;
 		}
         /// Set the meta data
         void set_meta_data(const AcquisitionsInfo &acqs_info);
@@ -756,6 +787,10 @@ namespace sirf {
         GadgetronImagesVector(const GadgetronImagesVector& images);
 		GadgetronImagesVector(GadgetronImagesVector& images, const char* attr,
 			const char* target);
+		virtual void empty()
+		{
+			images_.clear();
+		}
 		virtual unsigned int items() const
 		{ 
 			return (unsigned int)images_.size(); 
@@ -788,15 +823,15 @@ namespace sirf {
 			(unsigned int im_num)
 		{
 			int i = index(im_num);
-			return images_[i];
+			return images_.at(i);
 		}
 		virtual gadgetron::shared_ptr<const ImageWrap> sptr_image_wrap
 			(unsigned int im_num) const
 		{
 			int i = index(im_num);
-			return images_[i];
+			return images_.at(i);
 		}
-		virtual ImageWrap& image_wrap(unsigned int im_num)
+/*		virtual ImageWrap& image_wrap(unsigned int im_num)
 		{
 			gadgetron::shared_ptr<ImageWrap> sptr_iw = sptr_image_wrap(im_num);
 			return *sptr_iw;
@@ -807,7 +842,7 @@ namespace sirf {
 				sptr_image_wrap(im_num);
 			return *sptr_iw;
 		}
-
+*/
 		virtual ObjectHandle<DataContainer>* new_data_container_handle() const
 		{
 			return new ObjectHandle<DataContainer>

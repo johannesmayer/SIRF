@@ -8,10 +8,12 @@ Usage:
   osem_reconstruction [--help | options]
 
 Options:
-  -S <file>, --sino=<file>     sinogram [default: data/examples/PET/mMR/my_forward_projection.hs]
+  -S <file>, --sino=<file>     sinogram (default: data/examples/PET/my_forward_projection.hs)
   -R <file>, --rand=<file>     randoms
-  -a <attn>, --attn=<attn>     attenuation image file
-  -n <norm>, --norm=<norm>     ECAT8 bin normalization file
+  -a <attn>, --attn_im=<attn>  attenuation image file
+  -A <attn>, --attn_sn=<attn>  attenuation sinogram
+  -n <norm>, --norm_e8=<norm>  ECAT8 bin normalization file
+  -N <norm>, --norm_sn=<norm>  Normalisation sinogram
   -s <subs>, --subs=<subs>     number of subsets [default: 12]
   -i <siter>, --subiter=<siter>  number of sub-iterations [default: 2]
   -e <engn>, --engine=<engn>   reconstruction engine [default: STIR]
@@ -21,15 +23,16 @@ Options:
   --visualisations             show visualisations
   --nifti                      save output as nifti
   --gpu                        use gpu
+  --non-interactive            do not show plots
 '''
 
-## CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
+## SyneRBI Synergistic Image Reconstruction Framework (SIRF)
 ## Copyright 2015 - 2018 Rutherford Appleton Laboratory STFC
-## Copyright 2015 - 2018 University College London.
+## Copyright 2015 - 2020 University College London.
 ##
 ## This is software developed for the Collaborative Computational
-## Project in Positron Emission Tomography and Magnetic Resonance imaging
-## (http://www.ccppetmr.ac.uk/).
+## Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+## (http://www.ccpsynerbi.ac.uk/).
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ##   you may not use this file except in compliance with the License.
@@ -62,11 +65,14 @@ def check_file_exists(filename):
 # import engine module
 exec('from sirf.' + args['--engine'] + ' import *')
 
+
 # Sinogram. if sino not found, get the one in the example data
 sino_file = args['--sino']
+if not sino_file:
+    print("Sinogram not given, using data/examples/PET/my_forward_projection.hs")
+    sino_file = examples_data_path('PET') + "/my_forward_projection.hs"
 if not file_exists(sino_file):
-    sino_file = examples_data_path('PET') + '/mMR/' + sino_file
-    check_file_exists(sino_file)
+    raise error("Sinogram not found: " + sino_file)
 
 # Randoms
 rand_file = None
@@ -74,17 +80,29 @@ if args['--rand']:
     rand_file = args['--rand']
     check_file_exists(rand_file)
 
-# Attenuation
-attn_file = None
-if args['--attn']:
-    attn_file = args['--attn']
-    check_file_exists(attn_file)
+# Attenuation - image
+attn_im_file = None
+if args['--attn_im']:
+    attn_im_file = args['--attn_im']
+    check_file_exists(attn_im_file)
 
-# Norm
-norm_file = None
-if args['--norm']:
-    norm_file = args['--norm']
-    check_file_exists(norm_file)
+# Attenuation - sinogram
+attn_sn_file = None
+if args['--attn_sn']:
+    attn_sn_file = args['--attn_sn']
+    check_file_exists(attn_sn_file)
+
+# Norm - ECAT8
+norm_e8_file = None
+if args['--norm_e8']:
+    norm_e8_file = args['--norm_e8']
+    check_file_exists(norm_e8_file)
+
+# Norm - sinogram
+norm_sn_file = None
+if args['--norm_sn']:
+    norm_sn_file = args['--norm_sn']
+    check_file_exists(norm_sn_file)
 
 # Number of voxels
 nxny = literal_eval(args['--nxny'])
@@ -95,6 +113,8 @@ outp_file = args['--outp']
 if args['--visualisations']:
     visualisations = True
 else:
+    visualisations = False
+if args['--non-interactive']:
     visualisations = False
 
 if args['--nifti']:
@@ -114,9 +134,6 @@ num_subiterations = int(args['--subiter'])
 
 
 def main():
- 
-    # direct all engine's information and warnings printing to files
-    msg_red = MessageRedirector('info.txt', 'warn.txt')
 
     if not use_gpu:
         print("Using CPU projector...")
@@ -127,6 +144,8 @@ def main():
         print("Using GPU projector...")
         # If using GPU, use the niftypet projector
         acq_model = AcquisitionModelUsingNiftyPET()
+        # Truncate to FOV
+        acq_model.set_use_truncation(True)
 
     # PET acquisition data to be read from this file
     # (TODO: a link to raw data formats document to be given here)
@@ -143,13 +162,22 @@ def main():
         image.fill(1.0)
 
     # If norm is present
-    if norm_file:
+    asm_norm = None
+    if norm_e8_file and norm_sn_file:
+        raise error("For normalisation, only give ECAT8 or sinogram.")
+    if norm_e8_file:
         # create acquisition sensitivity model from ECAT8 normalisation data
-        asm_norm = AcquisitionSensitivityModel(norm_file)
+        asm_norm = AcquisitionSensitivityModel(norm_e8_file)
+    if norm_sn_file:
+        norm_sino = AcquisitionData(norm_sn_file)
+        asm_norm = AcquisitionSensitivityModel(norm_sino)
     
     # If attenuation is present
-    if attn_file:
-        attn_image = ImageData(attn_file)
+    asm_attn = None
+    if attn_im_file and attn_sn_file:
+        raise error("For attenuation, only give image or sinogram.")
+    if attn_im_file:
+        attn_image = ImageData(attn_im_file)
         # If gpu, make sure that the attn. image is same dimensions as image to recon
         if use_gpu:
             resampler = sirf.Reg.NiftyResample()
@@ -167,16 +195,19 @@ def main():
         print('applying attenuation (please wait, may take a while)...')
         asm_attn.unnormalise(bin_eff)
         asm_attn = AcquisitionSensitivityModel(bin_eff)
+    if attn_sn_file:
+        attn_sino = AcquisitionData(attn_sn_file)
+        asm_attn = AcquisitionSensitivityModel(attn_sino)
 
     # Get ASM dependent on attn and/or norm
     asm = None
-    if norm_file and attn_file:
+    if asm_norm and asm_attn:
         print("AcquisitionSensitivityModel contains norm and attenuation...")
         asm = AcquisitionSensitivityModel(asm_norm, asm_attn)
-    elif norm_file:
+    elif asm_norm:
         print("AcquisitionSensitivityModel contains norm...")
         asm = asm_norm
-    elif attn_file:
+    elif asm_attn:
         print("AcquisitionSensitivityModel contains attenuation...")
         asm = asm_attn
     if asm:
@@ -227,14 +258,17 @@ def main():
     if visualisations:
         # show reconstructed image
         image_array = out.as_array()
+        z = image_array.shape[0]//3
         show_2D_array('Reconstructed image', image_array[z,:,:])
         pylab.show()
+
 
 # if anything goes wrong, an exception will be thrown 
 # (cf. Error Handling section in the spec)
 try:
     main()
-    print('done')
+    print('\n=== done with %s' % __file__)
+
 except error as err:
     # display error information
     print('%s' % err.value)

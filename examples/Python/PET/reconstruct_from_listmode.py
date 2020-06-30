@@ -24,15 +24,16 @@ Options:
   --visualisations             show visualisations
   --nifti                      save output as nifti
   --gpu                        use gpu
+  --non-interactive            do not show plots
 '''
 
-## CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-## Copyright 2018 Rutherford Appleton Laboratory STFC
-## Copyright 2018 University College London.
+## SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+## Copyright 2018 - 2019 Rutherford Appleton Laboratory STFC
+## Copyright 2018 - 2020 University College London.
 ##
 ## This is software developed for the Collaborative Computational
-## Project in Positron Emission Tomography and Magnetic Resonance imaging
-## (http://www.ccppetmr.ac.uk/).
+## Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+## (http://www.ccpsynerbi.ac.uk/).
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ##   you may not use this file except in compliance with the License.
@@ -55,6 +56,7 @@ from pUtilities import show_2D_array
 
 # import engine module
 exec('from sirf.' + args['--engine'] + ' import *')
+
 
 # process command-line options
 data_path = args['--path']
@@ -91,6 +93,8 @@ if args['--visualisations']:
     visualisations = True
 else:
     visualisations = False
+if args['--non-interactive']:
+    visualisations = False
 
 if args['--gpu']:
     use_gpu = True
@@ -123,7 +127,7 @@ def main():
     if count_threshold is None:
         interval = input_interval
     else:
-        time_shift = lm2sino.get_time_at_which_prompt_rate_exceeds_threshold(count_threshold)
+        time_shift = lm2sino.get_time_at_which_num_prompts_exceeds_threshold(count_threshold)
         if time_shift < 0:
             print("No time found at which count rate exceeds " + str(time_shift) + ", not modifying interval")
         interval = (input_interval[0]+time_shift, input_interval[1]+time_shift)
@@ -247,8 +251,10 @@ def main():
         show_2D_array('Reconstructed image', image_array[z,:,:])
         pylab.show()
 
+
 try:
     main()
-    print('done')
+    print('\n=== done with %s' % __file__)
+
 except error as err:
     print('%s' % err.value)

@@ -2,13 +2,13 @@
 Object-Oriented wrap for the cSIRF-to-Python interface pysirf.py
 '''
 
-## CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-## Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC
-## Copyright 2015 - 2019 University College London
+## SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+## Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
+## Copyright 2015 - 2020 University College London
 ##
 ## This is software developed for the Collaborative Computational
-## Project in Positron Emission Tomography and Magnetic Resonance imaging
-## (http://www.ccppetmr.ac.uk/).
+## Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+## (http://www.ccpsynerbi.ac.uk/).
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ##   you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ except:
     HAVE_PYLAB = False
 import sys
 
-from sirf.Utilities import assert_validities, check_status, try_calling
+from sirf.Utilities import assert_validity, assert_validities, check_status, try_calling
 import pyiutilities as pyiutil
 import sirf.pysirf as pysirf
+
 
 from numbers import Number
 
@@ -55,7 +56,7 @@ class DataContainer(ABC):
         print("SIRF.DataContainer __del__ with handle {}.".format(self.handle))
         if self.handle is not None:
             pyiutil.deleteDataHandle(self.handle)
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def same_object(self):
         '''
         Returns an object of the same type as self.
@@ -98,12 +99,19 @@ class DataContainer(ABC):
         data viewed as vectors.
         other: DataContainer
         '''
-        assert_validities(self, other)
+        assert_validities(self,other)
+        # Check if input are the same size
+        if numpy.prod(self.dimensions()) != numpy.prod(other.dimensions()):
+            raise ValueError("Input sizes are expected to be equal, got " + numpy.prod(self.dimensions()) + " and " + numpy.prod(other.dimensions()) + " instead.")
         handle = pysirf.cSIRF_dot(self.handle, other.handle)
         check_status(handle)
-        r = pyiutil.floatDataFromHandle(handle)
+        re = pyiutil.floatReDataFromHandle(handle)
+        im = pyiutil.floatImDataFromHandle(handle)
         pyiutil.deleteDataHandle(handle)
-        return r
+        if im == 0:
+            return re
+        else:
+            return re + 1j*im
     def multiply(self, other, out=None):
         '''
         Returns the elementwise product of this and another container 
@@ -117,13 +125,14 @@ class DataContainer(ABC):
             other.fill(tmp)
         assert_validities(self, other)
         if out is None:
-            z = self.same_object()
+            out = self.same_object()
+            out.handle = pysirf.cSIRF_product(self.handle, other.handle)
+            check_status(out.handle)
+            #out = self.copy()
         else:
             assert_validities(self, out)
-            z = out
-        z.handle = pysirf.cSIRF_multiply(self.handle, other.handle)
-        check_status(z.handle)
-        return z
+            try_calling(pysirf.cSIRF_multiply(self.handle, other.handle, out.handle))
+        return out
     def divide(self, other, out=None):
         '''
         Returns the elementwise ratio of this and another container 
@@ -137,13 +146,14 @@ class DataContainer(ABC):
             other.fill(tmp)
         assert_validities(self, other)
         if out is None:
-            z = self.same_object()
+            out = self.same_object()
+            out.handle = pysirf.cSIRF_ratio(self.handle, other.handle)
+            check_status(out.handle)
+            #out = self.copy()
         else:
             assert_validities(self, out)
-            z = out
-        z.handle = pysirf.cSIRF_divide(self.handle, other.handle)
-        check_status(z.handle)
-        return z
+            try_calling(pysirf.cSIRF_divide(self.handle, other.handle, out.handle))
+        return out
     def add(self, other, out=None):
         '''
         Addition for data containers.
@@ -161,14 +171,16 @@ class DataContainer(ABC):
         one = numpy.asarray([1.0, 0.0], dtype = numpy.float32)
         if out is None:
             z = self.same_object()
+            z.handle = pysirf.cSIRF_axpby \
+                (one.ctypes.data, self.handle, one.ctypes.data, other.handle)
+            check_status(z.handle)
         else:
             assert_validities(self, out)
             z = out
-        z.handle = pysirf.cSIRF_axpby \
-            (one.ctypes.data, self.handle, one.ctypes.data, other.handle)
-        check_status(z.handle)
+            try_calling(pysirf.cSIRF_axpbyAlt \
+                (one.ctypes.data, self.handle, one.ctypes.data, other.handle, z.handle))
         return z
-    def axpby(self, a,b, y, out=None, **kwargs):
+    def axpby(self, a, b, y, out=None, **kwargs):
         '''
         Addition for data containers.
 
@@ -181,17 +193,20 @@ class DataContainer(ABC):
         #     tmp = other + numpy.zeros(self.as_array().shape)
         #     other = self.copy()
         #     other.fill(tmp)
+
         assert_validities(self, y)
         alpha = numpy.asarray([a.real, a.imag], dtype = numpy.float32)
         beta = numpy.asarray([b.real, b.imag], dtype = numpy.float32)
         
         if out is None:
-            z = self.copy()
+            z = self.same_object()
+            z.handle = pysirf.cSIRF_axpby \
+                (alpha.ctypes.data, self.handle, beta.ctypes.data, y.handle)
         else:
             assert_validities(self, out)
             z = out
-        z.handle = pysirf.cSIRF_axpby \
-            (alpha.ctypes.data, self.handle, beta.ctypes.data, y.handle)
+            try_calling(pysirf.cSIRF_axpbyAlt \
+                (alpha.ctypes.data, self.handle, beta.ctypes.data, y.handle, z.handle))
         check_status(z.handle)
         return z
 
@@ -227,12 +242,14 @@ class DataContainer(ABC):
         mn_one = numpy.asarray([-1.0, 0.0], dtype = numpy.float32)
         if out is None:
             z = self.same_object()
+            z.handle = pysirf.cSIRF_axpby \
+                (pl_one.ctypes.data, self.handle, mn_one.ctypes.data, other.handle)
+            check_status(z.handle)
         else:
             assert_validities(self, out)
             z = out
-        z.handle = pysirf.cSIRF_axpby \
-            (pl_one.ctypes.data, self.handle, mn_one.ctypes.data, other.handle)
-        check_status(z.handle)
+            try_calling(pysirf.cSIRF_axpbyAlt \
+                (pl_one.ctypes.data, self.handle, mn_one.ctypes.data, other.handle, z.handle))
         return z
     def __sub__(self, other):
         '''
@@ -381,7 +398,8 @@ class DataContainer(ABC):
     # inline algebra
     def __iadd__(self, other):
         '''Not quite in-place add'''
-        self.fill(self.add(other))
+        #self.fill(self.add(other))
+        self.add(other, out=self)
         return self
     def __imul__(self, other):
         '''Not quite in-place multiplication'''
@@ -389,11 +407,13 @@ class DataContainer(ABC):
             z = other * self
             self.fill(z.as_array())
             return self
-        self.fill(self.multiply(other).as_array())
+        #self.fill(self.multiply(other).as_array())
+        self.multiply(other, out=self)
         return self
     def __isub__(self, other):
         '''Not quite in-place subtract'''
-        self.fill(self.subtract(other).as_array())
+        #self.fill(self.subtract(other).as_array())
+        self.subtract(other, out=self)
         return self
     def __idiv__(self, other):
         '''Not quite in-place division'''
@@ -401,7 +421,8 @@ class DataContainer(ABC):
             z = (1./other) * self
             self.fill(z.as_array())
             return self
-        self.fill(self.divide(other).as_array())
+        #self.fill(self.divide(other).as_array())
+        self.divide(other, out=self)
         return self
     def abs(self, out=None):
         '''Returns the element-wise absolute value of the DataContainer data
@@ -500,13 +521,49 @@ class DataContainer(ABC):
         return self.__div__(other)
     @property
     def shape(self):
-        '''returns the shape of the data array
+        '''Returns the shape of the data array
         
         CIL/SIRF compatibility
         '''
         return self.as_array().shape
+    @property
+    def size(self):
+        '''Returns the (total) size of the data array.'''
+        return self.as_array().size
 
 class ImageData(DataContainer):
+    '''
+    Image data ABC
+    '''
+    def equal(self, other):
+        '''
+        Overloads == for ImageData.
+
+        other: ImageData
+        '''
+        assert_validity(self, ImageData)
+        assert_validity(other, ImageData)
+        handle = pysirf.cSIRF_equalImages(self.handle, other.handle)
+        check_status(handle)
+        same = pyiutil.intDataFromHandle(handle)
+        pyiutil.deleteDataHandle(handle)
+        return same
+
+    def __eq__(self, other):
+        return self.equal(other)
+
+    def __ne__(self, other):
+        '''
+        Overloads != for ImageData.
+
+        other: ImageData
+        '''
+        return not (self == other)
+
+    def read(self, file, engine, verb):
+        self.handle = pysirf.cSIRF_readImageData(file, engine, verb)
+        check_status(self.handle)
+
     def fill(self, image):
         try_calling(pysirf.cSIRF_fillImageFromImage(self.handle, image.handle))
 

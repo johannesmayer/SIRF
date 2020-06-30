@@ -18,7 +18,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE True)
 # Configure the aladin/f3d files dependent on NIFTYREG version number
 include(${CMAKE_CURRENT_SOURCE_DIR}/../callable_NR_methods.cmake)
 get_parser_methods("../callable_NR_aladin_methods.txt" "reg_aladin_sym" "${NIFTYREG_VERSION}" NR_aladin_parser_methods)
-get_parser_methods("../callable_NR_f3d_methods.txt"    "reg_f3d_sym"    "${NIFTYREG_VERSION}" NR_f3d_parser_methods   )
+get_parser_methods("../callable_NR_f3d_methods.txt"    "reg_f3d"    "${NIFTYREG_VERSION}" NR_f3d_parser_methods   )
 get_runtime_methods("../callable_NR_aladin_methods.txt" "${NIFTYREG_VERSION}" NR_aladin_runtime_methods)
 get_runtime_methods("../callable_NR_f3d_methods.txt"    "${NIFTYREG_VERSION}" NR_f3d_runtime_methods   )
 get_list_of_wrapped_methods("../callable_NR_aladin_methods.txt" "${NIFTYREG_VERSION}" NR_aladin_list_methods)
@@ -78,6 +78,12 @@ if (NIFTYREG_BUILT_WITH_CUDA)
   target_link_libraries(Reg PUBLIC ${CUDA_CUDART_LIBRARY})
 endif()
 
+# If niftyreg was bulit with OpenCL
+if (NIFTYREG_BUILT_WITH_OPENCL)
+  find_package(OpenCL REQUIRED)
+  target_link_libraries(REG PUBLIC OpenCL::OpenCL)
+endif()
+
 # Add boost library dependencies
 if((CMAKE_VERSION VERSION_LESS 3.5.0) OR (NOT _Boost_IMPORTED_TARGETS))
   # This is harder than it should be on older CMake versions to be able to cope with
@@ -96,6 +102,17 @@ IF(SPM_FOUND)
   TARGET_INCLUDE_DIRECTORIES(Reg PUBLIC "${Matlab_INCLUDE_DIRS}")
   TARGET_LINK_LIBRARIES(Reg PUBLIC "${Matlab_LIBRARIES}")
   target_compile_definitions(Reg PUBLIC SIRF_SPM)
+ENDIF()
+
+# Link VTK
+IF(VTK_FOUND)
+  if(TARGET VTK::IOImage AND TARGET VTK::FiltersHybrid)
+    TARGET_LINK_LIBRARIES(Reg INTERFACE VTK::IOImage VTK::FiltersHybrid)
+  else()
+    target_link_libraries(Reg INTERFACE ${VTK_LIBRARIES})
+    target_include_directories(Reg INTERFACE ${vtkFiltersHybrid_INCLUDE_DIRS})
+  endif()
+  target_compile_definitions(Reg PUBLIC SIRF_VTK)
 ENDIF()
 
 # Install

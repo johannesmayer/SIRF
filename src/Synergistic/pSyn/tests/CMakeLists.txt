@@ -1,6 +1,8 @@
 #========================================================================
+# Author: Richard Brown
+# Copyright 2018 - 2020 University College London
 # Author: Evgueni Ovtchinnikov
-# Copyright 2017 STFC
+# Copyright 2020 UKRI-STFC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,10 +18,16 @@
 #
 #=========================================================================
 
-if(BUILD_MATLAB)
+set(MR_vendor_dicom_as_nifti "${CMAKE_SOURCE_DIR}/data/examples/MR/zenodo/dicom_as_nifti.nii")
+set(MR_SIRF_recon "${CMAKE_SOURCE_DIR}/data/examples/MR/zenodo/SIRF_recon.h5")
 
-  add_executable(gmi_xgadgetron gmi_xgadgetron.cpp)
-  target_link_libraries(gmi_xgadgetron mig csirf)
-  INSTALL(TARGETS gmi_xgadgetron DESTINATION bin)
-
-endif(BUILD_MATLAB)
+if (BUILD_PYTHON)
+	ADD_TEST(NAME SYN_TEST_GADGETRON_TO_NIFTI_PYTHON
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests_syn.py 
+		${MR_SIRF_recon} "Gadgetron"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+	ADD_TEST(NAME SYN_TEST_STIR_TO_NIFTI_PYTHON
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests_syn.py 
+		${MR_vendor_dicom_as_nifti} "STIR"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()

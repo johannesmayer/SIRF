@@ -1,10 +1,10 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2017 - 2019 University College London
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+Copyright 2017 - 2020 University College London
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ limitations under the License.
 \brief Class for deformation field transformations.
 
 \author Richard Brown
-\author CCP PETMR
+\author SyneRBI
 */
 
 #include "sirf/Reg/NiftiImageData3DDeformation.h"
@@ -113,7 +113,8 @@ NiftiImageData3DDeformation<dataType> NiftiImageData3DDeformation<dataType>::com
 }
 
 template<class dataType>
-std::shared_ptr<const NiftiImageData3DDeformation<dataType> > NiftiImageData3DDeformation<dataType>::get_inverse(const std::shared_ptr<const NiftiImageData<dataType> > image_sptr) const
+NiftiImageData3DDeformation<dataType>*
+NiftiImageData3DDeformation<dataType>::get_inverse_impl_nr(const std::shared_ptr<const NiftiImageData<dataType> > image_sptr) const
 {
     // Output is based on original deformation field or some other
     // input, depending on whether input argument is nullptr or not
@@ -140,11 +141,27 @@ std::shared_ptr<const NiftiImageData3DDeformation<dataType> > NiftiImageData3DDe
     // Method not marked const, so have to clone the deformation field
     reg_defFieldInvert(this->clone()->get_raw_nifti_sptr().get(),output_ptr,1.0e-6f);
 
-    // Create shared_ptr, delete the original ptr
-    std::shared_ptr<const NiftiImageData3DDeformation<dataType> > output_sptr =
-            std::make_shared<NiftiImageData3DDeformation<dataType> >(*output_ptr);
+    // Create image to be returned, delete the original ptr
+    auto *output_sirf_ptr = new NiftiImageData3DDeformation<dataType>(*output_ptr);
     nifti_image_free(output_ptr);
-    return output_sptr;
+    return output_sirf_ptr;
+}
+
+template<class dataType>
+NiftiImageData3DDeformation<dataType>*
+NiftiImageData3DDeformation<dataType>::get_inverse_impl_vtk(const std::shared_ptr<const NiftiImageData<dataType> > image_sptr) const
+{
+#ifndef SIRF_VTK
+    throw std::runtime_error("Build SIRF with VTK support for this functionality");
+#endif
+    // Convert to displacement
+    NiftiImageData3DDisplacement<dataType> disp(*this);
+
+    // Inverse with VTK
+    auto disp_inv = disp.get_inverse(image_sptr, true);
+
+    // Convert back to def
+    return new NiftiImageData3DDeformation<dataType>(*disp_inv);
 }
 
 namespace sirf {

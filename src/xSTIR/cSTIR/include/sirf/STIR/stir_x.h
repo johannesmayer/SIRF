@@ -1,10 +1,11 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
+Copyright 2019 - 2020 University College London
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +30,7 @@ limitations under the License.
 \brief Specification file for extended STIR functionality classes.
 
 \author Evgueni Ovtchinnikov
-\author CCP PETMR
+\author SyneRBI
 */
 
 #include <stdlib.h>
@@ -150,7 +151,7 @@ The actual algorithm is described in
 		{
 			return store_delayeds;
 		}
-		bool set_up()
+        virtual stir::Succeeded set_up()
 		{
 			// always reset here, in case somebody set a new listmode or template file
 			max_segment_num_to_process = -1;
@@ -158,7 +159,7 @@ The actual algorithm is described in
 
 			bool failed = post_processing();
 			if (failed)
-				return true;
+				return stir::Succeeded::no;
 			const int num_rings =
 				lm_data_ptr->get_scanner_ptr()->get_num_rings();
 			// code below is a copy of STIR for more generic cases
@@ -177,7 +178,7 @@ The actual algorithm is described in
 			half_fan_size = fan_size / 2;
 			fan_size = 2 * half_fan_size + 1;
 
-			return false;
+			return stir::Succeeded::yes;
 		}
 		stir::shared_ptr<PETAcquisitionData> get_output()
 		{
@@ -199,9 +200,9 @@ The actual algorithm is described in
 		{
 			return randoms_sptr;
 		}
-        /// Get the time at which the prompt rate exceeds a certain threshold.
+        /// Get the time at which the number of prompts exceeds a certain threshold.
         /// Returns -1 if not found.
-        float get_time_at_which_prompt_rate_exceeds_threshold(const float threshold) const;
+        float get_time_at_which_num_prompts_exceeds_threshold(const unsigned long threshold) const;
 
 	protected:
 		// variables for ML estimation of singles/randoms
@@ -471,7 +472,7 @@ The actual algorithm is described in
 	typedef PETAcquisitionModelUsingMatrix AcqModUsingMatrix3DF;
 	typedef stir::shared_ptr<AcqMod3DF> sptrAcqMod3DF;
 
-#ifdef STIR_WITH_NIFTYPET_PROJECTOR
+#ifdef STIR_WITH_NiftyPET_PROJECTOR
     /*!
     \ingroup STIR Extensions
     \brief NiftyPET implementation of the PET acquisition model.
@@ -481,15 +482,21 @@ The actual algorithm is described in
     public:
         PETAcquisitionModelUsingNiftyPET()
         {
-            _niftypet_projector_pair_sptr.reset(new ProjectorPairUsingNiftyPET);
-            this->sptr_projectors_ = _niftypet_projector_pair_sptr;
+            _NiftyPET_projector_pair_sptr.reset(new ProjectorPairUsingNiftyPET);
+            this->sptr_projectors_ = _NiftyPET_projector_pair_sptr;
+			// Set verbosity to 0 by default
+            _NiftyPET_projector_pair_sptr->set_verbosity(0);
         }
         void set_cuda_verbosity(const bool verbosity) const
         {
-            _niftypet_projector_pair_sptr->set_verbosity(verbosity);
+            _NiftyPET_projector_pair_sptr->set_verbosity(verbosity);
+        }
+        void set_use_truncation(const bool use_truncation) const
+        {
+            _NiftyPET_projector_pair_sptr->set_use_truncation(use_truncation);
         }
     protected:
-        stir::shared_ptr<ProjectorPairUsingNiftyPET> _niftypet_projector_pair_sptr;
+        stir::shared_ptr<ProjectorPairUsingNiftyPET> _NiftyPET_projector_pair_sptr;
     };
     typedef PETAcquisitionModelUsingNiftyPET AcqModUsingNiftyPET3DF;
 #endif
@@ -522,9 +529,9 @@ The actual algorithm is described in
 
 	class xSTIR_GeneralisedPrior3DF : public stir::GeneralisedPrior < Image3DF > {
 	public:
-		bool post_process() {
-			return post_processing();
-		}
+//		bool post_process() {
+//			return post_processing();
+//		}
 	};
 
 	class xSTIR_QuadraticPrior3DF : public stir::QuadraticPrior < float > {
@@ -544,9 +551,9 @@ The actual algorithm is described in
 	class xSTIR_GeneralisedObjectiveFunction3DF :
 		public stir::GeneralisedObjectiveFunction < Image3DF > {
 	public:
-		bool post_process() {
-			return post_processing();
-		}
+//		bool post_process() {
+//			return post_processing();
+//		}
 	};
 
 	//typedef xSTIR_GeneralisedObjectiveFunction3DF ObjectiveFunction3DF;
@@ -587,16 +594,12 @@ The actual algorithm is described in
 	class xSTIR_IterativeReconstruction3DF :
 		public stir::IterativeReconstruction < Image3DF > {
 	public:
-		bool post_process() {
+/*		bool post_process() {
 			//std::cout << "in xSTIR_IterativeReconstruction3DF.post_process...\n";
 			if (this->output_filename_prefix.length() < 1)
 				this->set_output_filename_prefix("reconstructed_image");
 			return post_processing();
-		}
-		stir::Succeeded setup(sptrImage3DF const& image) {
-			//std::cout << "in xSTIR_IterativeReconstruction3DF.setup...\n";
-			return set_up(image);
-		}
+		}*/
 		void update(Image3DF &image) {
 			update_estimate(image);
 			end_of_iteration_processing(image);

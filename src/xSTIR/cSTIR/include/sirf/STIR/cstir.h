@@ -1,11 +1,11 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
 Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC
 Copyright 2015 - 2017 University College London.
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ extern "C" {
 
     // Global
     void* cSTIR_setVerbosity(const int verbosity_ptr);
+    void* cSTIR_getVerbosity();
 
 	// Common STIR Object methods
 	void* cSTIR_newObject(const char* name);
@@ -55,7 +56,7 @@ extern "C" {
 	void* cSTIR_setupListmodeToSinogramsConverter(void* ptr);
 	void* cSTIR_convertListmodeToSinograms(void* ptr);
 	void* cSTIR_computeRandoms(void* ptr);
-    void* cSTIR_lm_prompt_rate_exceeds_threshold(void* ptr, const float threshold);
+    void* cSTIR_lm_num_prompts_exceeds_threshold(void* ptr, const float threshold);
 
 	// Data processor methods
 	void* cSTIR_setupImageDataProcessor(const void* ptr_p, void* ptr_i);
@@ -100,6 +101,7 @@ extern "C" {
 	void* cSTIR_fillAcquisitionDataFromAcquisitionData
 		(void* ptr_acq, const void * ptr_from);
 	void* cSTIR_writeAcquisitionData(void* ptr_acq, const char* filename);
+	void* cSTIR_get_ProjDataInfo(void* ptr_acq);
 
 	// Reconstruction methods
 	void* cSTIR_setupFBP2DReconstruction(void* ptr_r, void* ptr_i);
@@ -139,6 +141,7 @@ extern "C" {
 	void* cSTIR_fillImage(void* ptr_i, float v);
 	void* cSTIR_addShape(void* ptr_i, void* ptr_s, float v);
 	void* cSTIR_writeImage(void* ptr_i, const char* filename); 
+    void* cSTIR_writeImage_par(void* ptr_i, const char* filename, const char* par);
     void* cSTIR_ImageData_zoom_image(void* ptr_im,
                                      const PTR_FLOAT zooms_ptr_raw,
                                      const PTR_FLOAT offsets_in_mm_ptr_raw,

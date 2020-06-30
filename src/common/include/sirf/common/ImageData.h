@@ -1,11 +1,11 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2018 Rutherford Appleton Laboratory STFC
-Copyright 2018 University College London
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+Copyright 2018 - 2020 Rutherford Appleton Laboratory STFC
+Copyright 2018 - 2020 University College London
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,8 +80,10 @@ namespace sirf {
         }
         /// Write image to file
         //virtual void write(const std::string &filename) const = 0;
-		bool operator==(const ImageData& id) const
+		virtual bool operator==(const ImageData& id) const
 		{
+			if (&id == this)
+				return true;
 			GeometricalInfo<3, 3>& gi_self = (GeometricalInfo<3, 3>&)*get_geom_info_sptr();
 			GeometricalInfo<3, 3>& gi_other = (GeometricalInfo<3, 3>&)*id.get_geom_info_sptr();
 			if (gi_self != gi_other)
@@ -105,7 +107,7 @@ namespace sirf {
 			bool same = (s <= 1e-6*t);
 			return same;
 		}
-		bool operator!=(const ImageData& id) const
+		virtual bool operator!=(const ImageData& id) const
 		{
 			return !(*this == id);
 		}

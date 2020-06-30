@@ -1,13 +1,13 @@
 function [failed, ntests] = test_listmode(record, engine)
 % PET test set 1.
 
-% CCP PETMR Synergistic Image Reconstruction Framework (SIRF).
+% SyneRBI Synergistic Image Reconstruction Framework (SIRF).
 % Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC.
-% Copyright 2015 - 2017 University College London.
+% Copyright 2015 - 2020 University College London.
 % 
 % This is software developed for the Collaborative Computational
-% Project in Positron Emission Tomography and Magnetic Resonance imaging
-% (http://www.ccppetmr.ac.uk/).
+% Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+% (http://www.ccpsynerbi.ac.uk/).
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@ raw_data_file = fullfile(data_path, 'mMR', 'list.l.hdr');
 lm2sino = pet.ListmodeToSinograms();
 lm2sino.set_input(raw_data_file);
 
-prompt_rate_threshold = 73036.;
+num_prompts_threshold = 73036.;
 known_time = 22.;
 
-time_at_which_prompt_rate_exceeds_threshold = ...
-    lm2sino.get_time_at_which_prompt_rate_exceeds_threshold(prompt_rate_threshold);
+time_at_which_num_prompts_exceeds_threshold = ...
+    lm2sino.get_time_at_which_num_prompts_exceeds_threshold(num_prompts_threshold);
 
-assert(abs(time_at_which_prompt_rate_exceeds_threshold-known_time) <= 1e-4, ...
-	'ListmodeToSinograms::get_time_at_which_prompt_rate_exceeds_threshold failed')
+assert(abs(time_at_which_num_prompts_exceeds_threshold-known_time) <= 1e-4, ...
+	'ListmodeToSinograms::get_time_at_which_num_prompts_exceeds_threshold failed')
 
 failed = 0;
 ntests = 1;

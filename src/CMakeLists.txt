@@ -1,8 +1,8 @@
 
 #========================================================================
 # Author: Richard Brown, Kris Thielemans
-# Copyright 2016 - 2019 University College London
-# Copyright 2016 - 2018 Science Technology Facilities Council
+# Copyright 2016 - 2020 University College London
+# Copyright 2016 - 2020 Science Technology Facilities Council
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #=========================================================================
 
 ADD_SUBDIRECTORY(iUtilities)
-ADD_SUBDIRECTORY(common)
+#ADD_SUBDIRECTORY(common)
 
 
 ##########################################################################
@@ -29,9 +29,7 @@ option(DISABLE_Gadgetron "Disable building the SIRF interface to Gadgetron" OFF)
 if (DISABLE_Gadgetron)
   message(STATUS "Gadgetron support disabled.")
 else()
-  # include explicit search for HDF5 for older ISMRMRD versions.
-  find_package(HDF5 1.8 COMPONENTS C REQUIRED)
-  find_package(ISMRMRD REQUIRED)
+  find_package(ISMRMRD 1.4 REQUIRED)
   # Add ISMRMRD to search path for FFTW3
   set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${ISMRMRD_DIR}")
   find_package(FFTW3 COMPONENTS single REQUIRED)
@@ -81,13 +79,17 @@ if (DISABLE_STIR)
   message(STATUS "STIR support disabled.")
 else()
   find_package(STIR 4.0.0 REQUIRED)
-  if (STIR_WITH_NIFTYPET_PROJECTOR)
-    set(NIFTYPET_BOOL_STR "1")
+  if (STIR_WITH_NiftyPET_PROJECTOR)
+    set(NiftyPET_BOOL_STR "1")
   	message(STATUS "STIR was built with NiftyPET, GPU projectors will be enabled.")
-    add_compile_definitions(STIR_WITH_NIFTYPET_PROJECTOR)
+    if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
+      add_definitions(-DSTIR_WITH_NiftyPET_PROJECTOR)
+    else()
+      add_compile_definitions(STIR_WITH_NiftyPET_PROJECTOR)
+    endif()
   else()
     MESSAGE(STATUS "STIR not built with NiftyPET.")
-    set(NIFTYPET_BOOL_STR "0")
+    set(NiftyPET_BOOL_STR "0")
   endif()
   ADD_SUBDIRECTORY(xSTIR)
 endif()
@@ -119,3 +121,5 @@ else()
     endif()
   endif()
 endif()
+
+ADD_SUBDIRECTORY(common)

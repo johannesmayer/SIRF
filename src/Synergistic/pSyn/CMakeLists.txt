@@ -1,6 +1,6 @@
 #========================================================================
 # Author: Evgueni Ovtchinnikov
-# Copyright 2017 STFC
+# Copyright 2020 UKRI-STFC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,12 +16,4 @@
 #
 #=========================================================================
 
-if(BUILD_MATLAB)
-
-  set(CMAKE_POSITION_INDEPENDENT_CODE True)
-
-  add_executable(gmi_xstir gmi_xstir.cpp)
-  target_link_libraries(gmi_xstir csirf mig)
-  INSTALL(TARGETS gmi_xstir DESTINATION bin)
-
-endif(BUILD_MATLAB)
+ADD_SUBDIRECTORY(tests)

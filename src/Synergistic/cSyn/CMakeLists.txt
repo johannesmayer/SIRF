@@ -1,6 +1,8 @@
 #========================================================================
+# Author: Richard Brown
 # Author: Evgueni Ovtchinnikov
-# Copyright 2017 STFC
+# Copyright 2018 - 2020 University College London
+# Copyright 2020 UKRI-STFC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,12 +18,17 @@
 #
 #=========================================================================
 
-set(CMAKE_POSITION_INDEPENDENT_CODE True)
+SET(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-if(BUILD_MATLAB)
+#add_library(csyn csyn.cpp utilities.cpp)
+add_library(csyn utilities.cpp)
+target_include_directories(csyn PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:include>"
+  )
+target_include_directories(csyn PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>$<INSTALL_INTERFACE:include>"
+  )
+target_link_libraries(csyn PUBLIC cgadgetron cstir Reg)
+INSTALL(TARGETS csyn DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
-  add_executable(gmi_iutilities gmi.cpp)
-  target_link_libraries(gmi_iutilities csirf mig)
-  INSTALL(TARGETS gmi_iutilities DESTINATION bin)
-
-endif(BUILD_MATLAB)
+ADD_SUBDIRECTORY(tests)

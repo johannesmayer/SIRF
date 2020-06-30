@@ -3,7 +3,7 @@
 v{version}
 
 Usage:
-  tests_niftypet [--help | options]
+  tests_NiftyPET [--help | options]
 
 Options:
   -r, --record   record the measurements rather than check them
@@ -13,19 +13,18 @@ Options:
 
 {licence}
 """
-from sirf.STIR import *
-from sirf.Utilities import runner, __license__
+import sirf.STIR as pet
+from sirf.Utilities import is_operator_adjoint, runner, __license__
 import numpy as np
-
-# Set STIR verbosity to off
-set_verbosity(0)
+import time
+import sys
 
 __version__ = "0.2.3"
 __author__ = "Richard Brown"
 
 
 def get_elliptical_cylinder(radius_x, radius_y, length, origin=None):
-    cyl = EllipticCylinder()
+    cyl = pet.EllipticCylinder()
     cyl.set_radius_x(radius_x)
     cyl.set_radius_y(radius_y)
     cyl.set_length(length)
@@ -36,7 +35,7 @@ def get_elliptical_cylinder(radius_x, radius_y, length, origin=None):
 def get_image():
     im_size = (127, 320, 320)
     im_spacing = (2.03125, 2.08626, 2.08626)
-    image = ImageData()
+    image = pet.ImageData()
     image.initialise(im_size, im_spacing)
     image.fill(0)
 
@@ -60,30 +59,43 @@ def add_noise(proj_data,noise_factor = 1):
 
 def test_main(rec=False, verb=False, throw=True):
 
+    # Set STIR verbosity to off
+    original_verb = pet.get_verbosity()
+    pet.set_verbosity(0)
+
     time.sleep(0.5)
     sys.stderr.write("Testing NiftyPET projector...")
     time.sleep(0.5)
 
-    data_path = examples_data_path('PET')
-    raw_data_file = existing_filepath(data_path, 'mMR/mMR_template_span11.hs')
-    template_acq_data = AcquisitionData(raw_data_file)
+    data_path = pet.examples_data_path('PET')
+    raw_data_file = pet.existing_filepath(data_path, 'mMR/mMR_template_span11.hs')
+    template_acq_data = pet.AcquisitionData(raw_data_file)
 
     # Get image
     image = get_image()
 
     # Get AM
-    acq_model = AcquisitionModelUsingNiftyPET()
+    try:
+        acq_model = pet.AcquisitionModelUsingNiftyPET()
+    except:
+        return 1, 1
     acq_model.set_cuda_verbosity(verb)
     acq_model.set_up(template_acq_data, image)
+
+    # Test operator adjointness
+    if verb:
+        print('testing adjointness')
+    if not is_operator_adjoint(acq_model, num_tests=1, verbose=True):
+        raise AssertionError('NiftyPet AcquisitionModel is not adjoint')
 
     # Generate test data
     simulated_acq_data = acq_model.forward(image)
     simulated_acq_data_w_noise = add_noise(simulated_acq_data,10)
 
-    obj_fun = make_Poisson_loglikelihood(template_acq_data)
+    obj_fun = pet.make_Poisson_loglikelihood(template_acq_data)
     obj_fun.set_acquisition_model(acq_model)
 
-    recon = OSMAPOSLReconstructor()
+    recon = pet.OSMAPOSLReconstructor()
     recon.set_objective_function(obj_fun)
     recon.set_num_subsets(1)
     recon.set_num_subiterations(1)
@@ -100,6 +112,11 @@ def test_main(rec=False, verb=False, throw=True):
     reconstructed_im = recon.get_output()
     if not reconstructed_im:
         raise AssertionError()
+
+    # Reset original verbose-ness
+    pet.set_verbosity(original_verb)
+
+    return 0, 1
 
 if __name__ == "__main__":
     runner(test_main, __doc__, __version__, __author__)

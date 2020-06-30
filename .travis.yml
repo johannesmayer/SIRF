@@ -1,7 +1,7 @@
 # Note: with `language: cpp`, `cache: ccache` works
 # but `cache: pip` and `python:` is ignored
 language: cpp
-dist: xenial  # Ubuntu 14.04 LTS
+dist: bionic  # Ubuntu 18.04 LTS
 cache:  # cache C/C++/pip (shared between builds)
 - ccache
 - pip
@@ -59,17 +59,19 @@ addons:
 env:
  global:
  # Need STIR_TAG=master at present, see https://github.com/CCPPETMR/SIRF/issues/366
- - BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Release -DSTIR_TAG=master"
+ - BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Release"
  # don't use too many threads - may crash
  - MAKEFLAGS="-j 2"
 matrix:
  include:
  # linux g{cc,++}-6 py{27,3}
  - os: linux
+   dist: xenial
    python: 3
    # -boost +fftw3 +hdf5 +ace
    env: EXTRA_BUILD_FLAGS="-DUSE_ITK:BOOL=ON -DUSE_SYSTEM_ITK:BOOL=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DUSE_SYSTEM_ACE=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=3
  - os: linux
+   dist: xenial
    python: 2.7
    # -boost +fftw3 +hdf5 +siemens_to_ismrmrd +swig +ace
    env: EXTRA_BUILD_FLAGS="-DUSE_ITK:BOOL=ON -DUSE_SYSTEM_ITK:BOOL=ON -DUSE_SYSTEM_Boost=OFF -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DBUILD_siemens_to_ismrmrd=ON -DUSE_SYSTEM_SWIG=ON -DUSE_SYSTEM_ACE=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=2
@@ -104,13 +106,13 @@ matrix:
    env: EXTRA_BUILD_FLAGS="-DDEVEL_BUILD=ON -DUSE_SYSTEM_Boost=ON -DUSE_SYSTEM_FFTW3=OFF -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON -DUSE_ITK=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
  - os: linux
    python: 3
-   # -boost +itk +fftw3 +hdf5
-   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_ITK=ON -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=3
+   # -boost +itk +fftw3 +hdf5 +vtk
+   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=OFF -DUSE_ITK=ON -DUSE_SYSTEM_FFTW3=ON -DUSE_SYSTEM_HDF5=ON -DUSE_VTK=ON -DUSE_SYSTEM_VTK=ON" MATRIX_EVAL="CC=gcc-6 CXX=g++-6" PYMVER=3
  - os: osx
    python: 2.7
-   # +boost +itk -hdf5 +swig
+   # +boost +itk -hdf5 +swig +vtk
    osx_image: xcode11.2
-   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_ITK=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
+   env: EXTRA_BUILD_FLAGS="-DUSE_SYSTEM_Boost=ON -DUSE_ITK=ON -DUSE_SYSTEM_HDF5=OFF -DUSE_SYSTEM_SWIG=ON -DUSE_VTK=ON -DUSE_SYSTEM_VTK=ON" MATRIX_EVAL="CC=gcc CXX=g++" PYMVER=2
 
 before_install:
 # Set C and C++ compiler etc using trick from
@@ -154,6 +156,9 @@ before_install:
        #PY_INC=$PY_INST/Headers
        # BUILD_FLAGS="$BUILD_FLAGS -DPYTHON_LIBRARY=$PY_LIB -DPYTHON_INCLUDE_DIR=$PY_INC"
      fi
+     if [[ $EXTRA_BUILD_FLAGS == *"-DUSE_VTK=ON"* ]] && [[ $EXTRA_BUILD_FLAGS == *"-DUSE_SYSTEM_VTK=ON"* ]]; then
+       brew install vtk
+     fi
      BUILD_FLAGS="$BUILD_FLAGS -DPYTHON_EXECUTABLE=$PY_EXE"
      ( set -ev
        # boost is already installed but 1.65 doesn't work so update
@@ -183,6 +188,9 @@ before_install:
      tar xzf cmake.tgz && rm cmake.tgz
      ln -s cmake-*x86_64 cmake
      export PATH="$PWD/cmake/bin:$PATH"
+     if [[ $EXTRA_BUILD_FLAGS == *"-DUSE_VTK=ON"* ]] && [[ $EXTRA_BUILD_FLAGS == *"-DUSE_SYSTEM_VTK=ON"* ]]; then
+       sudo apt install libvtk7-dev
+     fi
    fi
 # get pip
 - curl -0 https://bootstrap.pypa.io/get-pip.py -o get-pip.py

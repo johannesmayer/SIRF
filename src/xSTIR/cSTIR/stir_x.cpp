@@ -1,11 +1,11 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
-Copyright 2015 - 2017 Rutherford Appleton Laboratory STFC
-Copyright 2015 - 2017 University College London.
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
+Copyright 2015 - 2020 University College London.
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ limitations under the License.
 #include "stir/IO/stir_ecat_common.h"
 #include "stir/is_null_ptr.h"
 #include "stir/error.h"
+#include "stir/Verbosity.h"
 
 #include "sirf/STIR/stir_x.h"
 
@@ -38,10 +39,10 @@ using namespace sirf;
     typedef CListRecord LMR;
 #endif
 
-float ListmodeToSinograms::get_time_at_which_prompt_rate_exceeds_threshold(const float threshold) const
+float ListmodeToSinograms::get_time_at_which_num_prompts_exceeds_threshold(const unsigned long threshold) const
 {
     if (input_filename.empty())
-        throw std::runtime_error("ListmodeToSinograms::get_time_at_which_prompt_rate_exceeds_threshold: Filename missing");
+        throw std::runtime_error("ListmodeToSinograms::get_time_at_which_num_prompts_exceeds_threshold: Filename missing");
 
     shared_ptr<LMD> lm_data_ptr
       (read_from_file<LMD>(input_filename));
@@ -253,10 +254,13 @@ ListmodeToSinograms::compute_singles_()
 	Array<2, float> data_fan_sums = (*fan_sums_sptr)[0];
 
 	num_rings = data_fan_sums.get_length();
-	assert(num_rings > 0);
-	assert(data_fan_sums.get_min_index() == 0);
+	ASSERT(num_rings > 0, "num_rings must be positive");
+	ASSERT(data_fan_sums.get_min_index() == 0, "data_fan_sums.get_min_index() must be 0");
+//	assert(num_rings > 0);
+//	assert(data_fan_sums.get_min_index() == 0);
 	num_detectors_per_ring = data_fan_sums[0].get_length();
-	assert(num_detectors_per_ring > 0);
+	ASSERT(num_detectors_per_ring > 0, "num_detectors_per_ring must be positive");
+//	assert(num_detectors_per_ring > 0);
 	if (num_rings < max_ring_diff || num_detectors_per_ring < fan_size)
 	{
 		warning("fan sums matrix has sizes %dx%d, but this is "
@@ -320,36 +324,36 @@ ListmodeToSinograms::estimate_randoms_()
 	ProjData& proj_data = *randoms_sptr->data();
 
 	const int num_rings =
-		template_projdata_ptr->get_proj_data_info_ptr()->get_scanner_ptr()->
+		template_projdata_ptr->get_proj_data_info_sptr()->get_scanner_ptr()->
 		get_num_rings();
 	const int num_detectors_per_ring =
-		template_projdata_ptr->get_proj_data_info_ptr()->get_scanner_ptr()->
+		template_projdata_ptr->get_proj_data_info_sptr()->get_scanner_ptr()->
 		get_num_detectors_per_ring();
 	DetectorEfficiencies& efficiencies = *det_eff_sptr;
 
 	{
-		const ProjDataInfoCylindricalNoArcCorr * const proj_data_info_ptr =
-			dynamic_cast<const ProjDataInfoCylindricalNoArcCorr * const>
-			(proj_data.get_proj_data_info_ptr());
-		if (proj_data_info_ptr == 0)
+		const shared_ptr<const ProjDataInfoCylindricalNoArcCorr> proj_data_info_sptr =
+			stir::dynamic_pointer_cast<const ProjDataInfoCylindricalNoArcCorr>
+			(proj_data.get_proj_data_info_sptr());
+		if (proj_data_info_sptr == 0)
 		{
 			error("Can only process not arc-corrected data\n");
 		}
 
 		const int mashing_factor =
-			proj_data_info_ptr->get_view_mashing_factor();
+			proj_data_info_sptr->get_view_mashing_factor();
 
 		shared_ptr<Scanner>
-			scanner_sptr(new Scanner(*proj_data_info_ptr->get_scanner_ptr()));
+			scanner_sptr(new Scanner(*proj_data_info_sptr->get_scanner_ptr()));
 		unique_ptr<ProjDataInfo> uncompressed_proj_data_info_uptr
 			(ProjDataInfo::construct_proj_data_info(scanner_sptr,
 				/*span=*/1, max_ring_diff_for_fansums,
 				/*num_views=*/num_detectors_per_ring / 2,
 				scanner_sptr->get_max_num_non_arccorrected_bins(),
 				/*arccorrection=*/false));
-		const ProjDataInfoCylindricalNoArcCorr * const uncompressed_proj_data_info_ptr =
-			dynamic_cast<const ProjDataInfoCylindricalNoArcCorr * const>
-			(uncompressed_proj_data_info_uptr.get());
+		const ProjDataInfoCylindricalNoArcCorr &uncompressed_proj_data_info =
+			dynamic_cast<const ProjDataInfoCylindricalNoArcCorr&>
+			(*uncompressed_proj_data_info_uptr);
 		Bin bin;
 		Bin uncompressed_bin;
 
@@ -364,13 +368,13 @@ ListmodeToSinograms::estimate_randoms_()
 				(bin.segment_num());
 			++bin.axial_pos_num())
 			{
-				Sinogram<float> sinogram = proj_data_info_ptr->get_empty_sinogram
+				Sinogram<float> sinogram = proj_data_info_sptr->get_empty_sinogram
 					(bin.axial_pos_num(), bin.segment_num());
-				const float out_m = proj_data_info_ptr->get_m(bin);
+				const float out_m = proj_data_info_sptr->get_m(bin);
 				const int in_min_segment_num =
-					proj_data_info_ptr->get_min_ring_difference(bin.segment_num());
+					proj_data_info_sptr->get_min_ring_difference(bin.segment_num());
 				const int in_max_segment_num =
-					proj_data_info_ptr->get_max_ring_difference(bin.segment_num());
+					proj_data_info_sptr->get_max_ring_difference(bin.segment_num());
 
 				// now loop over uncompressed detector-pairs
 				{
@@ -378,15 +382,15 @@ ListmodeToSinograms::estimate_randoms_()
 						uncompressed_bin.segment_num() <= in_max_segment_num;
 						++uncompressed_bin.segment_num())
 						for (uncompressed_bin.axial_pos_num() =
-							uncompressed_proj_data_info_ptr->get_min_axial_pos_num
+							uncompressed_proj_data_info.get_min_axial_pos_num
 							(uncompressed_bin.segment_num());
 					uncompressed_bin.axial_pos_num() <=
-						uncompressed_proj_data_info_ptr->get_max_axial_pos_num
+						uncompressed_proj_data_info.get_max_axial_pos_num
 						(uncompressed_bin.segment_num());
 					++uncompressed_bin.axial_pos_num())
 						{
 							const float in_m =
-								uncompressed_proj_data_info_ptr->get_m(uncompressed_bin);
+								uncompressed_proj_data_info.get_m(uncompressed_bin);
 							if (fabs(out_m - in_m) > 1E-4)
 								continue;
 
@@ -398,8 +402,8 @@ ListmodeToSinograms::estimate_randoms_()
 								++bin.view_num())
 							{
 
-								for (bin.tangential_pos_num() = proj_data_info_ptr->get_min_tangential_pos_num();
-									bin.tangential_pos_num() <= proj_data_info_ptr->get_max_tangential_pos_num();
+								for (bin.tangential_pos_num() = proj_data_info_sptr->get_min_tangential_pos_num();
+									bin.tangential_pos_num() <= proj_data_info_sptr->get_max_tangential_pos_num();
 									++bin.tangential_pos_num())
 								{
 									uncompressed_bin.tangential_pos_num() =
@@ -412,7 +416,7 @@ ListmodeToSinograms::estimate_randoms_()
 									{
 										int ra = 0, a = 0;
 										int rb = 0, b = 0;
-										uncompressed_proj_data_info_ptr->get_det_pair_for_bin(a, ra, b, rb,
+										uncompressed_proj_data_info.get_det_pair_for_bin(a, ra, b, rb,
 											uncompressed_bin);
 										/*(*segment_ptr)[bin.axial_pos_num()]*/
 										sinogram[bin.view_num()][bin.tangential_pos_num()] +=
@@ -525,13 +529,13 @@ PETAcquisitionModel::set_up(
 	Succeeded s = Succeeded::no;
 	if (sptr_projectors_.get()) {
 		s = sptr_projectors_->set_up
-			(sptr_acq->get_proj_data_info_sptr(), sptr_image->data_sptr());
+			(sptr_acq->get_proj_data_info_sptr()->create_shared_clone(), sptr_image->data_sptr());
 		sptr_acq_template_ = sptr_acq;
 		sptr_image_template_ = sptr_image;
 	}
 	if (s == Succeeded(Succeeded::yes)) {
 		if (sptr_asm_ && sptr_asm_->data())
-			s = sptr_asm_->set_up(sptr_acq->get_proj_data_info_sptr());
+			s = sptr_asm_->set_up(sptr_acq->get_proj_data_info_sptr()->create_shared_clone());
 	}
 	return s;
 }
@@ -557,37 +561,39 @@ PETAcquisitionModel::forward(PETAcquisitionData& ad, const STIRImageData& image,
 	float one = 1.0;
 
 	if (sptr_add_.get()) {
-		std::cout << "additive term added...";
+		if (stir::Verbosity::get() > 1) std::cout << "additive term added...";
 		ad.axpby(&one, ad, &one, *sptr_add_);
 		//ad.axpby(1.0, ad, 1.0, *sptr_add_);
-		std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
 	}
 	else
-		std::cout << "no additive term added\n";
+		if (stir::Verbosity::get() > 1) std::cout << "no additive term added\n";
 
 	PETAcquisitionSensitivityModel* sm = sptr_asm_.get();
 	if (sm && sm->data() && !sm->data()->is_trivial()) {
-		std::cout << "applying unnormalisation...";
+		if (stir::Verbosity::get() > 1) std::cout << "applying unnormalisation...";
 		sptr_asm_->unnormalise(ad);
-		std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
 	}
 	else
-		std::cout << "no unnormalisation applied\n";
+		if (stir::Verbosity::get() > 1) std::cout << "no unnormalisation applied\n";
 
 	if (sptr_background_.get()) {
-		std::cout << "background term added...";
+		if (stir::Verbosity::get() > 1) std::cout << "background term added...";
 		ad.axpby(&one, ad, &one, *sptr_background_);
 		//ad.axpby(1.0, ad, 1.0, *sptr_background_);
-		std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
 	}
 	else
-		std::cout << "no background term added\n";
+		if (stir::Verbosity::get() > 1) std::cout << "no background term added\n";
 }
 
 shared_ptr<PETAcquisitionData>
 PETAcquisitionModel::forward(const STIRImageData& image, 
 	int subset_num, int num_subsets)
 {
+	if (!sptr_acq_template_.get())
+		THROW("Fatal error in PETAcquisitionModel::forward: acquisition template not set");
 	shared_ptr<PETAcquisitionData> sptr_ad;
 	sptr_ad = sptr_acq_template_->new_acquisition_data();
 	shared_ptr<ProjData> sptr_fd = sptr_ad->data();
@@ -633,6 +639,8 @@ shared_ptr<STIRImageData>
 PETAcquisitionModel::backward(PETAcquisitionData& ad, 
 	int subset_num, int num_subsets)
 {
+	if (!sptr_image_template_.get())
+		THROW("Fatal error in PETAcquisitionModel::backward: image template not set");
 	shared_ptr<STIRImageData> sptr_id;
 	sptr_id = sptr_image_template_->new_image_data();
 	shared_ptr<Image3DF> sptr_im = sptr_id->data_sptr();
@@ -640,22 +648,22 @@ PETAcquisitionModel::backward(PETAcquisitionData& ad,
 	//if (sptr_normalisation_.get() && !sptr_normalisation_->is_trivial()) {
 	PETAcquisitionSensitivityModel* sm = sptr_asm_.get();
 	if (sm && sm->data() && !sm->data()->is_trivial()) {
-		std::cout << "applying unnormalisation...";
+		if (stir::Verbosity::get() > 1) std::cout << "applying unnormalisation...";
 		shared_ptr<PETAcquisitionData> sptr_ad(ad.new_acquisition_data());
 		sptr_ad->fill(ad);
 		sptr_asm_->unnormalise(*sptr_ad);
 		//sptr_normalisation_->undo(*sptr_ad->data(), 0, 1);
-		std::cout << "ok\n";
-		std::cout << "backprojecting...";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "backprojecting...";
 		sptr_projectors_->get_back_projector_sptr()->back_project
 			(*sptr_im, *sptr_ad, subset_num, num_subsets);
-		std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
 	}
 	else {
-		std::cout << "backprojecting...";
+		if (stir::Verbosity::get() > 1) std::cout << "backprojecting...";
 		sptr_projectors_->get_back_projector_sptr()->back_project
 			(*sptr_im, ad, subset_num, num_subsets);
-		std::cout << "ok\n";
+		if (stir::Verbosity::get() > 1) std::cout << "ok\n";
 	}
 
 	return sptr_id;

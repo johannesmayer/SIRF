@@ -1,11 +1,11 @@
 /*
-CCP PETMR Synergistic Image Reconstruction Framework (SIRF)
+SyneRBI Synergistic Image Reconstruction Framework (SIRF)
 Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
 Copyright 2019 - 2020 UCL
 
 This is software developed for the Collaborative Computational
-Project in Positron Emission Tomography and Magnetic Resonance imaging
-(http://www.ccppetmr.ac.uk/).
+Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
+(http://www.ccpsynerbi.ac.uk/).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -291,7 +291,7 @@ sirf::cSTIR_setAcqModUsingMatrixParameter
 	return new DataHandle;
 }
 
-#ifdef STIR_WITH_NIFTYPET_PROJECTOR
+#ifdef STIR_WITH_NiftyPET_PROJECTOR
 void*
 sirf::cSTIR_setAcqModUsingNiftyPETParameter
 (DataHandle* hm, const char* name, const DataHandle* hv)
@@ -299,6 +299,8 @@ sirf::cSTIR_setAcqModUsingNiftyPETParameter
     AcqModUsingNiftyPET3DF& am = objectFromHandle<AcqModUsingNiftyPET3DF>(hm);
     if (boost::iequals(name, "cuda_verbosity"))
         am.set_cuda_verbosity(dataFromHandle<int>((void*)hv));
+    else if (boost::iequals(name, "use_truncation"))
+        am.set_use_truncation(dataFromHandle<int>((void*)hv));
     else
         return parameterNotFound(name, __FILE__, __LINE__);
     return new DataHandle;
@@ -395,18 +397,18 @@ sirf::cSTIR_PLSPriorParameter
 	else if (boost::iequals(name, "eta"))
 		return dataHandle<float>(prior.get_eta());
 	else if (boost::iequals(name, "anatomical_image")) {
-		sptrImage3DF sptr_im = prior.get_anatomical_image_sptr();
-		shared_ptr<STIRImageData> sptr_id(new STIRImageData(sptr_im));
+		auto sptr_im = prior.get_anatomical_image_sptr();
+		auto sptr_id = std::make_shared<STIRImageData>(*sptr_im);
 		return newObjectHandle(sptr_id);
 	}
 	else if (boost::iequals(name, "kappa")) {
-		sptrImage3DF sptr_im = prior.get_kappa_sptr();
-		shared_ptr<STIRImageData> sptr_id(new STIRImageData(sptr_im));
+		auto sptr_im = prior.get_kappa_sptr();
+		auto sptr_id = std::make_shared<STIRImageData>(*sptr_im);
 		return newObjectHandle(sptr_id);
 	}
 	else if (boost::iequals(name, "norm")) {
-		sptrImage3DF sptr_im = prior.get_norm_sptr();
-		shared_ptr<STIRImageData> sptr_id(new STIRImageData(sptr_im));
+		auto sptr_im = prior.get_norm_sptr();
+		auto sptr_id = std::make_shared<STIRImageData>(*sptr_im);
 		return newObjectHandle(sptr_id);
 	}
 	else
@@ -610,6 +612,10 @@ sirf::cSTIR_setOSMAPOSLParameter
 {
 	OSMAPOSLReconstruction<Image3DF>& recon =
 		objectFromHandle<OSMAPOSLReconstruction<Image3DF> >(hp);
+    if (boost::iequals(name, "set_maximum_relative_change"))
+            recon.set_maximum_relative_change(dataFromHandle<double>((void*)hv));
+    if (boost::iequals(name, "set_minimum_relative_change"))
+            recon.set_minimum_relative_change(dataFromHandle<double>((void*)hv));
 	if (boost::iequals(name, "MAP_model"))
 		recon.set_MAP_model(charDataFromDataHandle(hv));
 	else
