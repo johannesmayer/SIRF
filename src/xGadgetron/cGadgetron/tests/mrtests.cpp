@@ -90,66 +90,108 @@ bool test_get_subset(const std::string& fname_input)
 
 bool test_CoilSensitivitiesVector_calculate(const std::string& fname_input)
 {
+    int const num_iter = 3;
+
+    sirf::GadgetronImagesVector ic;
+
+    for(int i=0; i<num_iter; ++i)
+    {
+        CFImage img;
+
+        void* vptr_img = new CFImage(img);// god help me I don't trust this!
+        ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
+
+        ic.append(iw);
+    }
+
+    return ic.number() == num_iter;
+}
+
+bool test_memory_safety_preprocessing(const std::string& fname_input)
+{
+    // this test is for valgrind use only to see if there is memory trouble when connecting to Gadgetron
     try
     {
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
-        sirf::AcquisitionsVector av;
-        av.read(fname_input);
+     sirf::AcquisitionsVector mr_rawdata;
+     mr_rawdata.read(fname_input);
 
-        sirf::preprocess_acquisition_data(av);
+     preprocess_acquisition_data(mr_rawdata);
 
         CoilSensitivitiesVector csv;
         csv.set_csm_smoothness(50);
         csv.calculate(av);
 
-        std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
-
-        for(int i=0; i<csv.items(); ++i)
-        {
-            gadgetron::shared_ptr<ImageWrap> sptr_iw = csv.sptr_image_wrap(i);
-
-            std::stringstream fname_out;
-            fname_out << "output_" << __FUNCTION__ << "_" << i;
-
-            sirf::write_cfimage_to_raw(fname_out.str(), *sptr_iw);
-        }
-
-        return true;
-
-    }
-    catch( std::runtime_error const &e)
-    {
-        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
-        std::cout << e.what() << std::endl;
-        throw;
-    }
 }
 
-bool test_CoilSensitivitiesVector_get_csm_as_cfimage(const std::string& fname_input)
+bool test_compute_coilmaps(const std::string& fname_input)
 {
     try
     {
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
-        sirf::AcquisitionsVector av;
-        av.read(fname_input);
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
 
-        sirf::preprocess_acquisition_data(av);
+        preprocess_acquisition_data(mr_rawdata);
+        mr_rawdata.sort();
 
-        CoilSensitivitiesVector csv;
-        csv.calculate(av);
+        sirf::CoilSensitivitiesAsImages csm;
 
-        std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
+        size_t const ks = 7;
+        size_t const kz = 5;
+        size_t const power = 7;
+        csm.set_csm_gadget_params(ks,kz,power);
 
-        for(int i=0; i<csv.items(); ++i)
+        csm.compute(mr_rawdata);
+
+        for(int i=0; i<csm.items(); ++i)
         {
-            CFImage img = csv.get_csm_as_cfimage(i);
+            std::stringstream fname_output;
+            fname_output << "output_" << __FUNCTION__ << "_csm_ks_" << ks << "_kz_" << kz << "power_" << power << "_"  <<  i;
+            CFImage csm_img = csm.get_csm_as_CFImage(i);
+            write_cfimage_to_raw(fname_output.str(), csm_img);
+        }
 
-            std::stringstream fname_out;
-            fname_out << "output_" << __FUNCTION__ << "_" << i;
+        return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
 
-            sirf::write_cfimage_to_raw(fname_out.str(), img);
+bool test_bwd(const std::string& fname_input)
+{
+    try
+    {
+       std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        sirf::AcquisitionsVector mr_rawdata;
+        mr_rawdata.read(fname_input);
+
+        preprocess_acquisition_data(mr_rawdata);
+        mr_rawdata.sort();
+
+        sirf::GadgetronImagesVector img_vec;
+        sirf::MRAcquisitionModel acquis_model;
+
+        sirf::CoilSensitivitiesAsImages csm;
+        csm.compute(mr_rawdata);
+
+        auto sptr_encoder = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
+        acquis_model.set_encoder(sptr_encoder);
+
+        acquis_model.bwd(img_vec, csm, mr_rawdata);
+
+        for(int i=0; i<img_vec.items(); ++i)
+        {
+            std::stringstream fname_output;
+            fname_output << "output_" << __FUNCTION__ << "_image_" << i;
+            write_cfimage_to_raw(fname_output.str(), img_vec.image_wrap(i));
         }
 
         return true;
@@ -163,11 +205,8 @@ bool test_CoilSensitivitiesVector_get_csm_as_cfimage(const std::string& fname_in
     }
 }
 
-
-
-int main ( int argc, char* argv[])
+int main (int argc, char* argv[])
 {
-
 	try{
 
         std::string SIRF_PATH;
@@ -176,13 +215,31 @@ int main ( int argc, char* argv[])
         else
             SIRF_PATH = argv[1];
 
-        std::string data_path = SIRF_PATH + "/data/examples/MR/simulated_MR_2D_cartesian_Grappa2.h5";
+        std::string simul_data_path = SIRF_PATH + "/data/examples/MR/simulated_MR_2D_cartesian.h5";
+        std::string real_data_path = SIRF_PATH + "/data/examples/MR/CV_2D_Stack_144.h5";
 
-//        test_get_kspace_order(data_path);
-//        test_get_subset(data_path);
-        test_CoilSensitivitiesVector_calculate(data_path);
-        test_CoilSensitivitiesVector_get_csm_as_cfimage(data_path);
-        return 0;
+        std::vector<bool> test_results;
+        //test_results.push_back(test_GRPETrajectoryPrep_set_trajectory(simul_data_path));
+        //test_results.push_back(test_apply_combine_coil_sensitivities());
+        //test_results.push_back(test_get_kspace_order(simul_data_path));
+        //test_results.push_back(test_get_subset(simul_data_path));
+        //test_results.push_back(test_append_image_wrap());
+        //test_results.push_back(test_memory_safety_preprocessing(simul_data_path));
+        test_results.push_back(test_compute_coilmaps(simul_data_path));
+//        test_results.push_back(test_bwd(simul_data_path));
+
+        bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
+
+        if(all_tests_successful)
+            return EXIT_SUCCESS;
+        else
+        {
+            for(int i=0; i<test_results.size(); ++i)
+            {
+                std::cout << "Test Result #" << i <<" = " << test_results[i] << std::endl;
+            }
+            return EXIT_FAILURE;
+        }
 	}
     catch(const std::exception &error) {
         std::cerr << "\nHere's the error:\n\t" << error.what() << "\n\n";

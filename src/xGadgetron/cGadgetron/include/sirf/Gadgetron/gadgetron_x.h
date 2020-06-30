@@ -45,6 +45,7 @@ limitations under the License.
 #include "sirf/Gadgetron/gadgetron_client.h"
 #include "sirf/Gadgetron/gadget_lib.h"
 #include "sirf/Gadgetron/ismrmrd_fftw.h"
+#include "sirf/Gadgetron/encoding.h"
 
 #define N_TRIALS 5
 
@@ -355,12 +356,13 @@ namespace sirf {
 			gadgetron::shared_ptr<GadgetronImageData> sptr_ic
 			) : sptr_acqs_(sptr_ac) //, sptr_imgs_(sptr_ic)
 		{
+            sptr_enc_ = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
 			set_image_template(sptr_ic);
 		}
 		
 		// make sure ic contains "true" images (and not e.g. G-factors)
 		void check_data_role(const GadgetronImageData& ic);
-
+        bool check_img_rawdata_consistency(CFImage img, sirf::MRAcquisitionData& ad);
 		// Records the acquisition template to be used. 
 		void set_acquisition_template
 			(gadgetron::shared_ptr<MRAcquisitionData> sptr_ac)
@@ -379,6 +381,11 @@ namespace sirf {
 		{
 			sptr_csms_ = sptr_csms;
 		}
+
+        void set_encoder(gadgetron::shared_ptr<sirf::FourierEncoding> sptr_enc)
+        {
+            sptr_enc_ = sptr_enc;
+        }
 
 		// Records templates
 		void set_up
@@ -425,18 +432,22 @@ namespace sirf {
 		// coil sensitivity maps referred to by sptr_csms_.
 		gadgetron::shared_ptr<MRAcquisitionData> fwd(GadgetronImageData& ic)
 		{
-			if (!sptr_acqs_.get())
+
+            if (!sptr_acqs_.get())
 				throw LocalisedException
 				("acquisition data template not set", __FILE__, __LINE__);
 			if (!sptr_csms_.get() || sptr_csms_->items() < 1)
 				throw LocalisedException
 				("coil sensitivity maps not found", __FILE__, __LINE__);
 			check_data_role(ic);
-			gadgetron::shared_ptr<MRAcquisitionData> sptr_acqs =
-				sptr_acqs_->new_acquisitions_container();
-			sptr_acqs->copy_acquisitions_info(*sptr_acqs_);
-			fwd(ic, *sptr_csms_, *sptr_acqs);
-			return sptr_acqs;
+
+            gadgetron::unique_ptr<MRAcquisitionData> uptr_acqs =
+                sptr_acqs_->clone();
+
+            fwd(ic, *sptr_csms_, *uptr_acqs);
+
+            return std::shared_ptr<MRAcquisitionData>(std::move(uptr_acqs));// something else wouldn't work for some reason...
+
 		}
 
 		// Backprojects the whole AcquisitionContainer using
@@ -460,6 +471,7 @@ namespace sirf {
 		gadgetron::shared_ptr<MRAcquisitionData> sptr_acqs_;
 		gadgetron::shared_ptr<GadgetronImageData> sptr_imgs_;
         gadgetron::shared_ptr<CoilSensitivitiesVector> sptr_csms_;
+        gadgetron::shared_ptr<FourierEncoding> sptr_enc_;
 
 		template< typename T>
         void fwd_(ISMRMRD::Image<T>* ptr_img, CFImage& csm,

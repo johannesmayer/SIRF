@@ -269,6 +269,37 @@ namespace sirf {
 		}
 	};
 
+    class CoilComputationGadget : public Gadget {
+    public:
+        CoilComputationGadget() :
+            Gadget("CoilComputation", "gadgetron_mricore", "CoilComputationGadget")
+        {
+        }
+
+        CoilComputationGadget(size_t ks, size_t kz, size_t power) :
+            Gadget("CoilComputation", "gadgetron_mricore", "CoilComputationGadget")
+        {
+            std::stringstream ss_var;
+
+            ss_var << ks;
+            add_property("ks", ss_var.str().c_str());
+            ss_var.str(std::string());
+
+            ss_var << kz;
+            add_property("kz", ss_var.str().c_str());
+            ss_var.str(std::string());
+
+            ss_var << power;
+            add_property("power", ss_var.str().c_str());
+        }
+
+        static const char* class_name()
+        {
+            return "CoilComputationGadget";
+        }
+
+    };
+
 	class AsymmetricEchoAdjustROGadget : public Gadget {
 	public:
 		AsymmetricEchoAdjustROGadget() :
