@@ -21,22 +21,125 @@ limitations under the License.
 
 /*!
 \file
-\ingroup Gadgetron Extensions
-\brief MR related C++ tests
+\ingroup Gadgetron Tests
 
-\author Johannes Mayer
+\author Evgueni Ovtchinnikov
+\author Richard Brown
 \author SyneRBI
 */
 
 #include <iostream>
 #include <cstdlib>
-
-#include "sirf/Gadgetron/gadgetron_data_containers.h"
-#include "sirf/Gadgetron/gadgetron_x.h"
+#include <vector>
+#include <numeric>
 
 #include "mrtest_auxiliary_funs.h"
 
+#include "sirf/Gadgetron/encoding.h"
+#include "sirf/Gadgetron/gadgetron_data_containers.h"
+#include "sirf/Gadgetron/gadgetron_x.h"
+
 using namespace sirf;
+
+bool test_TrajectoryPreparation_constructors( void )
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        sirf::CartesianTrajectoryPrep cart_tp;
+        sirf::GRPETrajectoryPrep rpe_tp;
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
+
+bool test_GRPETrajectoryPrep_set_trajectory(const std::string& fname_input)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+        sirf::GRPETrajectoryPrep rpe_tp;
+
+        std::string const fname_output = "res_phant_cv_rpe_itl_gc_ismrmrd.h5";
+
+        sirf::AcquisitionsVector mr_dat;
+        mr_dat.read(fname_input);
+        rpe_tp.set_trajectory(mr_dat);
+        mr_dat.write(fname_output);
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
+bool test_apply_combine_coil_sensitivities( void )
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        size_t const Nx=64;
+        size_t const Ny=64;
+        size_t const Nz=64;
+        size_t const Nc=4;
+
+        CFImage unit_img  = CFImage(Nx,Ny,Nz,1);
+
+        for(size_t i=0;i<unit_img.getNumberOfDataElements();++i)
+        {
+            *(unit_img.begin()+i) = complex_float_t(1.f, 0.f);
+        }
+        sirf::GadgetronImagesVector giv, miv;
+        giv.append(unit_img);
+
+        // generate artifical coil maps
+        size_t const num_dat_pts = Nx*Ny*Nz*Nc;
+        std::vector<float> csm_real(num_dat_pts);
+        std::vector<float> csm_imag(num_dat_pts);
+
+        for(size_t nc=0; nc<Nc; nc++)
+        for(size_t nz=0; nz<Nz; nz++)
+        for(size_t ny=0; ny<Ny; ny++)
+        for(size_t nx=0; nx<Nx; nx++)
+        {
+            size_t access_idx = (((nc*Nz + nz)*Ny + ny)*Nx + nx);
+            csm_real.at(access_idx) = nx;
+            csm_imag.at(access_idx) = nc;
+        }
+
+//        CoilSensitivitiesAsImages csm;
+//        csm.append_csm(Nx, Ny, Nz, Nc, &csm_real[0], &csm_imag[0]);
+
+//        csm.apply_coil_sensitivities(miv, giv);
+//        csm.combine_coils(giv, miv);
+
+        throw std::runtime_error("Please write teh last part of the test again");
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
 
 bool test_get_kspace_order(const std::string& fname_input)
 {
@@ -44,11 +147,11 @@ bool test_get_kspace_order(const std::string& fname_input)
     {
         std::cout << "Running test " << __FUNCTION__ << std::endl;
 
-        sirf::AcquisitionsVector av_slice;
-        av_slice.read(fname_input);
-        av_slice.sort();
+        sirf::AcquisitionsVector av;
+        av.read(fname_input);
+        av.sort();
 
-        auto kspace_sorting_slice = av_slice.get_kspace_order();
+        auto kspace_sorting = av.get_kspace_order();
 
         return true;
 
@@ -88,7 +191,7 @@ bool test_get_subset(const std::string& fname_input)
     }
 }
 
-bool test_CoilSensitivitiesVector_calculate(const std::string& fname_input)
+bool test_append_image_wrap()
 {
     int const num_iter = 3;
 
@@ -112,16 +215,21 @@ bool test_memory_safety_preprocessing(const std::string& fname_input)
     // this test is for valgrind use only to see if there is memory trouble when connecting to Gadgetron
     try
     {
-        std::cout << "Running test " << __FUNCTION__ << std::endl;
+    std::cout << "Running test " << __FUNCTION__ << std::endl;
 
      sirf::AcquisitionsVector mr_rawdata;
      mr_rawdata.read(fname_input);
 
      preprocess_acquisition_data(mr_rawdata);
 
-        CoilSensitivitiesVector csv;
-        csv.set_csm_smoothness(50);
-        csv.calculate(av);
+     return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
 
 }
 
@@ -137,14 +245,14 @@ bool test_compute_coilmaps(const std::string& fname_input)
         preprocess_acquisition_data(mr_rawdata);
         mr_rawdata.sort();
 
-        sirf::CoilSensitivitiesAsImages csm;
+        sirf::CoilSensitivitiesVector csm;
 
         size_t const ks = 7;
         size_t const kz = 5;
         size_t const power = 7;
         csm.set_csm_gadget_params(ks,kz,power);
 
-        csm.compute(mr_rawdata);
+        csm.calculate(mr_rawdata);
 
         for(int i=0; i<csm.items(); ++i)
         {
@@ -155,6 +263,82 @@ bool test_compute_coilmaps(const std::string& fname_input)
         }
 
         return true;
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
+
+bool test_CoilSensitivitiesVector_calculate(const std::string& fname_input)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        sirf::AcquisitionsVector av;
+        av.read(fname_input);
+
+        sirf::preprocess_acquisition_data(av);
+
+        CoilSensitivitiesVector csv;
+        csv.set_csm_smoothness(50);
+        csv.calculate(av);
+
+        std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
+
+        for(int i=0; i<csv.items(); ++i)
+        {
+            gadgetron::shared_ptr<ImageWrap> sptr_iw = csv.sptr_image_wrap(i);
+
+            std::stringstream fname_out;
+            fname_out << "output_" << __FUNCTION__ << "_" << i;
+
+            sirf::write_cfimage_to_raw(fname_out.str(), *sptr_iw);
+        }
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
+bool test_CoilSensitivitiesVector_get_csm_as_cfimage(const std::string& fname_input)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        sirf::AcquisitionsVector av;
+        av.read(fname_input);
+
+        sirf::preprocess_acquisition_data(av);
+
+        CoilSensitivitiesVector csv;
+        csv.calculate(av);
+
+        std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
+
+        for(int i=0; i<csv.items(); ++i)
+        {
+            CFImage img = csv.get_csm_as_CFImage(i);
+
+            std::stringstream fname_out;
+            fname_out << "output_" << __FUNCTION__ << "_" << i;
+
+            sirf::write_cfimage_to_raw(fname_out.str(), img);
+        }
+
+        return true;
+
     }
     catch( std::runtime_error const &e)
     {
@@ -179,8 +363,8 @@ bool test_bwd(const std::string& fname_input)
         sirf::GadgetronImagesVector img_vec;
         sirf::MRAcquisitionModel acquis_model;
 
-        sirf::CoilSensitivitiesAsImages csm;
-        csm.compute(mr_rawdata);
+        sirf::CoilSensitivitiesVector csm;
+        csm.calculate(mr_rawdata);
 
         auto sptr_encoder = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
         acquis_model.set_encoder(sptr_encoder);
@@ -205,9 +389,14 @@ bool test_bwd(const std::string& fname_input)
     }
 }
 
+
+
+
+
+
 int main (int argc, char* argv[])
 {
-	try{
+    try{
 
         std::string SIRF_PATH;
         if (argc==1)
@@ -226,6 +415,9 @@ int main (int argc, char* argv[])
         //test_results.push_back(test_append_image_wrap());
         //test_results.push_back(test_memory_safety_preprocessing(simul_data_path));
         test_results.push_back(test_compute_coilmaps(simul_data_path));
+        test_results.push_back(test_CoilSensitivitiesVector_calculate(simul_data_path));
+        test_results.push_back(test_CoilSensitivitiesVector_get_csm_as_cfimage(simul_data_path));
+
 //        test_results.push_back(test_bwd(simul_data_path));
 
         bool all_tests_successful = std::accumulate(std::begin(test_results), std::end(test_results), true, std::multiplies<bool>());
@@ -240,11 +432,9 @@ int main (int argc, char* argv[])
             }
             return EXIT_FAILURE;
         }
-	}
+    }
     catch(const std::exception &error) {
         std::cerr << "\nHere's the error:\n\t" << error.what() << "\n\n";
         return EXIT_FAILURE;
     }
-    return EXIT_SUCCESS;
 }
-

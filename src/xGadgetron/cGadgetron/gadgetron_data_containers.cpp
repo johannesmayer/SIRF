@@ -1709,7 +1709,7 @@ GadgetronImagesVector::set_up_geom_info()
                 (offset,spacing,size,direction));
 }
 
-CFImage CoilSensitivitiesVector::get_csm_as_cfimage(size_t const i) const
+CFImage CoilSensitivitiesVector::get_csm_as_CFImage(const size_t i) const
 {
     auto sptr_iw = this->sptr_image_wrap(i);
     if(sptr_iw->type() != ISMRMRD::ISMRMRD_CXFLOAT)
@@ -1718,6 +1718,21 @@ CFImage CoilSensitivitiesVector::get_csm_as_cfimage(size_t const i) const
     const void* ptr_cf_img = sptr_iw->ptr_image();
     return *( (CFImage*)ptr_cf_img);
 
+}
+
+CFImage CoilSensitivitiesVector::get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const
+{
+    int const num_csms = this->items();
+    for(int i=0; i<num_csms;++i)
+    {
+        int const access_idx = ((offset+i)%num_csms);
+        CFImage csm_img = get_csm_as_CFImage(access_idx);
+        KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
+
+        if(tag_csm[1] == tag[1]) // for now if the same slice is available then take it
+            return csm_img;
+
+    }
 }
 
 
@@ -1733,245 +1748,62 @@ void CoilSensitivitiesVector::calculate_images(const MRAcquisitionData& ac)
 {
     this->empty();
 
-    std::string par;
-    ISMRMRD::IsmrmrdHeader header;
-    ISMRMRD::Acquisition acq;
-    par = ac.acquisitions_info();
-    set_meta_data(par);
-    ISMRMRD::deserialize(par.c_str(), header);
+    gadgetron::shared_ptr<sirf::FourierEncoding> sptr_enc;
 
-    for (unsigned int i = 0; i < ac.number(); i++) {
-        ac.get_acquisition(i, acq);
-        if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
-            break;
+    ISMRMRD::TrajectoryType trajtype = ac.get_trajectory_type();
+    if( trajtype == ISMRMRD::TrajectoryType::CARTESIAN )
+        sptr_enc = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
+    else
+        throw LocalisedException("The encoding you wanted to apply was not implemented yet.", __FILE__,__LINE__);
+
+
+    this->set_meta_data(ac.acquisitions_info());
+
+    if(!ac.sorted())
+        throw std::runtime_error("Please callac.sort() before calling calculate_images.");
+
+    auto sort_idx = ac.get_kspace_order();
+
+    for(int i=0; i<sort_idx.size(); ++i)
+    {
+        sirf::AcquisitionsVector subset;
+        ac.get_subset(subset, sort_idx[i]);
+
+        CFImage img;
+        sptr_enc->backward(&img, subset);
+
+        void* vptr_img = new CFImage(img);// god help me I don't trust this!
+        ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, vptr_img);
+
+        this->append(iw);
     }
 
-    ISMRMRD::Encoding e = header.encoding[0];
-    bool parallel = e.parallelImaging.is_present() &&
-        e.parallelImaging().accelerationFactor.kspace_encoding_step_1 > 1;
-    unsigned int nx = e.reconSpace.matrixSize.x;
-    unsigned int ny = e.encodedSpace.matrixSize.y;
-    unsigned int nz = e.encodedSpace.matrixSize.z;
-    unsigned int nc = acq.active_channels();
-    unsigned int readout = acq.number_of_samples();
 
-    int nmap = 0;
-    std::cout << "map ";
-
-    for (unsigned int na = 0; na < ac.number();) {
-
-        std::cout << ++nmap << ' ' << std::flush;
-
-        std::vector<size_t> ci_dims;
-        ci_dims.push_back(readout);
-        ci_dims.push_back(ny);
-        ci_dims.push_back(nz);
-        ci_dims.push_back(nc);
-        ISMRMRD::NDArray<complex_float_t> ci(ci_dims);
-        memset(ci.getDataPtr(), 0, ci.getDataSize());
-
-        int y = 0;
-        for (;;) {
-            ac.get_acquisition(na + y, acq);
-            if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_FIRST_IN_SLICE))
-                break;
-            y++;
-        }
-        for (;;) {
-            ac.get_acquisition(na + y, acq);
-            int yy = acq.idx().kspace_encode_step_1;
-            int zz = acq.idx().kspace_encode_step_2;
-            //if (!e.parallelImaging.is_present() ||
-            if (!parallel ||
-                acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION) ||
-                acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION_AND_IMAGING)) {
-                for (unsigned int c = 0; c < nc; c++) {
-                    for (unsigned int s = 0; s < readout; s++) {
-                        ci(s, yy, zz, c) = acq.data(s, c);
-                    }
-                }
-            }
-            y++;
-            if (acq.isFlagSet(ISMRMRD::ISMRMRD_ACQ_LAST_IN_SLICE))
-                break;
-        }
-        na += y;
-
-        ifft3c(ci);
-
-        CFImage coil_img(readout,ny,nz,nc);
-        memcpy(coil_img.getDataPtr(), ci.getDataPtr(), ci.getDataSize());
-
-        void* vptr_coil_img = new CFImage(coil_img); //urgh this is so horrible
-        sirf::ImageWrap iw(ISMRMRD::ISMRMRD_CXFLOAT, vptr_coil_img);
-        append(iw);
-    }
     this->flag_imgs_suitable_for_csm_computation_ = true;
     std::cout << '\n';
 }
 
-
 void CoilSensitivitiesVector::calculate_csm(GadgetronImagesVector iv)
 {
-
     this->empty();
 
-    for(int i_img=0; i_img<iv.items();++i_img)
+    sirf::ImagesProcessor img_proc_chain;
+    auto sptr_csm_gadget = std::make_shared<sirf::Gadget>(sirf::CoilComputationGadget(csm_gadget_params_[0], csm_gadget_params_[1], csm_gadget_params_[2]));
+    img_proc_chain.add_gadget("CoilComputationGadget", sptr_csm_gadget);
+
+    img_proc_chain.process(iv);
+
+    auto sptr_iv = img_proc_chain.get_output();
+
+    for( int i=0; i<sptr_iv->number(); ++i)
     {
-        gadgetron::shared_ptr<ImageWrap> sptr_iw = iv.sptr_image_wrap(i_img);
-
-        int dim[4];
-        sptr_iw->get_dim(dim);
-        std::vector<size_t> img_dims;
-        for(int i_dim=0; i_dim<4; ++i_dim)
-            img_dims.push_back(dim[i_dim]);
-
-        ISMRMRD::NDArray<complex_float_t> cm(img_dims);
-        ISMRMRD::NDArray<float> img(img_dims);
-        ISMRMRD::NDArray<complex_float_t> csm(img_dims);
-
-        sptr_iw->get_complex_data(cm.getDataPtr());
-        this->calculate_csm(cm, img, csm);
-
-        ImageWrap iw_output(*sptr_iw);
-        iw_output.set_complex_data(csm.getDataPtr());
-        this->append(iw_output);
+        this->append( sptr_iv->image_wrap(i));
     }
 
     this->flag_imgs_suitable_for_csm_computation_ = false;
 }
 
-void CoilSensitivitiesVector::calculate_csm
-                    (ISMRMRD::NDArray<complex_float_t>& cm,
-                     ISMRMRD::NDArray<float>& img,
-                     ISMRMRD::NDArray<complex_float_t>& csm)
-{
-    int ndims = cm.getNDim();
-    const size_t* dims = cm.getDims();
-    unsigned int readout = (unsigned int)dims[0];
-    unsigned int ny = (unsigned int)dims[1];
-    unsigned int nz = (unsigned int)dims[2];
-    unsigned int nc = (unsigned int)dims[3];
-    unsigned int nx = (unsigned int)img.getDims()[0];
-
-    std::vector<size_t> cm0_dims;
-    cm0_dims.push_back(nx);
-    cm0_dims.push_back(ny);
-    cm0_dims.push_back(nz);
-    cm0_dims.push_back(nc);
-
-    ISMRMRD::NDArray<complex_float_t> cm0(cm0_dims);
-    for (unsigned int c = 0; c < nc; c++) {
-        for (unsigned int z = 0; z < nz; z++) {
-            for (unsigned int y = 0; y < ny; y++) {
-                for (unsigned int x = 0; x < nx; x++) {
-                    uint16_t xout = x + (readout - nx) / 2;
-                    cm0(x, y, z, c) = cm(xout, y, z, c);
-                }
-            }
-        }
-    }
-
-    int* object_mask = new int[nx*ny*nz];
-    memset(object_mask, 0, nx*ny*nz * sizeof(int));
-
-    ISMRMRD::NDArray<complex_float_t> v(cm0);
-    ISMRMRD::NDArray<complex_float_t> w(cm0);
-
-    float* ptr_img = img.getDataPtr();
-    for (unsigned int z = 0; z < nz; z++) {
-        for (unsigned int y = 0; y < ny; y++) {
-            for (unsigned int x = 0; x < nx; x++) {
-                float r = 0.0;
-                for (unsigned int c = 0; c < nc; c++) {
-                    float s = std::abs(cm0(x, y, z, c));
-                    r += s*s;
-                }
-                img(x, y, z) = (float)std::sqrt(r);
-            }
-        }
-    }
-
-    float max_im = max_(nx, ny, nz, ptr_img);
-    float small_grad = max_im * 2 / (nx + ny + 0.0f);
-    for (int i = 0; i < 3; i++)
-        smoothen_(nx, ny, nz, nc, v.getDataPtr(), w.getDataPtr(), 0, 1);
-    float noise = max_diff_(nx, ny, nz, nc, small_grad,
-        v.getDataPtr(), cm0.getDataPtr());
-    mask_noise_(nx, ny, nz, ptr_img, noise, object_mask);
-
-    for (int i = 0; i < csm_smoothness_; i++)
-        smoothen_(nx, ny, nz, nc, cm0.getDataPtr(), w.getDataPtr(), //0, 1);
-            object_mask, 1);
-
-    for (unsigned int z = 0; z < nz; z++) {
-        for (unsigned int y = 0; y < ny; y++) {
-            for (unsigned int x = 0; x < nx; x++) {
-                float r = 0.0;
-                for (unsigned int c = 0; c < nc; c++) {
-                    float s = std::abs(cm0(x, y, z, c));
-                    r += s*s;
-                }
-                img(x, y, z) = (float)std::sqrt(r);
-            }
-        }
-    }
-
-    for (unsigned int z = 0, i = 0; z < nz; z++) {
-        for (unsigned int y = 0; y < ny; y++) {
-            for (unsigned int x = 0; x < nx; x++, i++) {
-                float r = img(x, y, z);
-                float s;
-                if (r != 0.0)
-                    s = (float)(1.0 / r);
-                else
-                    s = 0.0;
-                complex_float_t zs(s, 0.0);
-                for (unsigned int c = 0; c < nc; c++) {
-                    csm(x, y, z, c) = zs * cm0(x, y, z, c);
-                }
-            }
-        }
-    }
-
-    delete[] object_mask;
-}
-
-
-
-void CoilSensitivitiesVector::mask_noise_
-(int nx, int ny, int nz, float* u, float noise, int* mask)
-{
-    int i = 0;
-    for (int iz = 0; iz < nz; iz++)
-        for (int iy = 0; iy < ny; iy++)
-            for (int ix = 0; ix < nx; ix++, i++) {
-            float t = fabs(u[i]);
-            mask[i] = (t > noise);
-        }
-}
-
-void
-CoilSensitivitiesVector::smoothen_
-(int nx, int ny, int nz, int nc,
-    complex_float_t* u, complex_float_t* v,
-    int* obj_mask, int w)
-{
-    const complex_float_t ONE(1.0, 0.0);
-    const complex_float_t TWO(2.0, 0.0);
-    for (int ic = 0, i = 0; ic < nc; ic++)
-        for (int iz = 0, k = 0; iz < nz; iz++)
-            for (int iy = 0; iy < ny; iy++)
-                for (int ix = 0; ix < nx; ix++, i++, k++) {
-                    if (obj_mask && !obj_mask[k]) {
-                        v[i] = u[i];
-                        continue;
-                    }
-                    int n = 0;
-                    complex_float_t r(0.0, 0.0);
-                    complex_float_t s(0.0, 0.0);
-
-void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
+void CoilSensitivitiesVector::forward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
 {
     if(src_img.items() != this->items() )
         throw LocalisedException("The number of coilmaps does not equal the number of images to which they should be applied to.",   __FILE__, __LINE__);
@@ -2016,11 +1848,12 @@ void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageDat
         individual_channels.append(iw_dst);
     }
 }
-void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)
+
+void CoilSensitivitiesVector::backward(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)
 {
-    std::cout << this->CoilSensitivitiesContainer::items() <<std::endl;
+    std::cout << this->items() <<std::endl;
     std::cout << individual_channels.items() << std::endl;
-    if(individual_channels.items() != this->CoilSensitivitiesContainer::items() )
+    if(individual_channels.items() != this->items() )
         throw LocalisedException("The number of coilmaps does not equal the number of images to be combined.",   __FILE__, __LINE__);
 
     // check for matching dimensions
@@ -2079,4 +1912,3 @@ void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined
         combined_image.append(iw_dst);
     }
 }
-

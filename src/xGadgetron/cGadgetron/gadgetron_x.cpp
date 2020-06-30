@@ -375,7 +375,7 @@ MRAcquisitionModel::fwd(GadgetronImageData& ic, CoilSensitivitiesVector& cc,
 {
 
     GadgetronImagesVector indiv_channels;
-    cc.apply_coil_sensitivities(indiv_channels, ic);
+    cc.forward(indiv_channels, ic);
 
     if(!ac.sorted())
         ac.sort();
@@ -440,7 +440,7 @@ MRAcquisitionModel::bwd(GadgetronImageData& ic, CoilSensitivitiesVector& cc,
 
 	}
 
-    cc.combine_coils(ic, iv);
+    cc.backward(ic, iv);
 }
 
 /*

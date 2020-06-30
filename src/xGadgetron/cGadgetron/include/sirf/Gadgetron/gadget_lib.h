@@ -282,15 +282,15 @@ namespace sirf {
             std::stringstream ss_var;
 
             ss_var << ks;
-            add_property("ks", ss_var.str().c_str());
+            add_property("ks_", ss_var.str().c_str());
             ss_var.str(std::string());
 
             ss_var << kz;
-            add_property("kz", ss_var.str().c_str());
+            add_property("kz_", ss_var.str().c_str());
             ss_var.str(std::string());
 
             ss_var << power;
-            add_property("power", ss_var.str().c_str());
+            add_property("power_", ss_var.str().c_str());
         }
 
         static const char* class_name()

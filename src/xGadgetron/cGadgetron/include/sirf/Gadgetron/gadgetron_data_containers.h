@@ -148,23 +148,6 @@ namespace sirf {
         SetType get_idx_set(void) const {return idx_set_;}
         void add_idx_to_set(size_t const idx){this->idx_set_.push_back(idx);}
 
-        static TagType get_tag_from_acquisition(ISMRMRD::Acquisition acq)
-        {
-            TagType tag;
-            tag[0] = acq.idx().average;
-            tag[1] = acq.idx().slice;
-            tag[2] = acq.idx().contrast;
-            tag[3] = acq.idx().phase;
-            tag[4] = acq.idx().repetition;
-            tag[5] = acq.idx().set;
-            tag[6] = 0; //acq.idx().segment;
-
-            for(int i=7; i<tag.size(); ++i)
-                tag[i]=acq.idx().user[i];
-
-            return tag;
-        }
-
         bool is_first_set() const {
             bool is_first= (tag_[0] == 0);
             if(is_first)
@@ -974,6 +957,12 @@ namespace sirf {
         }
 
         void set_csm_smoothness(int s){csm_smoothness_ = s;}
+        void set_csm_gadget_params(size_t ks,size_t kz,size_t power)
+        {
+            this->csm_gadget_params_ = std::array<size_t, 3>{ks,kz,power};
+
+        }
+
 
         void calculate(const MRAcquisitionData& acq)
         {
@@ -984,7 +973,8 @@ namespace sirf {
         void calculate_images(const MRAcquisitionData& acq);
         void calculate_csm(GadgetronImagesVector iv);
 
-        CFImage get_csm_as_cfimage(size_t const i) const;
+        CFImage get_csm_as_CFImage(const size_t i) const;
+        CFImage get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const;
 
         void get_dim(size_t const num_csm, int* dim) const
         {
@@ -992,29 +982,21 @@ namespace sirf {
 
         }
 
+        void forward(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
+        void backward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
+
     protected:
 
+        std::array<size_t,3> csm_gadget_params_{13,9,3};
+
+        int csm_smoothness_ = 1;
         bool flag_imgs_suitable_for_csm_computation_=false;
 
-
         void calculate_csm(void);
-
-        void calculate_csm(ISMRMRD::NDArray<complex_float_t>& cm, ISMRMRD::NDArray<float>& img, ISMRMRD::NDArray<complex_float_t>& csm);
-
-        void forward(){
-            throw LocalisedException("This has not been implemented yet." , __FILE__, __LINE__);
+        void calculate_csm(ISMRMRD::NDArray<complex_float_t>& cm, ISMRMRD::NDArray<float>& img, ISMRMRD::NDArray<complex_float_t>& csm)
+        {
+            throw std::runtime_error("This has not been implemented yet");
         }
-        void backward(){
-            throw LocalisedException("This has not been implemented yet." , __FILE__, __LINE__);
-        }
-
-
-    private:
-        int csm_smoothness_=0;
-        void smoothen_(int nx, int ny, int nz, int nc, complex_float_t* u, complex_float_t* v, int* obj_mask, int w);
-        void mask_noise_(int nx, int ny, int nz, float* u, float noise, int* mask);
-        float max_diff_(int nx, int ny, int nz, int nc, float small_grad, complex_float_t* u, complex_float_t* v);
-        float max_(int nx, int ny, int nz, float* u);
 
     };
 
