@@ -1912,3 +1912,136 @@ void CoilSensitivitiesVector::backward(sirf::GadgetronImageData& combined_image,
         combined_image.append(iw_dst);
     }
 }
+
+CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const unsigned int ic) const
+{
+    gadgetron::shared_ptr<ImageWrap> sptr_iw = this->sptr_csm_gid_->sptr_image_wrap(ic);
+    void* vptr_img = sptr_iw->ptr_image();
+    CFImage* ptr_cfi = static_cast<CFImage*>(vptr_img);
+    return *ptr_cfi;
+}
+
+CFImage CoilSensitivitiesAsImages::get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const
+{
+    int const num_csms = this->items();
+    for(int i=0; i<num_csms;++i)
+    {
+        int const access_idx = ((offset + i) % num_csms);
+        CFImage csm_img = get_csm_as_CFImage(access_idx);
+        KSpaceSorting::TagType tag_csm = KSpaceSorting::get_tag_from_img(csm_img);
+
+        if(tag_csm[1] == tag[1]) //for now if the same slice is available then take it!
+            return csm_img;
+    }
+
+    throw LocalisedException("No coilmap with this tag was in the coilsensitivity container.",   __FILE__, __LINE__);
+}
+
+void CoilSensitivitiesAsImages::apply_coil_sensitivities(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
+{
+    if(src_img.items() != this->items() )
+        throw LocalisedException("The number of coilmaps does not equal the number of images to which they should be applied to.",   __FILE__, __LINE__);
+
+    if(!src_img.check_dimension_consistency())
+       throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
+
+    if(src_img.dimensions()["c"] != 1)
+        throw LocalisedException("The source image has more than one channel.",   __FILE__, __LINE__);
+
+    individual_channels.set_meta_data( src_img.get_meta_data());
+    individual_channels.clear_data();
+
+    for(size_t i_img=0; i_img<src_img.items(); ++i_img)
+    {
+        ImageWrap& iw_src = src_img.image_wrap(i_img);
+        void* vptr_src_img = iw_src.ptr_image();
+
+        CFImage* ptr_src_img = static_cast<CFImage*>(vptr_src_img);
+
+        CFImage coilmap = get_csm_as_CFImage( KSpaceSorting::get_tag_from_img(*ptr_src_img), i_img);
+
+        CFImage dst_img(coilmap);
+        dst_img.setHead((*ptr_src_img).getHead());
+        dst_img.setNumberOfChannels(coilmap.getNumberOfChannels());
+
+        size_t const Nx = dst_img.getMatrixSizeX();
+        size_t const Ny = dst_img.getMatrixSizeY();
+        size_t const Nz = dst_img.getMatrixSizeZ();
+        size_t const Nc = dst_img.getNumberOfChannels();
+
+        for( size_t nc=0;nc<Nc ; nc++)
+        for( size_t nz=0;nz<Nz ; nz++)
+        for( size_t ny=0;ny<Ny ; ny++)
+        for( size_t nx=0;nx<Nx ; nx++)
+        {
+            dst_img(nx, ny, nz, nc) = coilmap(nx, ny, nz, nc) * ((*ptr_src_img)(nx, ny, nz, 0));
+        }
+
+        void* vptr_dst_img = new CFImage(dst_img); //urgh this is so horrible
+        sirf::ImageWrap iw_dst(ISMRMRD::ISMRMRD_CXFLOAT, vptr_dst_img );
+        individual_channels.append(iw_dst);
+    }
+}
+void CoilSensitivitiesAsImages::combine_coils(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels)
+{
+    std::cout << this->CoilSensitivitiesContainer::items() <<std::endl;
+    std::cout << individual_channels.items() << std::endl;
+    if(individual_channels.items() != this->CoilSensitivitiesContainer::items() )
+        throw LocalisedException("The number of coilmaps does not equal the number of images to be combined.",   __FILE__, __LINE__);
+
+    // check for matching dimensions
+    if(!individual_channels.check_dimension_consistency())
+        throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
+
+    std::vector<int> img_dims(4);
+    individual_channels.get_image_dimensions(0, &img_dims[0]);
+    combined_image.set_meta_data(individual_channels.get_meta_data());
+    combined_image.clear_data();
+
+    for(size_t i_img=0; i_img<individual_channels.items(); ++i_img)
+    {
+        ImageWrap& iw_src = individual_channels.image_wrap(i_img);
+        void* vptr_src_img = iw_src.ptr_image();
+
+        CFImage* ptr_src_img = static_cast<CFImage*>(vptr_src_img);
+
+        CFImage coilmap= get_csm_as_CFImage(KSpaceSorting::get_tag_from_img(*ptr_src_img), i_img);
+
+        int const Nx = (int)coilmap.getMatrixSizeX();
+        int const Ny = (int)coilmap.getMatrixSizeY();
+        int const Nz = (int)coilmap.getMatrixSizeZ();
+        int const Nc = (int)coilmap.getNumberOfChannels();
+
+        std::vector<int> csm_dims{Nx, Ny, Nz, Nc};
+
+        if( img_dims != csm_dims)
+            throw LocalisedException("The data dimensions of the image don't match the sensitivity maps.",   __FILE__, __LINE__);
+
+
+        CFImage dst_img(Nx, Ny, Nz, 1);
+
+        complex_float_t* it_dst = dst_img.begin();
+
+        while(it_dst != dst_img.end())
+        {
+            *it_dst = complex_float_t(0.f,0.f);
+            it_dst++;
+        }
+
+        dst_img.setHead(ptr_src_img->getHead());
+        dst_img.setNumberOfChannels(1);
+
+        for( size_t nc=0;nc<Nc ; nc++)
+        for( size_t nz=0;nz<Nz ; nz++)
+        for( size_t ny=0;ny<Ny ; ny++)
+        for( size_t nx=0;nx<Nx ; nx++)
+        {
+            dst_img(nx, ny, nz, 0) += std::conj(coilmap(nx, ny, nz, nc)) * ((*ptr_src_img)(nx, ny, nz, nc));
+
+        }
+
+        void* vptr_dst_img = new CFImage(dst_img); //urgh this is so horrible
+        sirf::ImageWrap iw_dst(ISMRMRD::ISMRMRD_CXFLOAT, vptr_dst_img );
+        combined_image.append(iw_dst);
+    }
+}
