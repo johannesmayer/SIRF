@@ -1735,16 +1735,6 @@ CFImage CoilSensitivitiesVector::get_csm_as_CFImage(const KSpaceSorting::TagType
     }
 }
 
-
-void CoilSensitivitiesVector::calculate_csm(void)
-{
-    if(!this->flag_imgs_suitable_for_csm_computation_)
-        throw LocalisedException("The images in container are not suitable for coilmap computation. Maybe you already computed them." , __FILE__, __LINE__);
-
-
-    calculate_csm(*this);
-}
-
 void CoilSensitivitiesVector::calculate_images(const MRAcquisitionData& ac)
 {
     this->empty();
@@ -1778,9 +1768,6 @@ void CoilSensitivitiesVector::calculate_images(const MRAcquisitionData& ac)
 
         this->append(iw);
     }
-
-
-    this->flag_imgs_suitable_for_csm_computation_ = true;
     std::cout << '\n';
 }
 
@@ -1800,27 +1787,25 @@ void CoilSensitivitiesVector::calculate_csm(GadgetronImagesVector iv)
     {
         this->append( sptr_iv->image_wrap(i));
     }
-
-    this->flag_imgs_suitable_for_csm_computation_ = false;
 }
 
-void CoilSensitivitiesVector::forward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img)
+void CoilSensitivitiesVector::forward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& combined_image)
 {
-    if(src_img.items() != this->items() )
+    if(combined_image.items() != this->items() )
         throw LocalisedException("The number of coilmaps does not equal the number of images to which they should be applied to.",   __FILE__, __LINE__);
 
-    if(!src_img.check_dimension_consistency())
+    if(!combined_image.check_dimension_consistency())
        throw LocalisedException("The image dimensions in the source image container are not consistent.",   __FILE__, __LINE__);
 
-    if(src_img.dimensions()["c"] != 1)
+    if(combined_image.dimensions()["c"] != 1)
         throw LocalisedException("The source image has more than one channel.",   __FILE__, __LINE__);
 
-    individual_channels.set_meta_data( src_img.get_meta_data());
+    individual_channels.set_meta_data( combined_image.get_meta_data());
     individual_channels.clear_data();
 
-    for(size_t i_img=0; i_img<src_img.items(); ++i_img)
+    for(size_t i_img=0; i_img<combined_image.items(); ++i_img)
     {
-        ImageWrap& iw_src = src_img.image_wrap(i_img);
+        ImageWrap& iw_src = combined_image.image_wrap(i_img);
         void* vptr_src_img = iw_src.ptr_image();
 
         CFImage* ptr_src_img = static_cast<CFImage*>(vptr_src_img);

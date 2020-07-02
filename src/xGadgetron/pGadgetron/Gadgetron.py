@@ -507,68 +507,72 @@ class CoilSensitivityData(ImageData):
             pyiutil.deleteDataHandle(self.handle)
         self.handle = pygadgetron.cGT_CoilSensitivities('')
         check_status(self.handle)
+        nit = self.smoothness
+        
         if method is not None:
             method_name, parm_list = name_and_parameters(method)
             parm = parse_arglist(parm_list)
+            if 'niter' in parm:
+                nit = int(parm['niter'])
         else:
             method_name = 'SRSS'
             parm = {}
-        if isinstance(data, AcquisitionData):
-            
-            assert data.handle is not None
-            
-            if method_name == 'Inati':
-                try:
-                    from ismrmrdtools import coils
-                except:
-                    raise error('Inati method requires ismrmrd-python-tools')
-                
-                try_calling(pygadgetron.cGT_computeCoilImages(self.handle, data.handle))
-                    
-                cis_array = self.as_array()
-                csm, _ = coils.calculate_csm_inati_iter(cis_array)
-                
-                nc, nz, ny, nx = self.dimensions()
-                ns = self.number() # number of total dynamics (slices, contrasts, etc.)
-                nz = nz//ns        # z-dimension of a slice
+        
+        parms.set_int_par(self.handle, 'coil_sensitivity', 'smoothness', nit)
 
-                csm = numpy.reshape(csm, (nc, ns, nz, ny, nx))
-                csm = numpy.swapaxes(csm,0,1)
-                csm = numpy.reshape(csm, (nc, ns*nz, ny, nx))
-                
-                self.append(csm.astype(numpy.complex64))
-            
-            elif method_name == 'SRSS':
-            
-                parms.set_int_par\
-                (self.handle, 'coil_sensitivity', 'smoothness', self.smoothness)
-                try_calling(pygadgetron.cGT_computeCoilSensitivities \
-                    (self.handle, data.handle))
-            
-            
+        if isinstance(data, AcquisitionData):
+            self.__calc_from_acquisitions(data, method_name)
         elif isinstance(data, ImageData):
-            assert data.handle is not None
-            if method_name == 'Inati':
-                try:
-                    from ismrmrdtools import coils
-                except:
-                    raise error('Inati method requires ismrmrd-python-tools')
-                    
-                cis_array = data.as_array()
-                csm, _ = coils.calculate_csm_inati_iter(cis_array)
-                self.append(csm.astype(numpy.complex64))
-            elif method_name == 'SRSS':
-                if 'niter' in parm:
-                    nit = int(parm['niter'])
-                    parms.set_int_par \
-                        (self.handle, 'coil_sensitivity', 'smoothness', nit)
-                try_calling(pygadgetron.cGT_computeCoilSensitivitiesFromGadgetronImages \
-                    (self.handle, data.handle))
-            else:
-                raise error('Unknown method %s' % method_name)
+            self.__calc_from_images(data, method_name)
         else:
             raise error('Cannot calculate coil sensitivities from %s' % \
                         repr(type(data)))
+
+    def __calc_from_acquisitions(self, data, method_name):
+        assert data.handle is not None
+            
+        if method_name == 'Inati':
+            try:
+                from ismrmrdtools import coils
+            except:
+                raise error('Inati method requires ismrmrd-python-tools')
+            
+            try_calling(pygadgetron.cGT_computeCoilImages(self.handle, data.handle))
+                
+            cis_array = self.as_array()
+            csm, _ = coils.calculate_csm_inati_iter(cis_array)
+            
+            nc, nz, ny, nx = self.dimensions()
+            ns = self.number() # number of total dynamics (slices, contrasts, etc.)
+            nz = nz//ns        # z-dimension of a slice
+
+            csm = numpy.reshape(csm, (nc, ns, nz, ny, nx))
+            csm = numpy.swapaxes(csm,0,1)
+            csm = numpy.reshape(csm, (nc, ns*nz, ny, nx))
+            
+            self.append(csm.astype(numpy.complex64))
+        
+        elif method_name == 'SRSS':
+            try_calling(pygadgetron.cGT_computeCoilSensitivities(self.handle, data.handle))
+
+    def __calc_from_images(self, data, method_name):
+        assert data.handle is not None
+        if method_name == 'Inati':
+            try:
+                from ismrmrdtools import coils
+            except:
+                raise error('Inati method requires ismrmrd-python-tools')
+                
+            cis_array = data.as_array()
+            csm, _ = coils.calculate_csm_inati_iter(cis_array)
+            self.append(csm.astype(numpy.complex64))
+        elif method_name == 'SRSS':
+            try_calling(pygadgetron.cGT_computeCoilSensitivitiesFromGadgetronImages \
+                (self.handle, data.handle))
+        else:
+            raise error('Unknown method %s' % method_name)   
+
+
     def append(self, csm):
         '''
         Appends a coil sensitivity map to self.

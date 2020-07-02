@@ -252,7 +252,7 @@ bool test_compute_coilmaps(const std::string& fname_input)
         size_t const power = 7;
         csm.set_csm_gadget_params(ks,kz,power);
 
-        csm.calculate(mr_rawdata);
+        csm.calculate_csm(mr_rawdata);
 
         for(int i=0; i<csm.items(); ++i)
         {
@@ -286,7 +286,7 @@ bool test_CoilSensitivitiesVector_calculate(const std::string& fname_input)
 
         CoilSensitivitiesVector csv;
         csv.set_csm_smoothness(50);
-        csv.calculate(av);
+        csv.calculate_csm(av);
 
         std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
 
@@ -323,7 +323,7 @@ bool test_CoilSensitivitiesVector_get_csm_as_cfimage(const std::string& fname_in
         sirf::preprocess_acquisition_data(av);
 
         CoilSensitivitiesVector csv;
-        csv.calculate(av);
+        csv.calculate_csm(av);
 
         std::cout << "We have " << csv.items() << " coilmaps" << std::endl;
 
@@ -364,7 +364,7 @@ bool test_bwd(const std::string& fname_input)
         sirf::MRAcquisitionModel acquis_model;
 
         sirf::CoilSensitivitiesVector csm;
-        csm.calculate(mr_rawdata);
+        csm.calculate_csm(mr_rawdata);
 
         auto sptr_encoder = std::make_shared<sirf::CartesianFourierEncoding>(sirf::CartesianFourierEncoding());
         acquis_model.set_encoder(sptr_encoder);

@@ -964,14 +964,15 @@ namespace sirf {
         }
 
 
-        void calculate(const MRAcquisitionData& acq)
+        void calculate_csm(GadgetronImagesVector iv);
+        void calculate_csm(const MRAcquisitionData& acq)
         {
             this->calculate_images(acq);
-            this->calculate_csm();
+            this->calculate_csm(*this);
         }
 
         void calculate_images(const MRAcquisitionData& acq);
-        void calculate_csm(GadgetronImagesVector iv);
+
 
         CFImage get_csm_as_CFImage(const size_t i) const;
         CFImage get_csm_as_CFImage(const KSpaceSorting::TagType tag, const int offset) const;
@@ -982,17 +983,15 @@ namespace sirf {
 
         }
 
-        void forward(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
-        void backward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& src_img);
+        void forward(sirf::GadgetronImageData& individual_channels, sirf::GadgetronImageData& combined_image);
+        void backward(sirf::GadgetronImageData& combined_image, sirf::GadgetronImageData& individual_channels);
 
     protected:
 
         std::array<size_t,3> csm_gadget_params_{13,9,3};
 
         int csm_smoothness_ = 1;
-        bool flag_imgs_suitable_for_csm_computation_=false;
 
-        void calculate_csm(void);
         void calculate_csm(ISMRMRD::NDArray<complex_float_t>& cm, ISMRMRD::NDArray<float>& img, ISMRMRD::NDArray<complex_float_t>& csm)
         {
             throw std::runtime_error("This has not been implemented yet");
