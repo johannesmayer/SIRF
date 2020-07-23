@@ -63,6 +63,7 @@ public:
 	MRContrastGenerator (const LabelVolume& tissue_labels, const std::string& filename_tissue_parameter_xml);
 
 	void set_rawdata_header(const IsmrmrdHeader& hdr);
+    IsmrmrdHeader get_rawdata_header(void);
 	void map_contrast();
 	complex_float_t get_signal_for_tissuelabel( size_t const label );
 
@@ -119,3 +120,8 @@ private:
 	sirf::STIRImageData template_pet_image_data_;
 
 };
+
+
+void set_B0(MRContrastGenerator& mrcg, float const B0_T);
+void set_TR(MRContrastGenerator& mrcg, SeqParamType const TR_ms);
+void set_TE(MRContrastGenerator& mrcg, SeqParamType const TE_ms);

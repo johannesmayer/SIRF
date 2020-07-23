@@ -58,6 +58,11 @@ void MRContrastGenerator::set_rawdata_header(const ISMRMRD::IsmrmrdHeader& hdr)
 	this->hdr_ = hdr;
 }
 
+ISMRMRD::IsmrmrdHeader MRContrastGenerator::get_rawdata_header()
+{
+    return this-> hdr_;
+}
+
 std::vector< ISMRMRD::Image< complex_float_t> >& MRContrastGenerator::get_contrast_filled_volumes(bool const resample_output)
 {
 	if( resample_output == true )
@@ -308,7 +313,7 @@ std::vector < complex_float_t > map_flash_contrast(std::shared_ptr<TissueParamet
 	float const field_strength_t = *(asi.systemFieldStrength_T);
 	
 
-	if (flip_angle_deg.size() > 1)
+    if (flip_angle_deg.size() != 1)
 		throw std::runtime_error(" More than one flip angle was given. Please give only one in Flash contrast.");
 
 	size_t const num_echoes = TE.size();
@@ -559,4 +564,34 @@ void PETContrastGenerator::resample_to_template_image( void )
 		this->contrast_filled_volumes_[i].set_data( (float*)( deformed_img->get_raw_nifti_sptr()->data ) );
 
 	}
+}
+
+
+
+// setting parameters for MR contrast from outside
+void set_B0(MRContrastGenerator& mrcg, float const B0_T)
+{
+    IsmrmrdHeader hdr = mrcg.get_rawdata_header();
+    AcquisitionSystemInformation asi = *(hdr.acquisitionSystemInformation);
+    asi.systemFieldStrength_T = B0_T;
+    hdr.acquisitionSystemInformation.set(asi);
+    mrcg.set_rawdata_header(hdr);
+}
+void set_TR(MRContrastGenerator& mrcg, SeqParamType const TR_ms)
+{
+    IsmrmrdHeader hdr = mrcg.get_rawdata_header();
+    SequenceParameters seq_par = *(hdr.sequenceParameters);
+    seq_par.TR = TR_ms;
+    seq_par.echo_spacing = TR_ms;
+    hdr.sequenceParameters.set(seq_par);
+    mrcg.set_rawdata_header(hdr);
+}
+
+void set_TE(MRContrastGenerator& mrcg, SeqParamType const TE_ms)
+{
+    IsmrmrdHeader hdr = mrcg.get_rawdata_header();
+    SequenceParameters seq_par = *(hdr.sequenceParameters);
+    seq_par.TE = TE_ms;
+    hdr.sequenceParameters.set(seq_par);
+    mrcg.set_rawdata_header(hdr);
 }
