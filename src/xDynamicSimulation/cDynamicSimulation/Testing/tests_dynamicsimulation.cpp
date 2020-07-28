@@ -509,7 +509,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
         bool const simulate_data = true;
         bool const store_gt_mvfs = true;
 
-        int const num_simul_motion_dyn = 6;
+        int const num_simul_motion_dyn = 24;
 
         float const test_SNR = 6;
 		size_t const noise_label = 13;
