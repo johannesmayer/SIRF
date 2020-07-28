@@ -505,18 +505,18 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 {
 	try
 	{	
-        bool const do_cardiac_sim = false;
+        bool const do_cardiac_sim = true;
         bool const simulate_data = true;
         bool const store_gt_mvfs = true;
 
-        int const num_simul_motion_dyn = 36;
+        int const num_simul_motion_dyn = 6;
 
-        float const test_SNR = 18;
+        float const test_SNR = 6;
 		size_t const noise_label = 13;
 
 
-        std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/SynergisticNaF/Input/";
-        std::string output_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/SynergisticNaF/Output/MR/4DMotion/";
+        std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/FatWaterQuantification/Input/";
+        std::string output_path = std::string(SHARED_FOLDER_PATH) + "PublicationData/FatWaterQuantification/Output/4DMotion/";
 
         if(do_cardiac_sim)
             output_path  += "Cardiac/";
@@ -524,7 +524,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
             output_path  += "Respiratory/";
 
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
-		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
+        MRContrastGenerator mr_cont_gen( segmentation_labels, XML_FATWATER_PATH);
 
         SeqParamType TR_ms{8.20};
         SeqParamType TE_ms{2.9, 4.48, 6.06};
@@ -637,7 +637,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 			std::string const motion_type = do_cardiac_sim ? "cardiac" : "respiratory";			
 
 			std::stringstream outname_stream;
-			outname_stream << "output_grpe_mri_simulation_" << "motion_type_" << motion_type << "_num_motion_states_" << num_simul_motion_dyn;
+            outname_stream << "raw/output_grpe_mri_simulation_" << "motion_type_" << motion_type << "_num_motion_states_" << num_simul_motion_dyn;
 			
 			std::string const filename_mri_output = output_path + outname_stream.str() + ".h5";
 
