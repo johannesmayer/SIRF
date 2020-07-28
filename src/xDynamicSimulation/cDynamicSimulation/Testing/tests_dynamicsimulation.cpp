@@ -637,7 +637,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 			std::string const motion_type = do_cardiac_sim ? "cardiac" : "respiratory";			
 
 			std::stringstream outname_stream;
-			outname_stream << "output_grpe_mri_simulation_" << "motion_type_" << motion_type << "_num_motion_states_" << num_simul_motion_dyn;
+            outname_stream << "raw/output_grpe_mri_simulation_" << "motion_type_" << motion_type << "_num_motion_states_" << num_simul_motion_dyn;
 			
 			std::string const filename_mri_output = output_path + outname_stream.str() + ".h5";
 
@@ -1069,10 +1069,10 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 		pet_dyn_sim.set_filename_rawdata( PET_TEMPLATE_ACQUISITION_DATA_PATH );
 		pet_dyn_sim.set_template_image_data( PET_TEMPLATE_ACQUISITION_IMAGE_DATA_PATH );
 		
-        int const num_sim_motion_states = 16;
+        int const num_sim_motion_states = 2;
 
 		std::cout << "WARNING: NOISE IS STRONGLY SUPPRESSED" << std::endl;
-		float const noise_suppression = 1000 * 1000;
+        float const noise_suppression = 2 * 1000 * 1000;
 		float tot_time_ms =  noise_suppression * 30 * 60 * 1000; // in case there is no motion simulation use this acqu time
 
 		if( num_sim_motion_states > 1)

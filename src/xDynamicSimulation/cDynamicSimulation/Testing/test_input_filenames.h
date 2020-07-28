@@ -69,8 +69,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 	
     // #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_192.h5"
 	// #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "XCATSegmentations/xcat192Cube_DCE/xcat_phantom_incl_geomertry_192_dce.h5"
-    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_192_naf.h5"
-
+    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "PublicationData/SynergisticNaF/Input/XCATInput/xcat_phantom_incl_geomertry_192_naf.h5"
 
 	#define DISPLACEMENT_FIELD_PATH SHARED_FOLDER_PATH ""
 
@@ -100,8 +99,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 #define RESP_SIGNAL_PATH SHARED_FOLDER_PATH "PublicationData/Input/SurrogateSignals/resp_signal"
 
 
-#define XML_TEST_PATH SHARED_FOLDER_PATH "XMLTestData/test_TissueParameters_XML_NaF.xml"
-#define XML_XCAT_PATH SHARED_FOLDER_PATH "XMLTestData/XCAT_TissueParameters_XML_NaF.xml"
+#define XML_TEST_PATH SHARED_FOLDER_PATH "PublicationData/SynergisticNaF/Input/XCATInput/XCAT_TissueParameters_XML_NaF.xml"
+#define XML_XCAT_PATH SHARED_FOLDER_PATH "PublicationData/SynergisticNaF/Input/XCATInput/XCAT_TissueParameters_XML_NaF.xml"
 
 // #define H5_PHANTOM_TEST_PATH  SHARED_FOLDER_PATH "h5_testfile_cube_size3.h5"
 #define H5_PHANTOM_TEST_PATH  SHARED_FOLDER_PATH "testdata_inputoutput/xcat_phantom_incl_geomertry_64.h5"
