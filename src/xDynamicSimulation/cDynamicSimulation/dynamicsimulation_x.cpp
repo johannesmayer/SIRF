@@ -23,7 +23,7 @@ using std::cout;
 using std::endl;
 
 
-#define PET_GLOBAL_NOISE_SCALING 8.0f
+#define PET_GLOBAL_NOISE_SCALING 16.0f
 
 
 void MRDynamicSimulation::set_filename_rawdata( std::string const filename_template_rawdata ) 

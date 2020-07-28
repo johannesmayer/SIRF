@@ -1048,7 +1048,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 
         bool const do_cardiac_sim = false;
 		bool const simulate_data = true;
-        bool const store_gt_mvfs = true;
+        bool const store_gt_mvfs = false;
 
         std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/SynergisticNaF/Input/";
 
