@@ -116,7 +116,7 @@ void run_tests_dynamics( void )
 	// dyn_tests.push_back(test_dynamic::test_mr_contrast_motion_dyn_get_num_simul_states());
 	
 	// std::cout << "14 ----------------------------------------------------" <<std::endl;
-	dyn_tests.push_back(test_dynamic::test_bin_pet_time_interval());
+    //	dyn_tests.push_back(test_dynamic::test_bin_pet_time_interval());
 
 	std::cout << "15 ----------------------------------------------------" <<std::endl;
 	// dyn_tests.push_back(test_dynamic::test_nonisotropic_mvf_resampling () );
@@ -172,7 +172,7 @@ void run_tests_dynamic_simulation( void )
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_dce_acquisition());
 
 	std::cout << "MR 7 ----------------------------------------------------" <<std::endl;
-//    mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
+    mr_dynsim_tests.push_back(tests_mr_dynsim::test_4d_mri_acquisition());
 
 	std::cout << "MR 8 ----------------------------------------------------" <<std::endl;
 	// mr_dynsim_tests.push_back(tests_mr_dynsim::test_5d_mri_acquisition());
@@ -202,7 +202,7 @@ void run_tests_dynamic_simulation( void )
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_simulate_motion_dynamics());
 
 	std::cout << "PET 5 ----------------------------------------------------" <<std::endl;
-    pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
+//    pet_dynsim_tests.push_back(test_pet_dynsim::test_4d_pet_acquisition());
 
 	std::cout << "PET 6 ----------------------------------------------------" <<std::endl;
 	// pet_dynsim_tests.push_back(test_pet_dynsim::test_5d_pet_acquisition());

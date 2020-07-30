@@ -505,13 +505,13 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 {
 	try
 	{	
-        bool const do_cardiac_sim = false;
+        bool const do_cardiac_sim = true;
         bool const simulate_data = true;
         bool const store_gt_mvfs = true;
 
-        int const num_simul_motion_dyn = 36;
+        int const num_simul_motion_dyn = 12;
 
-        float const test_SNR = 18;
+        float const test_SNR = 6;
 		size_t const noise_label = 13;
 
 
@@ -526,13 +526,11 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
 		MRContrastGenerator mr_cont_gen( segmentation_labels, XML_XCAT_PATH);
 
-        SeqParamType TR_ms{8.20};
-        SeqParamType TE_ms{2.9, 4.48, 6.06};
-        const float B0_T = 1.4940;
+        SeqParamType TR_ms{7.6};
+        SeqParamType TE_ms{2.62, 4.13, 5.64};
 
         set_TE(mr_cont_gen, TE_ms);
         set_TR(mr_cont_gen, TR_ms);
-        set_B0(mr_cont_gen, B0_T);
 
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
         mr_dyn_sim.set_filename_rawdata( input_path + "/MR/20200721-140413,Phantom,CV_nav_sfl_usos4_gc,58838,110_ismrmrd.h5");
@@ -1046,7 +1044,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 	try
 	{
 
-        bool const do_cardiac_sim = false;
+        bool const do_cardiac_sim = true;
 		bool const simulate_data = true;
         bool const store_gt_mvfs = false;
 
@@ -1069,7 +1067,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 		pet_dyn_sim.set_filename_rawdata( PET_TEMPLATE_ACQUISITION_DATA_PATH );
 		pet_dyn_sim.set_template_image_data( PET_TEMPLATE_ACQUISITION_IMAGE_DATA_PATH );
 		
-        int const num_sim_motion_states = 2;
+        int const num_sim_motion_states = 12;
 
 		std::cout << "WARNING: NOISE IS STRONGLY SUPPRESSED" << std::endl;
         float const noise_suppression = 2 * 1000 * 1000;
