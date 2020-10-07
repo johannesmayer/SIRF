@@ -150,6 +150,25 @@ AcquisitionsVector mr_io::read_ismrmrd_acquisitions( std::string path_ismrmrd_h5
 
 }
 
+ISMRMRD::Image<complex_float_t> mr_io::read_csm_img_from_raw( std::string const fname_with_extenstion, std::vector<size_t> dims)
+{
+    if(dims.size()!= 4)
+        throw std::runtime_error("Give a 4 elements vector for Nx Ny Nz and Nc.");
 
+    ISMRMRD::Image<complex_float_t> csm(dims[0],dims[1],dims[2],dims[3]);
+
+    std::vector<float> data(csm.getNumberOfDataElements());
+    size_t const num_pts_in_file = data_io::read_raw<float>(fname_with_extenstion, &data[0]);
+
+    if(csm.getNumberOfDataElements()!= num_pts_in_file)
+    {
+        std::cout << "Comparing " << csm.getNumberOfDataElements() << " to " << num_pts_in_file <<std::endl;
+        throw std::runtime_error("The dimensions supplied dont match the number of points in the file.");
+    }
+    for(size_t i=0; i<csm.getNumberOfDataElements(); i++)
+        *(csm.begin() + i) = std::complex<float>(data[i], 0);
+
+    return csm;
+}
 
 // ++++++++++++++++++ pet_IO ++++++++++++++++++

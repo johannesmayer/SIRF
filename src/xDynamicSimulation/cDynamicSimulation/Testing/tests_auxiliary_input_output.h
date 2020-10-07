@@ -15,13 +15,14 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 namespace test_aux_io
 {
 
-
+bool test_read_raw( void );
 void test_write_ndarray_to_raw( void );
 bool test_read_acquisitions_vector_number_consistency( void );
 
 void test_write_ismrmrd_image_to_analyze( void );
 
 bool test_read_single_column_txt( void );
+
 
 
 }

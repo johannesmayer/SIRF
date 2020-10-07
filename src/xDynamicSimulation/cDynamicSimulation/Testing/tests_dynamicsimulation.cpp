@@ -181,7 +181,7 @@ bool tests_mr_dynsim::test_simulate_dynamics()
 		std::vector< size_t > vol_dims{(size_t)data_dims[1], (size_t)data_dims[2], (size_t)data_dims[3]}; 
 		
 		size_t num_coils = 4;
-		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
+        auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
 		mr_dyn_sim.set_coilmaps( csm );
 
 
@@ -507,7 +507,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 	{	
         bool const do_cardiac_sim = true;
         bool const simulate_data = true;
-        bool const store_gt_mvfs = true;
+        bool const store_gt_mvfs = false;
 
         int const num_simul_motion_dyn = 12;
 
@@ -535,7 +535,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
         mr_dyn_sim.set_filename_rawdata( input_path + "/MR/20200721-140413,Phantom,CV_nav_sfl_usos4_gc,58838,110_ismrmrd.h5");
 
-        std::vector<float> roi_labels{1,2,3,4,50,72,73,76,77};
+        std::vector<float> roi_labels{1,2,3,4,5,6,50,72,73,76,77};
 
 		std::string const output_prefix_roi = output_path;
 		
@@ -543,9 +543,18 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		
 		std::vector< size_t > vol_dims{(size_t)data_dims[1], (size_t)data_dims[2], (size_t)data_dims[3]}; 
 		
-		size_t num_coils = 4;
-		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
-		mr_dyn_sim.set_coilmaps( csm );
+
+//		size_t num_coils = 4;
+//		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
+
+        std::string const csm_filename = input_path + "/MR/coilmap_192x192x192x8.raw";
+        std::vector<size_t> csm_dims(vol_dims);
+        size_t num_coils_in_file = 8;
+        csm_dims.push_back(num_coils_in_file);
+        auto csm = mr_io::read_csm_img_from_raw(csm_filename, csm_dims);
+
+
+        mr_dyn_sim.set_coilmaps( csm );
 
 
 		// RPEInterleavedGoldenCutTrajectoryContainer rpe_traj;
@@ -1044,7 +1053,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 	try
 	{
 
-        bool const do_cardiac_sim = true;
+        bool const do_cardiac_sim = false;
 		bool const simulate_data = true;
         bool const store_gt_mvfs = false;
 
@@ -1070,7 +1079,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
         int const num_sim_motion_states = 12;
 
 		std::cout << "WARNING: NOISE IS STRONGLY SUPPRESSED" << std::endl;
-        float const noise_suppression = 2 * 1000 * 1000;
+        float const noise_suppression = 3 * 1000 * 1000;
 		float tot_time_ms =  noise_suppression * 30 * 60 * 1000; // in case there is no motion simulation use this acqu time
 
 		if( num_sim_motion_states > 1)

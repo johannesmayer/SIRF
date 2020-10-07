@@ -278,12 +278,12 @@ void run_tests_auxiliary_input_output( void )
 {
 	std::cout << "Starting aux io tests" << std::endl;
 	bool tests_successful = true;
-
+    tests_successful *= test_aux_io::test_read_raw();
 	// test_aux_io::test_write_ndarray_to_raw();
 	// test_aux_io::test_write_ismrmrd_image_to_analyze();
 
 	// tests_successful *= test_aux_io::test_read_acquisitions_vector_number_consistency();	
-	tests_successful *= test_aux_io::test_read_single_column_txt();
+    // tests_successful *= test_aux_io::test_read_single_column_txt();
 
 	if ( !tests_successful )
 	{

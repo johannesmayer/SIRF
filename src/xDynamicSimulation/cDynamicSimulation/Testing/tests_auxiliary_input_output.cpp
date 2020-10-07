@@ -19,6 +19,17 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 
 using namespace sirf;
 
+bool test_aux_io::test_read_raw( void )
+{
+    std::string fpath_raw = "/media/sf_SharedFolder/CCPPETMR/PublicationData/FatWaterQuantification/Input/MR/coilmap_192x192x192x8.raw";
+    size_t num_data_pts = 192*192*192*8;
+    std::vector<float> dat( num_data_pts, 0.f );
+    size_t const datapts_in_file = data_io::read_raw<float>(fpath_raw, &dat[0]);
+
+    return num_data_pts == datapts_in_file;
+}
+
+
 void test_aux_io::test_write_ndarray_to_raw( void )
 {
 
