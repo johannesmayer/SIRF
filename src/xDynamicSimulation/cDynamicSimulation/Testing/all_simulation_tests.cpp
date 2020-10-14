@@ -116,7 +116,7 @@ void run_tests_dynamics( void )
 	// dyn_tests.push_back(test_dynamic::test_mr_contrast_motion_dyn_get_num_simul_states());
 	
 	// std::cout << "14 ----------------------------------------------------" <<std::endl;
-	dyn_tests.push_back(test_dynamic::test_bin_pet_time_interval());
+    //	dyn_tests.push_back(test_dynamic::test_bin_pet_time_interval());
 
 	std::cout << "15 ----------------------------------------------------" <<std::endl;
 	// dyn_tests.push_back(test_dynamic::test_nonisotropic_mvf_resampling () );
@@ -278,12 +278,12 @@ void run_tests_auxiliary_input_output( void )
 {
 	std::cout << "Starting aux io tests" << std::endl;
 	bool tests_successful = true;
-
+    tests_successful *= test_aux_io::test_read_raw();
 	// test_aux_io::test_write_ndarray_to_raw();
 	// test_aux_io::test_write_ismrmrd_image_to_analyze();
 
 	// tests_successful *= test_aux_io::test_read_acquisitions_vector_number_consistency();	
-	tests_successful *= test_aux_io::test_read_single_column_txt();
+    // tests_successful *= test_aux_io::test_read_single_column_txt();
 
 	if ( !tests_successful )
 	{

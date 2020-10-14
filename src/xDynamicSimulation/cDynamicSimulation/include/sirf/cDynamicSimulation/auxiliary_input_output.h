@@ -61,6 +61,27 @@ namespace print_io{
 
 namespace data_io{
 
+    template <typename T>
+    int read_raw(std::string const input_name_with_ext, T* ptr_to_data)
+    {
+
+        std::cout<< "Reading file " << input_name_with_ext << std::endl;
+
+        std::ifstream myData(input_name_with_ext, std::ios::binary);
+
+        int i =0;
+        char buf[sizeof(T)];
+
+        while(myData.read(buf, sizeof(buf)))
+        {
+            memcpy(ptr_to_data+i, buf, sizeof(T));
+            i++;
+        }
+
+        return i;
+    }
+
+
 	template <typename T>
 	void write_raw(std::string const output_name_without_ext, T* ptr_to_data, size_t const num_elements)
 	{	
@@ -227,5 +248,7 @@ namespace mr_io{
 
 	ISMRMRD::IsmrmrdHeader read_ismrmrd_header( std::string path_ismrmrd_h5_file_with_ext);
 	sirf::AcquisitionsVector read_ismrmrd_acquisitions( std::string path_ismrmrd_h5_file_with_ext);
+
+    ISMRMRD::Image<complex_float_t> read_csm_img_from_raw( std::string const fname_with_extenstion, std::vector<size_t> dims);
 
 }

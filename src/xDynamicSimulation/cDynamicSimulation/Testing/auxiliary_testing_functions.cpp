@@ -475,6 +475,7 @@ ISMRMRD::NDArray< complex_float_t > aux_test::get_mock_csm( void )
 	return csm;
 }
 
+
 ISMRMRD::Image<complex_float_t> aux_test::get_mock_gaussian_csm( std::vector<size_t> vol_dims, int const num_coils )
 {
 

@@ -72,8 +72,8 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 	
     // #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "h5_phantom_input/xcat_phantom_incl_geomertry_192.h5"
 	// #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "XCATSegmentations/xcat192Cube_DCE/xcat_phantom_incl_geomertry_192_dce.h5"
-    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "/PublicationData/FatWaterQuantification/Input/XCATInput/xcat_phantom_incl_geomertry_192_fwsep.h5"
 
+    #define H5_XCAT_PHANTOM_PATH  SHARED_FOLDER_PATH "/PublicationData/FatWaterQuantification/Input/XCATInput/xcat_phantom_incl_geomertry_192_fwsep.h5"
 
 	#define DISPLACEMENT_FIELD_PATH SHARED_FOLDER_PATH ""
 
@@ -101,6 +101,7 @@ Institution: Physikalisch-Technische Bundesanstalt Berlin
 
 #define TIME_POINTS_RESP_PATH SHARED_FOLDER_PATH "PublicationData/Input/SurrogateSignals/resp_time"
 #define RESP_SIGNAL_PATH SHARED_FOLDER_PATH "PublicationData/Input/SurrogateSignals/resp_signal"
+
 
 
 // #define H5_PHANTOM_TEST_PATH  SHARED_FOLDER_PATH "h5_testfile_cube_size3.h5"

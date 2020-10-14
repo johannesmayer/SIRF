@@ -181,7 +181,7 @@ bool tests_mr_dynsim::test_simulate_dynamics()
 		std::vector< size_t > vol_dims{(size_t)data_dims[1], (size_t)data_dims[2], (size_t)data_dims[3]}; 
 		
 		size_t num_coils = 4;
-		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
+        auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
 		mr_dyn_sim.set_coilmaps( csm );
 
 
@@ -507,11 +507,11 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 	{	
         bool const do_cardiac_sim = true;
         bool const simulate_data = true;
-        bool const store_gt_mvfs = true;
+        bool const store_gt_mvfs = false;
 
-        int const num_simul_motion_dyn = 24;
+        int const num_simul_motion_dyn = 16;
 
-        float const test_SNR = 6;
+        float const test_SNR = 15;
 		size_t const noise_label = 13;
 
 
@@ -526,7 +526,7 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		LabelVolume segmentation_labels = read_segmentation_to_nifti_from_h5( H5_XCAT_PHANTOM_PATH );
         MRContrastGenerator mr_cont_gen( segmentation_labels, XML_FATWATER_PATH);
 
-        SeqParamType TR_ms{8.20};
+        SeqParamType TR_ms{8.2};
         SeqParamType TE_ms{2.9, 4.48, 6.06};
         const float B0_T = 1.4940;
 
@@ -535,9 +535,9 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
         set_B0(mr_cont_gen, B0_T);
 
 		MRDynamicSimulation mr_dyn_sim( mr_cont_gen );
-        mr_dyn_sim.set_filename_rawdata( input_path + "/MR/20200721-140413,Phantom,CV_nav_sfl_usos4_gc,58838,110_ismrmrd.h5");
+        mr_dyn_sim.set_filename_rawdata(input_path + "/MR/20200721-140413,Phantom,CV_nav_sfl_usos4_gc,58838,110_ismrmrd.h5");
 
-        std::vector<float> roi_labels{1,2,3,4,50,72,73,76,77};
+        std::vector<float> roi_labels{1,2,3,4,5,6,50,72,73,76,77};
 
 		std::string const output_prefix_roi = output_path;
 		
@@ -545,9 +545,18 @@ bool tests_mr_dynsim::test_4d_mri_acquisition( void )
 		
 		std::vector< size_t > vol_dims{(size_t)data_dims[1], (size_t)data_dims[2], (size_t)data_dims[3]}; 
 		
-		size_t num_coils = 4;
-		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
-		mr_dyn_sim.set_coilmaps( csm );
+
+//		size_t num_coils = 4;
+//		auto csm = aux_test::get_mock_gaussian_csm(vol_dims, num_coils);
+
+        std::string const csm_filename = input_path + "/MR/coilmap_192x192x192x8.raw";
+        std::vector<size_t> csm_dims(vol_dims);
+        size_t num_coils_in_file = 8;
+        csm_dims.push_back(num_coils_in_file);
+        auto csm = mr_io::read_csm_img_from_raw(csm_filename, csm_dims);
+
+
+        mr_dyn_sim.set_coilmaps( csm );
 
 
 		// RPEInterleavedGoldenCutTrajectoryContainer rpe_traj;
@@ -1048,7 +1057,7 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 
         bool const do_cardiac_sim = false;
 		bool const simulate_data = true;
-        bool const store_gt_mvfs = true;
+        bool const store_gt_mvfs = false;
 
         std::string const input_path = std::string(SHARED_FOLDER_PATH) + "/PublicationData/SynergisticNaF/Input/";
 
@@ -1069,10 +1078,10 @@ bool test_pet_dynsim::test_4d_pet_acquisition()
 		pet_dyn_sim.set_filename_rawdata( PET_TEMPLATE_ACQUISITION_DATA_PATH );
 		pet_dyn_sim.set_template_image_data( PET_TEMPLATE_ACQUISITION_IMAGE_DATA_PATH );
 		
-        int const num_sim_motion_states = 16;
+        int const num_sim_motion_states = 12;
 
 		std::cout << "WARNING: NOISE IS STRONGLY SUPPRESSED" << std::endl;
-		float const noise_suppression = 1000 * 1000;
+        float const noise_suppression = 3 * 1000 * 1000;
 		float tot_time_ms =  noise_suppression * 30 * 60 * 1000; // in case there is no motion simulation use this acqu time
 
 		if( num_sim_motion_states > 1)
