@@ -43,8 +43,8 @@ limitations under the License.
 #include "sirf/Gadgetron/gadgetron_data_containers.h"
 #include "sirf/Gadgetron/gadgetron_x.h"
 
-#include "sirf/Gadgetron/fourierencoding.h"
-#include "sirf/Gadgetron/trajectorypreparation.h"
+#include "sirf/Gadgetron/FourierEncoding.h"
+#include "sirf/Gadgetron/TrajectoryPreparation.h"
 
 #include "mrtest_auxiliary_funs.h"
 
@@ -102,13 +102,18 @@ bool test_ISMRMRDImageData_from_MRAcquisitionData(MRAcquisitionData& av)
         using namespace ISMRMRD;
 
         std::cout << "Running test " << __FUNCTION__ << std::endl;
+
         GadgetronImagesVector iv(av);
+        
         bool test_successful = true;
+
         //
         int const num_images = iv.number();
         int const num_kspace_dims = av.get_kspace_sorting().size();
         test_successful *= (num_images == num_kspace_dims);
 
+
+        //
         std::vector<Encoding> enc_vec = av.acquisitions_info().get_IsmrmrdHeader().encoding;
         Encoding enc = enc_vec[0];
         EncodingSpace rec_space = enc.reconSpace;
@@ -472,6 +477,105 @@ bool test_rpe_bwd(MRAcquisitionData& av)
         throw;
     }
 }
+
+bool test_rpe_fwd(MRAcquisitionData& av)
+{
+    try
+    {
+       std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+       sirf::GRPETrajectoryPrep rpe_tp;
+       rpe_tp.set_trajectory(av);
+
+       sirf::GadgetronImagesVector img_vec;
+       img_vec.set_meta_data(av.acquisitions_info());
+
+       if(!av.sorted())
+           av.sort();
+
+       auto sort_idx = av.get_kspace_order();
+       auto sptr_enc = std::make_shared< RPEFourierEncoding > (RPEFourierEncoding());
+
+       for(int i=0; i<sort_idx.size(); ++i)
+       {
+           sirf::AcquisitionsVector subset;
+           av.get_subset(subset, sort_idx[i]);
+
+           CFImage* ptr_img = new CFImage();
+           ImageWrap iw(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, ptr_img);
+
+           sptr_enc->backward(*ptr_img, subset);
+
+           img_vec.append(iw);
+
+           sptr_enc->forward(subset, *ptr_img);
+
+           sptr_enc->backward(*ptr_img, subset);
+
+           CFImage* ptr_img_bfb = new CFImage(*ptr_img);// god help me I don't trust this!
+           ImageWrap iw_bfb(ISMRMRD::ISMRMRD_DataTypes::ISMRMRD_CXFLOAT, ptr_img_bfb);
+           
+           img_vec.append(iw_bfb);
+
+           av.set_subset(subset, sort_idx[i]); //assume forward does not reorder the acquisitions
+       }
+
+       if(mr_cpp_tests_writefiles)
+       {
+           sirf::write_imagevector_to_raw(__FUNCTION__, img_vec);
+
+           std::stringstream fname_output_raw;
+           fname_output_raw << "output_" << __FUNCTION__ << "_rawdata.h5";
+           av.write(fname_output_raw.str());
+       }
+
+       return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
+bool test_mracquisition_model_rpe_bwd(MRAcquisitionData& av)
+{
+    try
+        {
+            std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+            sirf::GRPETrajectoryPrep rpe_tp;
+            rpe_tp.set_trajectory(av);
+
+            sirf::GadgetronImagesVector img_vec;
+            sirf::MRAcquisitionModel acquis_model;
+
+            sirf::CoilSensitivitiesVector csm;
+            csm.set_csm_smoothness(50);
+            csm.calculate(av);
+
+            auto sptr_encoder = std::make_shared<sirf::RPEFourierEncoding>(sirf::RPEFourierEncoding());
+            acquis_model.set_encoder(sptr_encoder);
+
+            acquis_model.bwd(img_vec, csm, av);
+
+            if(mr_cpp_tests_writefiles)
+                sirf::write_imagevector_to_raw(__FUNCTION__, img_vec);
+
+            return true;
+
+        }
+        catch( std::runtime_error const &e)
+        {
+            std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+            std::cout << e.what() << std::endl;
+            throw;
+        }
+}
+#endif
+
 
 bool test_rpe_fwd(MRAcquisitionData& av)
 {

@@ -22,8 +22,14 @@ Options:
 '''
 
 ## SyneRBI Synergistic Image Reconstruction Framework (SIRF)
+<<<<<<< HEAD
 ## Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
 ## Copyright 2015 - 2017 University College London.
+=======
+## Copyright 2021 Physikalisch-Technische Bundesanstalt (PTB)
+## Copyright 2015 - 2021 Rutherford Appleton Laboratory STFC
+## Copyright 2015 - 2021 University College London.
+>>>>>>> 58d7173aa321c4d5e174b776115caf78841f6234
 ##
 ## This is software developed for the Collaborative Computational
 ## Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
@@ -58,6 +64,7 @@ run_recon = str(args['--non-cart']) == 'True'
 
 def main():
 
+<<<<<<< HEAD
     # locate the k-space raw data file
     input_file = existing_filepath(data_path, data_file)
     
@@ -67,6 +74,12 @@ def main():
     
     print('---\n acquisition data norm: %e' % acq_data.norm())
 
+=======
+    # locate the k-space raw data file adn read
+    input_file = existing_filepath(data_path, data_file)
+    acq_data = AcquisitionData(input_file)
+    
+>>>>>>> 58d7173aa321c4d5e174b776115caf78841f6234
     # pre-process acquisition data
     print('---\n pre-processing acquisition data...')
     processed_data  = preprocess_acquisition_data(acq_data)

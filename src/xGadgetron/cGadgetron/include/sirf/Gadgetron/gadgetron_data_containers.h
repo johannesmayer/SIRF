@@ -510,8 +510,7 @@ namespace sirf {
             const ImageWrap&  iw = image_wrap(im_num);
 			iw.get_dim(dim);
 		}
-		
-		bool check_dimension_consistency() const
+        bool check_dimension_consistency() const
         {
             size_t const num_dims = 4;
             std::vector<int> first_img_dims(num_dims), temp_img_dims(num_dims);
@@ -1083,7 +1082,6 @@ namespace sirf {
         void get_dim(size_t const num_csm, int* dim) const
         {
             GadgetronImagesVector::get_image_dimensions(num_csm, dim);
-
         }
 
         void forward(GadgetronImageData& img, GadgetronImageData& combined_img)const;
@@ -1093,9 +1091,6 @@ namespace sirf {
 
         void coilchannels_from_combined_image(GadgetronImageData& img, GadgetronImageData& combined_img) const;
         void combine_images_with_coilmaps(GadgetronImageData& combined_img, const GadgetronImageData& img) const;
-
-
-        //bool flag_imgs_suitable_for_csm_computation_=false;
 
         void calculate_csm(ISMRMRD::NDArray<complex_float_t>& cm, ISMRMRD::NDArray<float>& img, ISMRMRD::NDArray<complex_float_t>& csm);
 
