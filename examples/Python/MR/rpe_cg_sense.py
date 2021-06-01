@@ -21,14 +21,9 @@ Options:
 '''
 
 ## SyneRBI Synergistic Image Reconstruction Framework (SIRF)
-<<<<<<< HEAD
-## Copyright 2015 - 2020 Rutherford Appleton Laboratory STFC
-## Copyright 2015 - 2017 University College London.
-=======
 ## Copyright 2021 Physikalisch-Technische Bundesanstalt (PTB)
 ## Copyright 2015 - 2021 Rutherford Appleton Laboratory STFC
 ## Copyright 2015 - 2021 University College London.
->>>>>>> 58d7173aa321c4d5e174b776115caf78841f6234
 ##
 ## This is software developed for the Collaborative Computational
 ## Project in Synergistic Reconstruction for Biomedical Imaging (formerly CCP PETMR)
