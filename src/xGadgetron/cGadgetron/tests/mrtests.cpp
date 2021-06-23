@@ -35,6 +35,7 @@ limitations under the License.
 #include <random>
 
 #include <ismrmrd/xml.h>
+#include <ismrmrd/ismrmrd.h>
 
 #include "sirf/Gadgetron/chain_lib.h"
 
@@ -149,6 +150,41 @@ bool test_ISMRMRDImageData_from_MRAcquisitionData(MRAcquisitionData& av)
     }
 }
 
+
+
+bool test_GadgetronImageData_DICOM_writer(MRAcquisitionData& av)
+{
+    try
+    {
+        std::cout << "Running test " << __FUNCTION__ << std::endl;
+
+        using ISMRMRD::ISMRMRD_ImageTypes;
+
+        GadgetronImagesVector iv(av);
+
+        std::stringstream fname_output;
+        fname_output << "output_" << __FUNCTION__ <<"_complex.dcm";
+        iv.write(fname_output.str());
+        fname_output.str("");
+
+        fname_output << "output_" << __FUNCTION__ <<"_magnitude.dcm";
+        iv.write(fname_output.str());
+        fname_output.str("");
+
+        fname_output << "output_" << __FUNCTION__ <<"_phase.dcm";
+        iv.write(fname_output.str());
+
+        return true;
+
+    }
+    catch( std::runtime_error const &e)
+    {
+        std::cout << "Exception caught " <<__FUNCTION__ <<" .!" <<std::endl;
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
 bool test_CoilSensitivitiesVector_calculate( MRAcquisitionData& av)
 {
     try
@@ -174,6 +210,7 @@ bool test_CoilSensitivitiesVector_calculate( MRAcquisitionData& av)
         throw;
     }
 }
+
 
 bool test_CoilSensitivitiesVector_get_csm_as_cfimage(MRAcquisitionData& av)
 {
@@ -605,12 +642,12 @@ int main ( int argc, char* argv[])
         ok *= test_get_subset(av);
 
         ok *= test_ISMRMRDImageData_from_MRAcquisitionData(av);
+        ok *= test_GadgetronImageData_DICOM_writer(av);
 
         ok *= test_CoilSensitivitiesVector_calculate(av);
         ok *= test_CoilSensitivitiesVector_get_csm_as_cfimage(av);
 
         ok *= test_bwd(av);
-
         ok *= test_acq_mod_adjointness(av);
         ok *= test_acq_mod_norm(sptr_ad);
 

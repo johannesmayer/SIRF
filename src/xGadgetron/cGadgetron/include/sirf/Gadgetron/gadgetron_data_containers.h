@@ -486,6 +486,8 @@ namespace sirf {
 		virtual void set_data(const complex_float_t* data);
 		virtual void get_real_data(float* data) const;
 		virtual void set_real_data(const float* data);
+		virtual void magnitude();
+		virtual void phase();
 		virtual int read(std::string filename, std::string variable = "", int iv = -1);
 		virtual void write(const std::string &filename, const std::string &groupname, const bool dicom) const;
 		virtual void write(const std::string &filename) const 

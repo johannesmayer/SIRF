@@ -1251,6 +1251,28 @@ GadgetronImageData::set_real_data(const float* z)
 	}
 }
 
+void 
+GadgetronImageData::magnitude()
+{
+    // for(int i=0;i<number();++i)
+    // {
+    //     ImageWrap& iw = image_wrap(i);
+    //     int const current_type = iw.type();
+    //     if( current_type != ISMRMRD::ISMRMRD_CXFLOAT || current_type != ISMRMRD::ISMRMRD_CXDOUBLE)
+    //         return;
+    //     else{
+    //         typdef std::conditional<current_type == ISMRMRD::ISMRMRD_CXFLOAT,float, double>::type NewType; 
+    //         iw.set_imtype(ISMRMRD::ISMRMRD_ImageTypes::ISMRMRD_IMTYPE_MAGNITUDE)                
+    //     }
+    // }
+}
+
+void 
+GadgetronImageData::phase()
+{
+    
+}
+
 void
 GadgetronImageData::set_meta_data(const AcquisitionsInfo &acqs_info)
 {
@@ -1383,6 +1405,7 @@ GadgetronImagesVector::set_real_data(const float* data)
 	for (; iter != stop; ++iter, ++data)
 		*iter = *data;
 }
+
 
 void sirf::match_img_header_to_acquisition(CFImage& img, const ISMRMRD::Acquisition& acq) 
 {
